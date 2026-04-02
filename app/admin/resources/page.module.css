@@ -1,0 +1,61 @@
+.page { max-width: 1000px; width: 100%; margin: 0 auto; }
+.header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-6); }
+.title { font-size: 1.75rem; }
+.addBtn {
+  display: flex; align-items: center; gap: var(--space-2);
+  padding: var(--space-2) var(--space-5);
+  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+  color: var(--bg-primary); font-weight: 600; font-size: 0.85rem;
+  border-radius: var(--radius-full); text-decoration: none;
+  transition: all var(--transition-fast);
+}
+.addBtn:hover { box-shadow: 0 0 16px rgba(0, 240, 255, 0.3); transform: scale(1.03); }
+
+.toolbar { margin-bottom: var(--space-4); }
+.searchWrap {
+  position: relative; max-width: 340px;
+}
+.searchIcon { position: absolute; left: var(--space-3); top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+.searchInput { padding-left: 36px; }
+
+.table {
+  background: var(--bg-card); border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg); overflow: hidden;
+}
+.tableHeader {
+  display: grid; grid-template-columns: 2fr 1fr 0.8fr 0.8fr 0.8fr;
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-surface); font-size: 0.8rem; font-weight: 600;
+  color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border-default);
+}
+.emptyTable {
+  padding: var(--space-12) var(--space-4);
+  text-align: center; color: var(--text-muted);
+}
+
+.tableRow {
+  display: grid; grid-template-columns: 2fr 1fr 0.8fr 0.8fr 0.8fr;
+  padding: var(--space-3) var(--space-4);
+  border-bottom: 1px solid var(--border-default);
+  align-items: center;
+  transition: background var(--transition-fast);
+}
+.tableRow:last-child { border-bottom: none; }
+.tableRow:hover { background: var(--bg-surface); }
+
+.cellName { font-weight: 600; color: var(--text-primary); }
+.cellMeta { font-size: 0.85rem; color: var(--text-muted); }
+.cellFormat {
+  font-size: 0.75rem; font-weight: 600; text-transform: uppercase;
+  color: var(--neon-cyan); letter-spacing: 0.05em;
+}
+
+.deleteBtn {
+  background: none; border: none; cursor: pointer;
+  color: var(--text-muted); padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+.deleteBtn:hover { color: #F43F5E; background: rgba(244, 63, 94, 0.1); }
+

@@ -1,0 +1,357 @@
+/* =========================================
+   EditerLor — Micro-Animations
+   15 animations (UIverse-inspired)
+   ========================================= */
+
+/* ---------- 1. Gradient Slide Fill (Download Button) ---------- */
+@keyframes gradientSlide {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}
+
+.anim-gradient-slide {
+  background: linear-gradient(90deg, var(--neon-cyan), var(--neon-purple), var(--neon-cyan));
+  background-size: 200% 100%;
+  transition: background-position var(--transition-base);
+}
+
+.anim-gradient-slide:hover {
+  animation: gradientSlide 1.5s ease infinite;
+}
+
+/* ---------- 2. Ripple Click ---------- */
+@keyframes ripple {
+  0% {
+    transform: scale(0);
+    opacity: 0.6;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
+}
+
+.anim-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.anim-ripple::after {
+  content: '';
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(0, 240, 255, 0.4);
+  transform: scale(0);
+  pointer-events: none;
+}
+
+.anim-ripple.rippling::after {
+  animation: ripple 0.6s ease-out forwards;
+}
+
+/* ---------- 3. Icon Bounce ---------- */
+@keyframes iconBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.anim-icon-bounce:hover svg {
+  animation: iconBounce 0.4s ease;
+}
+
+/* ---------- 4. Glassmorphism Lift ---------- */
+.anim-glass-lift {
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.anim-glass-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--glow-cyan-strong);
+}
+
+/* ---------- 5. Glow Tracking (JS adds --mouse-x/y) ---------- */
+.anim-glow-track {
+  position: relative;
+  overflow: hidden;
+}
+
+.anim-glow-track::before {
+  content: '';
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 240, 255, 0.12) 0%, transparent 70%);
+  left: var(--mouse-x, 50%);
+  top: var(--mouse-y, 50%);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  transition: opacity var(--transition-fast);
+  opacity: 0;
+}
+
+.anim-glow-track:hover::before {
+  opacity: 1;
+}
+
+/* ---------- 6. Blur to Clear ---------- */
+.anim-blur-to-clear {
+  filter: blur(0.5px);
+  opacity: 0.85;
+  transition: filter var(--transition-base), opacity var(--transition-base);
+}
+
+.anim-blur-to-clear:hover {
+  filter: blur(0);
+  opacity: 1;
+}
+
+/* ---------- 7. Staggered Entrance ---------- */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.anim-stagger {
+  opacity: 0;
+  animation: fadeInUp 0.5s ease forwards;
+  animation-delay: calc(var(--stagger-index, 0) * 60ms);
+}
+
+/* ---------- 8. Pop-in Scale (Context Search) ---------- */
+@keyframes popIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes popOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+}
+
+.anim-pop-in {
+  animation: popIn 0.2s ease forwards;
+}
+
+.anim-pop-out {
+  animation: popOut 0.15s ease forwards;
+}
+
+/* ---------- 9. Rainbow Rotating Border ---------- */
+@keyframes borderRotate {
+  0% { --angle: 0deg; }
+  100% { --angle: 360deg; }
+}
+
+@property --angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+.anim-rainbow-border {
+  border: 2px solid transparent;
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  background-image:
+    linear-gradient(var(--bg-card), var(--bg-card)),
+    conic-gradient(from var(--angle), var(--neon-cyan), var(--neon-purple), var(--neon-pink), var(--neon-cyan));
+  animation: borderRotate 3s linear infinite;
+}
+
+/* ---------- 10. Accordion Smooth ---------- */
+.anim-accordion {
+  overflow: hidden;
+  max-height: 0;
+  transition: max-height var(--transition-slow) ease;
+}
+
+.anim-accordion.open {
+  max-height: 1000px;
+}
+
+/* ---------- 11. Active Neon Bar ---------- */
+.anim-neon-bar {
+  position: relative;
+  transition: all var(--transition-fast);
+}
+
+.anim-neon-bar::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 0;
+  background: var(--neon-cyan);
+  border-radius: var(--radius-full);
+  box-shadow: var(--glow-cyan);
+  transition: height var(--transition-base);
+}
+
+.anim-neon-bar.active::before {
+  height: 60%;
+}
+
+/* ---------- 12. Category Pulse ---------- */
+@keyframes neonPulse {
+  0%, 100% {
+    box-shadow: 0 0 5px var(--pulse-color, rgba(0, 240, 255, 0.2));
+  }
+  50% {
+    box-shadow: 0 0 20px var(--pulse-color, rgba(0, 240, 255, 0.4)),
+                0 0 40px var(--pulse-color, rgba(0, 240, 255, 0.1));
+  }
+}
+
+.anim-pulse {
+  animation: neonPulse 3s ease-in-out infinite;
+}
+
+/* ---------- 13. Glitch Text ---------- */
+@keyframes glitch {
+  0%, 90%, 100% {
+    clip-path: inset(0 0 0 0);
+    transform: translate(0);
+  }
+  92% {
+    clip-path: inset(30% 0 10% 0);
+    transform: translate(-2px, 1px);
+  }
+  94% {
+    clip-path: inset(50% 0 20% 0);
+    transform: translate(2px, -1px);
+  }
+  96% {
+    clip-path: inset(10% 0 60% 0);
+    transform: translate(-1px, 2px);
+  }
+  98% {
+    clip-path: inset(70% 0 5% 0);
+    transform: translate(1px, -2px);
+  }
+}
+
+.anim-glitch {
+  position: relative;
+}
+
+.anim-glitch::before,
+.anim-glitch::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.anim-glitch::before {
+  color: var(--neon-cyan);
+  animation: glitch 5s infinite linear;
+  z-index: -1;
+}
+
+.anim-glitch::after {
+  color: var(--neon-pink);
+  animation: glitch 5s infinite linear 0.2s;
+  z-index: -1;
+}
+
+/* ---------- 14. Glassmorphism Navbar (scroll) ---------- */
+.anim-glass-nav {
+  transition: background var(--transition-base), backdrop-filter var(--transition-base);
+}
+
+.anim-glass-nav.scrolled {
+  background: rgba(10, 10, 15, 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+/* ---------- 15. Orbiting Loader Dots ---------- */
+@keyframes orbit {
+  0% { transform: rotate(0deg) translateX(16px) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(16px) rotate(-360deg); }
+}
+
+.anim-loader {
+  position: relative;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.anim-loader span {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--neon-cyan);
+  animation: orbit 1.2s linear infinite;
+}
+
+.anim-loader span:nth-child(2) {
+  animation-delay: 0.4s;
+  background: var(--neon-purple);
+}
+
+.anim-loader span:nth-child(3) {
+  animation-delay: 0.8s;
+  background: var(--neon-pink);
+}
+
+/* ---------- Fade In (general) ---------- */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.anim-fade-in {
+  animation: fadeIn 0.3s ease forwards;
+}
+
+/* ---------- Slide In from Left ---------- */
+@keyframes slideInLeft {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+.anim-slide-in-left {
+  animation: slideInLeft 0.3s ease forwards;
+}
+
+/* ---------- Download Success Check ---------- */
+@keyframes checkBounce {
+  0% { transform: scale(0); }
+  50% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+.anim-check {
+  animation: checkBounce 0.4s ease forwards;
+}
