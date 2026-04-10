@@ -153,3 +153,29 @@
   50%      { opacity: 0.15; }
 }
 
+/* ---------- Pagination (Load More) ---------- */
+.loadMoreWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: var(--space-6);
+  margin-bottom: var(--space-4);
+}
+
+.loadMoreBtn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  padding: var(--space-2) var(--space-6);
+  border-radius: var(--radius-full);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.loadMoreBtn:hover {
+  background: var(--border-default);
+  color: var(--text-primary);
+}
+

@@ -1,17 +1,25 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Sidebar from "@/app/components/layout/Sidebar";
 import ResourceCard from "@/app/components/ui/ResourceCard";
 import SoundButton from "@/app/components/ui/SoundButton";
 import FilterBar from "@/app/components/ui/FilterBar";
 import styles from "./page.module.css";
 
+const PAGE_SIZE = 24;
+
 export default function ClientPage({ slug, info, folders, resources }) {
   const [selectedFolderId, setSelectedFolderId] = useState(null);
   const [selectedFolderName, setSelectedFolderName] = useState(null);
   const [selectedFormat, setSelectedFormat] = useState(null);
   const [sortBy, setSortBy] = useState("newest");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [selectedFolderId, selectedFormat, sortBy]);
 
   const filteredResources = useMemo(() => {
     let results = [...resources];
@@ -50,6 +58,10 @@ export default function ClientPage({ slug, info, folders, resources }) {
     }
   };
 
+  const handleLoadMore = () => {
+    setVisibleCount(prev => prev + PAGE_SIZE);
+  };
+
   const renderResources = () => {
     if (filteredResources.length === 0) {
       return (
@@ -61,10 +73,13 @@ export default function ClientPage({ slug, info, folders, resources }) {
       );
     }
 
+    const displayResources = filteredResources.slice(0, visibleCount);
+
+    let gridContent;
     if (info.layout === "sound") {
-      return (
+      gridContent = (
         <div className={styles.soundGrid}>
-          {filteredResources.map((resource, idx) => (
+          {displayResources.map((resource, idx) => (
             <SoundButton
               key={resource.id}
               id={resource.id}
@@ -78,12 +93,10 @@ export default function ClientPage({ slug, info, folders, resources }) {
           ))}
         </div>
       );
-    }
-
-    if (info.layout === "font") {
-      return (
+    } else if (info.layout === "font") {
+      gridContent = (
         <div className={styles.grid}>
-          {filteredResources.map((resource, idx) => (
+          {displayResources.map((resource, idx) => (
             <ResourceCard
               key={resource.id}
               {...resource}
@@ -94,26 +107,39 @@ export default function ClientPage({ slug, info, folders, resources }) {
           ))}
         </div>
       );
+    } else {
+      gridContent = (
+        <div className={styles.grid}>
+          {displayResources.map((resource, idx) => (
+            <ResourceCard
+              key={resource.id}
+              {...resource}
+              downloadUrl={resource.downloadUrl || resource.fileUrl}
+              cardType={
+                slug === "image-overlay"
+                  ? "image"
+                  : slug === "preset-lut"
+                  ? "preview"
+                  : "video"
+              }
+              index={idx}
+            />
+          ))}
+        </div>
+      );
     }
 
     return (
-      <div className={styles.grid}>
-        {filteredResources.map((resource, idx) => (
-          <ResourceCard
-            key={resource.id}
-            {...resource}
-            downloadUrl={resource.downloadUrl || resource.fileUrl}
-            cardType={
-              slug === "image-overlay"
-                ? "image"
-                : slug === "preset-lut"
-                ? "preview"
-                : "video"
-            }
-            index={idx}
-          />
-        ))}
-      </div>
+      <>
+        {gridContent}
+        {visibleCount < filteredResources.length && (
+          <div className={styles.loadMoreWrapper}>
+            <button onClick={handleLoadMore} className={styles.loadMoreBtn}>
+              Load More ({filteredResources.length - visibleCount} items left)
+            </button>
+          </div>
+        )}
+      </>
     );
   };
 
