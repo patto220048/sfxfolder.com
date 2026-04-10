@@ -1,4 +1,4 @@
-import { getFolders } from "@/app/lib/firestore";
+import { getAllFolders } from "@/app/lib/firestore";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/app/lib/firebase";
 import ClientPage from "./ClientPage";
@@ -74,7 +74,7 @@ export default async function CategoryPage({ params }) {
   let allResources = [];
 
   try {
-    const fetchedFolders = await getFolders(slug);
+    const fetchedFolders = await getAllFolders(slug);
     
     // Fetch resources using the exact same constraints to avoid missing index error
     const ref = collection(db, "resources");

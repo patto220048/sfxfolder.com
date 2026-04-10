@@ -122,6 +122,20 @@ export async function getFolders(categorySlug, parentId = null) {
   return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
+export async function getAllFolders(categorySlug) {
+  if (!db) return [];
+  const ref = collection(db, 'folders');
+  const constraints = [
+    where('categorySlug', '==', categorySlug)
+  ];
+  const q = query(ref, ...constraints);
+  const snapshot = await getDocs(q);
+  const folders = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+  
+  // Sort locally to avoid needing a new composite index for just (categorySlug) + (order)
+  return folders.sort((a, b) => (a.order || 0) - (b.order || 0));
+}
+
 export async function addFolder(data) {
   if (!db) return null;
   const ref = collection(db, 'folders');
