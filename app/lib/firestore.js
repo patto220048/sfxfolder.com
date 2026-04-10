@@ -95,6 +95,35 @@ export async function getCategories() {
   return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
 }
 
+export async function getCategoriesWithCounts() {
+  if (!db) return [];
+  
+  // 1. Get all categories
+  const categories = await getCategories();
+  
+  // 2. Get counts for each category
+  // Since we have < 1000 total resources, fetching all published resources 
+  // and counting locally is faster/cheaper than running multiple count queries.
+  const resourcesRef = collection(db, 'resources');
+  const q = query(resourcesRef, where('isPublished', '==', true));
+  const snapshot = await getDocs(q);
+  
+  const counts = {};
+  snapshot.docs.forEach((doc) => {
+    const data = doc.data();
+    const category = data.category;
+    if (category) {
+      counts[category] = (counts[category] || 0) + 1;
+    }
+  });
+  
+  // 3. Attach counts to categories
+  return categories.map(cat => ({
+    ...cat,
+    resourceCount: counts[cat.slug] || 0
+  }));
+}
+
 export async function getCategoryBySlug(slug) {
   if (!db) return null;
   const ref = collection(db, 'categories');

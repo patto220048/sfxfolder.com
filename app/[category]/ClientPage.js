@@ -168,7 +168,7 @@ export default function ClientPage({ slug, info, folders, resources }) {
         </div>
 
         <h1 className={styles.title} style={{ color: info.color }}>
-          {info.name}
+          {info.name} ({resources.length})
         </h1>
 
         <FilterBar

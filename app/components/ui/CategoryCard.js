@@ -35,9 +35,11 @@ export default function CategoryCard({ name, slug, icon, color, resourceCount = 
       <div className={styles.iconWrap}>
         <IconComponent size={28} strokeWidth={1.8} />
       </div>
-      <h3 className={styles.name}>{name}</h3>
+      <h3 className={styles.name}>
+        {name} {resourceCount > 0 && `(${resourceCount})`}
+      </h3>
       <span className={styles.count}>
-        {resourceCount > 0 ? `${resourceCount} files` : "Coming soon"}
+        {resourceCount > 0 ? "Browse library" : "Coming soon"}
       </span>
       <div className={styles.glow} />
     </Link>

@@ -1,6 +1,6 @@
 import CategoryCard from "@/app/components/ui/CategoryCard";
 import SearchBar from "@/app/components/ui/SearchBar";
-import { getCategories } from "@/app/lib/firestore";
+import { getCategoriesWithCounts } from "@/app/lib/firestore";
 import styles from "./page.module.css";
 
 export const revalidate = 3600; // Revalidate every hour
@@ -8,7 +8,7 @@ export const revalidate = 3600; // Revalidate every hour
 export default async function Home() {
   let categories = [];
   try {
-    categories = await getCategories();
+    categories = await getCategoriesWithCounts();
   } catch (e) {
     console.error("Failed to load categories:", e.message);
     // Fallback static data
