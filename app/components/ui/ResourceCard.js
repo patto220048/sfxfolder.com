@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import Image from "next/image";
 import { Download as DownloadCount, Play, Eye } from "lucide-react";
 import DownloadButton from "./DownloadButton";
 import { mediaManager } from "@/app/lib/mediaManager";
@@ -91,9 +92,10 @@ export default function ResourceCard({
                     muted
                     loop
                     playsInline
+                    preload="none"
                   />
                 ) : (
-                  <img src={thumbnailUrl} alt={displayName} className={styles.thumbnail} />
+                  <Image fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" src={thumbnailUrl} alt={displayName} className={styles.thumbnail} />
                 )}
               </>
             ) : resolvedUrl ? (
@@ -104,7 +106,7 @@ export default function ResourceCard({
                 muted
                 loop
                 playsInline
-                preload="metadata"
+                preload="none"
               />
             ) : (
               <div className={styles.placeholderThumb}>
@@ -134,7 +136,9 @@ export default function ResourceCard({
         return (
           <div className={styles.preview}>
             {(previewUrl || thumbnailUrl || resolvedUrl) ? (
-              <img
+              <Image
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 src={previewUrl || thumbnailUrl || resolvedUrl}
                 alt={displayName}
                 className={styles.thumbnail}
@@ -165,7 +169,9 @@ export default function ResourceCard({
         return (
           <div className={styles.preview}>
             {(previewUrl || thumbnailUrl) ? (
-              <img
+              <Image
+                fill
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                 src={previewUrl || thumbnailUrl}
                 alt={displayName}
                 className={styles.thumbnail}
@@ -193,7 +199,7 @@ export default function ResourceCard({
         return (
           <div className={styles.preview}>
             {thumbnailUrl ? (
-              <img src={thumbnailUrl} alt={displayName} className={styles.thumbnail} />
+              <Image fill sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw" src={thumbnailUrl} alt={displayName} className={styles.thumbnail} loading="lazy" />
             ) : (
               <div className={styles.placeholderThumb}>
                 <span className={styles.formatBig}>{fileFormat?.toUpperCase()}</span>

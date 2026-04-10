@@ -88,7 +88,7 @@ export default function ClientPage({ slug, info, folders, resources }) {
               fileFormat={resource.fileFormat}
               fileSize={resource.fileSize}
               downloadCount={resource.downloadCount}
-              index={idx}
+              index={idx % PAGE_SIZE}
             />
           ))}
         </div>
@@ -102,7 +102,7 @@ export default function ClientPage({ slug, info, folders, resources }) {
               {...resource}
               downloadUrl={resource.downloadUrl || resource.fileUrl}
               cardType="font"
-              index={idx}
+              index={idx % PAGE_SIZE}
             />
           ))}
         </div>
@@ -122,7 +122,7 @@ export default function ClientPage({ slug, info, folders, resources }) {
                   ? "preview"
                   : "video"
               }
-              index={idx}
+              index={idx % PAGE_SIZE}
             />
           ))}
         </div>
