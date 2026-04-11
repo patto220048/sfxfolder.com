@@ -11,7 +11,6 @@ import styles from "./AdminSidebar.module.css";
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/admin/dashboard" },
   { icon: Upload, label: "Resources", href: "/admin/resources" },
-  { icon: FolderTree, label: "Folders", href: "/admin/folders" },
   { icon: Tags, label: "Tags", href: "/admin/tags" },
   { icon: Settings, label: "Settings", href: "/admin/settings" },
 ];

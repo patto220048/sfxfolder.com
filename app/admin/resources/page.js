@@ -178,16 +178,21 @@ export default function AdminResources() {
       const subFolders = folders.filter(f => f.parentId === folder.id);
       await Promise.all(subFolders.map(sf => updateFolder(sf.id, { parentId: null })));
       
-      // 3. Delete the folder itself
-      await deleteFolder(folder.id);
+      // 3. Orphan resources (set folderId to null)
+      const folderResources = resources.filter(r => r.folderId === folder.id);
+      await Promise.all(folderResources.map(r => updateResource(r.id, { folderId: null })));
+
+      // 4. Delete the folder itself
+      await deleteDoc(doc(db, "folders", folder.id));
       
-      // 4. Update local state
+      // 5. Update local state
       setFolders(prev => {
-        // Remove deleted folder
         const filtered = prev.filter(f => f.id !== folder.id);
-        // Update subfolders in local state
         return filtered.map(f => f.parentId === folder.id ? { ...f, parentId: null } : f);
       });
+      
+      setResources(prev => prev.map(r => r.folderId === folder.id ? { ...r, folderId: null } : r));
+
       
       // 5. If we were viewing this folder, switch to category root
       if (selectedFolderId === folder.id) {
