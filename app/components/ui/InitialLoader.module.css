@@ -1,0 +1,84 @@
+.loaderWrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s;
+  backdrop-filter: blur(0px);
+}
+
+.fadeReady {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  backdrop-filter: blur(20px);
+}
+
+.loaderContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+}
+
+.loader {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 12px;
+  width: 100px;
+  height: 100px;
+}
+
+.cube {
+  background-color: rgb(var(--neon-cyan-rgb));
+  box-shadow: 0 0 10px rgba(var(--neon-cyan-rgb), 0.5), 
+              0 0 20px rgba(var(--neon-cyan-rgb), 0.3);
+  animation: loader_pulse 1.2s infinite ease-in-out;
+}
+
+/* staggered animation for grid effect */
+.cube:nth-child(1) { animation-delay: 0.1s; }
+.cube:nth-child(2) { animation-delay: 0.2s; }
+.cube:nth-child(3) { animation-delay: 0.3s; }
+.cube:nth-child(4) { animation-delay: 0.4s; }
+.cube:nth-child(5) { animation-delay: 0.5s; }
+.cube:nth-child(6) { animation-delay: 0.6s; }
+.cube:nth-child(7) { animation-delay: 0.7s; }
+.cube:nth-child(8) { animation-delay: 0.8s; }
+.cube:nth-child(9) { animation-delay: 0.9s; }
+
+@keyframes loader_pulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+    box-shadow: 0 0 5px rgba(var(--neon-cyan-rgb), 0.2);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+    box-shadow: 0 0 20px rgba(var(--neon-cyan-rgb), 0.8),
+                0 0 40px rgba(var(--neon-cyan-rgb), 0.4);
+  }
+}
+
+.loadingText {
+  color: #888;
+  font-family: inherit;
+  font-weight: 300;
+  font-size: 0.85rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  animation: pulse_text 2s infinite ease-in-out;
+}
+
+@keyframes pulse_text {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}

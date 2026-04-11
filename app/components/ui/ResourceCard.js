@@ -19,6 +19,7 @@ export default function ResourceCard({
   name,
   downloadUrl,
   fileUrl,
+  fileName,
   fileFormat,
   fileSize,
   tags = [],
@@ -33,7 +34,7 @@ export default function ResourceCard({
   const [videoProgress, setVideoProgress] = useState(0);
   const videoRef = useRef(null);
   const rafRef = useRef(null);
-  const displayName = name?.replace(/\.[^/.]+$/, "") || "Untitled";
+  const displayName = (name || fileName || "Untitled").replace(/\.[^/.]+$/, "");
 
   // Video progress updater via rAF
   const updateVideoProgress = useCallback(() => {

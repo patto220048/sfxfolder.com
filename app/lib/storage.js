@@ -5,6 +5,7 @@ import {
   deleteObject,
 } from 'firebase/storage';
 import { storage } from './firebase';
+import { convertToSlug } from './stringUtils';
 
 /**
  * Upload a file to Firebase Storage
@@ -60,6 +61,8 @@ export async function deleteFile(path) {
  */
 export function generateStoragePath(category, filename) {
   const timestamp = Date.now();
-  const safeName = filename.replace(/[^a-zA-Z0-9.-]/g, '_');
-  return `resources/${category}/${timestamp}-${safeName}`;
+  const nameWithoutExt = filename.replace(/\.[^/.]+$/, "");
+  const ext = filename.includes(".") ? "." + filename.split(".").pop() : "";
+  const safeBase = convertToSlug(nameWithoutExt);
+  return `resources/${category}/${timestamp}-${safeBase}${ext}`;
 }

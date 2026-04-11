@@ -23,6 +23,7 @@ function formatTime(seconds) {
 export default function SoundButton({
   id,
   name,
+  fileName,
   downloadUrl,
   fileFormat,
   fileSize,
@@ -47,7 +48,16 @@ export default function SoundButton({
 
   // Helper to initialize audio on demand
   const initAudio = useCallback(() => {
-    if (audioRef.current || !downloadUrl) return audioRef.current;
+    if (!downloadUrl) return null;
+    
+    // If audio object already exists but URL is different, update its src
+    if (audioRef.current) {
+      if (audioRef.current.src !== downloadUrl) {
+        audioRef.current.src = downloadUrl;
+        audioRef.current.load(); // Force browser to re-track the new source
+      }
+      return audioRef.current;
+    }
     
     const audio = new Audio();
     audio.preload = "metadata";
@@ -192,7 +202,7 @@ export default function SoundButton({
     setIsDownloading(false);
   };
 
-  const displayName = name?.replace(/\.[^/.]+$/, "") || "Untitled";
+  const displayName = (name || fileName || "Untitled").replace(/\.[^/.]+$/, "");
   const sizeStr = formatSize(fileSize);
   const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 

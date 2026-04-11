@@ -19,6 +19,14 @@ import { db } from './firebase';
    RESOURCES
    ======================================== */
 
+export async function getResource(id) {
+  if (!db) return null;
+  const ref = doc(db, 'resources', id);
+  const snapshot = await getDoc(ref);
+  if (!snapshot.exists()) return null;
+  return { id: snapshot.id, ...snapshot.data() };
+}
+
 export async function getResources(categorySlug, folderId = undefined) {
   if (!db) return [];
   const ref = collection(db, 'resources');
@@ -165,6 +173,13 @@ export async function getAllFolders(categorySlug) {
   return folders.sort((a, b) => (a.order || 0) - (b.order || 0));
 }
 
+export async function getAllAdminFolders() {
+  if (!db) return [];
+  const ref = collection(db, 'folders');
+  const snapshot = await getDocs(ref);
+  return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+}
+
 export async function addFolder(data) {
   if (!db) return null;
   const ref = collection(db, 'folders');
@@ -187,6 +202,7 @@ export async function deleteFolder(id) {
   const ref = doc(db, 'folders', id);
   return deleteDoc(ref);
 }
+
 
 /* ========================================
    SETTINGS

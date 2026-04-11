@@ -5,7 +5,7 @@
       "https://editerlor.vercel.app",
       "https://*.vercel.app"
     ],
-    "method": ["GET", "HEAD"],
+    "method": ["GET", "HEAD", "PUT", "POST", "DELETE"],
     "maxAgeSeconds": 3600,
     "responseHeader": [
       "Content-Type", 

@@ -5,6 +5,7 @@ import Sidebar from "@/app/components/layout/Sidebar";
 import ResourceCard from "@/app/components/ui/ResourceCard";
 import SoundButton from "@/app/components/ui/SoundButton";
 import FilterBar from "@/app/components/ui/FilterBar";
+import InitialLoader from "@/app/components/ui/InitialLoader";
 import styles from "./page.module.css";
 
 const PAGE_SIZE = 24;
@@ -15,6 +16,16 @@ export default function ClientPage({ slug, info, folders, resources }) {
   const [selectedFormat, setSelectedFormat] = useState(null);
   const [sortBy, setSortBy] = useState("newest");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const [isReady, setIsReady] = useState(false);
+  const [isMoreLoading, setIsMoreLoading] = useState(false);
+
+  // Initial mount ready state
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setIsReady(true);
+    }, 1000); // 1s buffer for browser to settle rendering
+    return () => clearTimeout(timer);
+  }, []);
 
   // Reset pagination when filters change
   useEffect(() => {
@@ -59,7 +70,12 @@ export default function ClientPage({ slug, info, folders, resources }) {
   };
 
   const handleLoadMore = () => {
-    setVisibleCount(prev => prev + PAGE_SIZE);
+    setIsMoreLoading(true);
+    // Simulate a short render/loading delay for better UX feel
+    setTimeout(() => {
+      setVisibleCount((prev) => prev + PAGE_SIZE);
+      setIsMoreLoading(false);
+    }, 600);
   };
 
   const renderResources = () => {
@@ -84,6 +100,7 @@ export default function ClientPage({ slug, info, folders, resources }) {
               key={resource.id}
               id={resource.id}
               name={resource.name}
+              fileName={resource.fileName}
               downloadUrl={resource.downloadUrl || resource.fileUrl}
               fileFormat={resource.fileFormat}
               fileSize={resource.fileSize}
@@ -134,8 +151,14 @@ export default function ClientPage({ slug, info, folders, resources }) {
         {gridContent}
         {visibleCount < filteredResources.length && (
           <div className={styles.loadMoreWrapper}>
-            <button onClick={handleLoadMore} className={styles.loadMoreBtn}>
-              Load More ({filteredResources.length - visibleCount} items left)
+            <button
+              onClick={handleLoadMore}
+              className={`${styles.loadMoreBtn} ${
+                isMoreLoading ? styles.loadingBtn : ""
+              }`}
+              disabled={isMoreLoading}
+            >
+              {isMoreLoading ? "Loading Assets..." : `Load More (${filteredResources.length - visibleCount} items left)`}
             </button>
           </div>
         )}
@@ -144,7 +167,9 @@ export default function ClientPage({ slug, info, folders, resources }) {
   };
 
   return (
-    <div className={styles.page}>
+    <>
+      <InitialLoader isReady={isReady} />
+      <div className={styles.page}>
       <Sidebar
         categoryName={info.name}
         folders={folders}
@@ -182,5 +207,6 @@ export default function ClientPage({ slug, info, folders, resources }) {
         {renderResources()}
       </div>
     </div>
+    </>
   );
 }

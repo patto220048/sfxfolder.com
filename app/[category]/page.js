@@ -3,7 +3,9 @@ import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/app/lib/firebase";
 import ClientPage from "./ClientPage";
 
-export const revalidate = 3600; // 1 hour ISR
+// Remove static revalidate to allow on-demand revalidation via tags
+// export const revalidate = 3600; 
+
 
 
 const CATEGORY_INFO = {
@@ -84,8 +86,11 @@ const getCachedCategoryData = unstable_cache(
       allResources: serializeList(fetchedResources)
     };
   },
-  ['category-data'],
-  { revalidate: 3600, tags: ['resources'] }
+  ['category-data'], // Base key
+  { 
+    revalidate: 3600, 
+    tags: ['resources'] 
+  }
 );
 
 export default async function CategoryPage({ params }) {
