@@ -14,8 +14,6 @@ export default function AdminDropOverlay({ isDragging }) {
         </div>
         <h2 className={styles.title}>Thả file hoặc thư mục để bắt đầu</h2>
         <p className={styles.subtitle}>Hệ thống sẽ tự động dọn dẹp tên và xác định danh mục cho bạn</p>
-        
-        <div className={styles.glow} />
       </div>
     </div>
   );

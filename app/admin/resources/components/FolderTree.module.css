@@ -1,72 +1,70 @@
 .tree {
   width: 280px;
   height: 100%;
-  background: rgba(255, 255, 255, 0.02);
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--bg-card);
+  border-right: 1px solid var(--border-default);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
 .treeHeader {
-  padding: 20px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: var(--space-6);
+  border-bottom: 1px solid var(--border-default);
 }
 
 .treeHeader h4 {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--neon-cyan);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
   margin: 0;
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 0.1em;
 }
 
 .sections {
   flex: 1;
   overflow-y: auto;
-  padding: 12px 0;
+  padding: var(--space-4) 0;
 }
 
 .categorySection {
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .categoryHeader {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   padding: 10px 16px;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all var(--transition-fast);
+  color: var(--text-secondary);
 }
 
 .categoryHeader:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .selected.categoryHeader {
-  background: rgba(0, 255, 255, 0.08);
-  border-right: 2px solid var(--neon-cyan);
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  font-weight: 700;
 }
 
 .toggleBtn.isCollapsed {
   transform: rotate(-90deg);
 }
 
-.categoryHeader .toggleBtn {
-  margin-right: -4px;
-}
-
 .catName {
   flex: 1;
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   font-weight: 600;
-  color: #fff;
 }
 
 .categoryContent {
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .itemWrapper {
@@ -77,46 +75,51 @@
 .item {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
+  gap: 12px;
+  padding: 8px 16px 8px 32px;
   cursor: pointer;
-  transition: all 0.2s;
-  position: relative;
+  transition: all var(--transition-fast);
+  color: var(--text-secondary);
 }
 
 .item:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-hover);
+  color: var(--text-primary);
 }
 
 .selected.item {
-  background: rgba(0, 255, 255, 0.1);
-  color: var(--neon-cyan);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-primary);
+  font-weight: 700;
+  border-right: 2px solid var(--text-primary);
 }
 
 .item.dragOver {
-  background: rgba(0, 255, 255, 0.2);
-  outline: 2px dashed var(--neon-cyan);
-  outline-offset: -2px;
+  background: var(--bg-surface);
+  border: 1px dashed var(--text-primary);
 }
 
 .toggleBtn {
   background: none;
   border: none;
-  color: rgba(255, 255, 255, 0.4);
+  color: inherit;
+  opacity: 0.5;
   cursor: pointer;
   padding: 2px;
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform var(--transition-fast);
 }
 
 .folderIcon {
-  color: rgba(0, 255, 255, 0.6);
+  color: inherit;
+  opacity: 0.7;
 }
 
 .name {
   flex: 1;
-  font-size: 0.85rem;
+  font-size: 0.8125rem;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -126,7 +129,7 @@
   display: flex;
   gap: 4px;
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity var(--transition-fast);
 }
 
 .item:hover .itemActions,
@@ -135,34 +138,34 @@
 }
 
 .addBtn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 4px;
-  color: rgba(255, 255, 255, 0.5);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 0;
+  color: var(--text-muted);
   cursor: pointer;
   padding: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: all var(--transition-fast);
 }
 
 .addBtn:hover {
-  background: var(--neon-cyan);
-  color: #000;
-  border-color: var(--neon-cyan);
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border-color: var(--text-primary);
 }
 
 .deleteBtn:hover {
-  background: #ff4444 !important;
+  background: #ff0000 !important;
   color: #fff !important;
-  border-color: #ff4444 !important;
+  border-color: #ff0000 !important;
 }
 
 .emptyText {
-  padding: 8px 40px;
+  padding: 8px 32px;
   font-size: 0.75rem;
-  color: rgba(255, 255, 255, 0.2);
+  color: var(--text-muted);
   font-style: italic;
 }
 
@@ -176,10 +179,9 @@
 }
 
 .sections::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 2px;
+  background: var(--border-default);
 }
 
 .sections::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 255, 255, 0.2);
+  background: var(--text-muted);
 }

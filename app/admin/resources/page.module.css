@@ -1,26 +1,24 @@
 .adminContainer {
   display: grid;
   grid-template-columns: 280px 1fr;
-  height: calc(100vh - 80px); /* Adjust based on navbar height */
-  background: rgba(10, 10, 15, 0.4);
-  backdrop-filter: blur(20px);
-  border-radius: var(--radius-xl);
+  height: calc(100vh - 64px);
+  background: var(--bg-primary);
+  border-radius: 0;
   overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  margin-top: var(--space-4);
+  border-top: 1px solid var(--border-default);
 }
 
 .sidebar {
-  border-right: 1px solid rgba(255, 255, 255, 0.05);
-  background: rgba(0, 0, 0, 0.2);
+  border-right: 1px solid var(--border-default);
+  background: var(--bg-card);
   display: flex;
   flex-direction: column;
   overflow: hidden;
 }
 
 .sidebarHeader {
-  padding: var(--space-4);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: var(--space-6);
+  border-bottom: 1px solid var(--border-default);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -30,79 +28,82 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  background: var(--bg-primary);
 }
 
 .pageHeader {
-  padding: var(--space-6);
-  background: rgba(255, 255, 255, 0.02);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: var(--space-8) var(--space-10);
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-default);
 }
 
 .topActions {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: var(--space-6);
+  margin-bottom: var(--space-8);
 }
 
 .titleSection h1 {
-  font-size: 1.75rem;
-  font-weight: 800;
-  background: linear-gradient(135deg, var(--text-primary), var(--neon-cyan));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: var(--space-1);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: var(--space-2);
+  letter-spacing: -0.04em;
 }
 
 .subtitle {
-  color: var(--text-muted);
+  color: var(--text-secondary);
   font-size: 0.875rem;
 }
 
 .headerTools {
   display: flex;
-  gap: var(--space-3);
+  gap: var(--space-4);
   align-items: center;
 }
 
 .viewToggle {
   display: flex;
-  background: rgba(0, 0, 0, 0.3);
-  padding: 4px;
-  border-radius: var(--radius-lg);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: var(--bg-surface);
+  padding: 2px;
+  border-radius: 0;
+  border: 1px solid var(--border-default);
 }
 
 .toggleBtn {
-  padding: 6px 10px;
-  border-radius: var(--radius-md);
+  padding: 8px 12px;
+  border-radius: 0;
   border: none;
   background: transparent;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-fast);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
 .toggleBtn.active {
-  background: var(--neon-cyan);
+  background: var(--text-primary);
   color: var(--bg-primary);
 }
 
 .toolbar {
   display: flex;
-  gap: var(--space-4);
+  gap: var(--space-6);
   align-items: center;
 }
 
 .searchWrap {
   position: relative;
   flex: 1;
-  max-width: 400px;
+  max-width: 480px;
 }
 
 .searchIcon {
   position: absolute;
-  left: 12px;
+  left: 16px;
   top: 50%;
   transform: translateY(-50%);
   color: var(--text-muted);
@@ -111,60 +112,61 @@
 
 .searchInput {
   width: 100%;
-  padding: 10px 12px 10px 40px;
-  background: rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-lg);
+  padding: 12px 16px 12px 48px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 0;
   color: var(--text-primary);
   outline: none;
-  transition: border-color 0.2s;
+  font-family: var(--font-body);
+  transition: border-color var(--transition-fast);
 }
 
 .searchInput:focus {
-  border-color: var(--neon-cyan);
+  border-color: var(--text-primary);
 }
 
 /* Resource Grid */
 .scrollArea {
   flex: 1;
   overflow-y: auto;
-  padding: var(--space-6);
+  padding: var(--space-10);
 }
 
 .resourceGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--space-6);
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-8);
 }
 
 .card {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: var(--radius-xl);
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: 0;
   overflow: hidden;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all var(--transition-base);
   position: relative;
 }
 
 .card:hover {
-  transform: translateY(-4px);
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(0, 240, 255, 0.3);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  border-color: var(--text-primary);
+  box-shadow: 4px 4px 0px var(--text-primary);
+  transform: translate(-2px, -2px);
 }
 
 .cardPreview {
   aspect-ratio: 16/9;
-  background: rgba(0, 0, 0, 0.4);
+  background: #000;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
   overflow: hidden;
+  border-bottom: 1px solid var(--border-default);
 }
 
 .cardIcon {
-  color: var(--neon-cyan);
+  color: var(--text-muted);
   opacity: 0.5;
 }
 
@@ -174,13 +176,13 @@
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.6);
+  background: rgba(0, 0, 0, 0.8);
   opacity: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: var(--space-4);
-  transition: opacity 0.2s;
+  transition: opacity var(--transition-fast);
 }
 
 .card:hover .cardOverlay {
@@ -188,16 +190,17 @@
 }
 
 .cardInfo {
-  padding: var(--space-4);
+  padding: var(--space-5);
 }
 
 .cardTitle {
   font-weight: 600;
   font-size: 1rem;
-  margin-bottom: var(--space-1);
+  margin-bottom: var(--space-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: var(--text-primary);
 }
 
 .cardMeta {
@@ -205,44 +208,43 @@
   justify-content: space-between;
   align-items: center;
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
 .formatBadge {
-  background: rgba(0, 240, 255, 0.1);
-  color: var(--neon-cyan);
-  padding: 2px 6px;
-  border-radius: 4px;
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  padding: 2px 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 0;
   font-weight: 700;
   text-transform: uppercase;
   font-size: 0.65rem;
 }
 
 .actionBtn {
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  width: 40px;
+  height: 40px;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: white;
+  color: var(--text-primary);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-fast);
 }
 
 .actionBtn:hover {
-  transform: scale(1.1);
+  background: var(--text-primary);
+  color: var(--bg-primary);
 }
 
 .actionBtn.delete:hover {
-  background: #ef4444;
-}
-
-.actionBtn.edit:hover {
-  background: var(--neon-cyan);
-  color: var(--bg-primary);
+  background: #ff0000;
+  color: #fff;
+  border-color: #ff0000;
 }
 
 /* Empty State */
@@ -251,14 +253,14 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 300px;
+  height: 400px;
   color: var(--text-muted);
-  gap: var(--space-4);
+  gap: var(--space-6);
 }
 
 .loadingIcon {
   animation: spin 1s linear infinite;
-  color: var(--neon-cyan);
+  color: var(--text-primary);
 }
 
 @keyframes spin {
@@ -269,89 +271,76 @@
 .addBtn {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+  gap: 12px;
+  background: var(--text-primary);
   color: var(--bg-primary);
-  padding: 8px 16px;
-  border-radius: var(--radius-full);
+  padding: 12px 24px;
+  border-radius: 0;
   font-weight: 700;
   font-size: 0.875rem;
   cursor: pointer;
-  border: none;
-  transition: all 0.2s;
+  border: 1px solid var(--text-primary);
+  transition: all var(--transition-fast);
+  text-transform: uppercase;
 }
 
 .addBtn:hover {
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
-  transform: translateY(-2px);
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .iconBtn {
-  background: rgba(255, 255, 255, 0.05);
-  border: none;
-  color: var(--text-muted);
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-md);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  width: 40px;
+  height: 40px;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-fast);
 }
 
 .iconBtn:hover {
-  background: rgba(255, 255, 255, 0.1);
+  border-color: var(--text-primary);
   color: var(--text-primary);
 }
 
-/* Tooltips & Helpers */
-.dragPreview {
-  background: var(--neon-cyan);
-  color: var(--bg-primary);
-  padding: 8px 16px;
-  border-radius: var(--radius-md);
-  font-weight: 600;
-  pointer-events: none;
-  z-index: 1000;
-  box-shadow: 0 10px 40px rgba(0, 240, 255, 0.3);
-}
 /* List View Mode */
 .listMode {
   display: flex;
   flex-direction: column;
   gap: 0;
+  border-top: 1px solid var(--border-default);
 }
 
 .listHeader {
   display: grid;
   grid-template-columns: 1fr 180px 140px 120px;
-  padding: 12px 24px;
-  background: rgba(255, 255, 255, 0.05);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 16px 24px;
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border-default);
   font-size: 0.75rem;
   font-weight: 700;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.1em;
 }
 
 .listRow {
   display: grid;
   grid-template-columns: 1fr 180px 140px 120px;
   align-items: center;
-  padding: 12px 24px;
+  padding: 16px 24px;
   background: transparent;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-  border-radius: 0;
-  transition: background 0.2s;
+  border-bottom: 1px solid var(--border-default);
+  transition: background var(--transition-fast);
 }
 
 .listRow:hover {
-  transform: none;
-  background: rgba(255, 255, 255, 0.03);
-  border-color: transparent;
-  box-shadow: none;
+  background: var(--bg-surface);
 }
 
 .listColName {
@@ -361,14 +350,15 @@
 }
 
 .listIconSmall {
-  width: 40px;
-  height: 40px;
-  background: rgba(0, 240, 255, 0.05);
-  border-radius: var(--radius-md);
+  width: 44px;
+  height: 44px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--neon-cyan);
+  color: var(--text-secondary);
 }
 
 .listNameInfo {
@@ -378,7 +368,7 @@
 
 .listTitle {
   font-weight: 600;
-  font-size: 0.9375rem;
+  font-size: 1rem;
   color: var(--text-primary);
 }
 
@@ -389,14 +379,14 @@
 
 .listColDate, .listColSize {
   font-size: 0.875rem;
-  color: var(--text-muted);
+  color: var(--text-secondary);
 }
 
 .listColActions {
   display: flex;
   gap: var(--space-3);
   opacity: 0;
-  transition: opacity 0.2s;
+  transition: opacity var(--transition-fast);
 }
 
 .listRow:hover .listColActions {
@@ -404,27 +394,27 @@
 }
 
 .inlineActionBtn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  width: 36px;
+  height: 36px;
+  border-radius: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--text-muted);
+  color: var(--text-secondary);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all var(--transition-fast);
 }
 
 .inlineActionBtn:hover {
-  background: var(--neon-cyan);
+  background: var(--text-primary);
   color: var(--bg-primary);
-  border-color: var(--neon-cyan);
+  border-color: var(--text-primary);
 }
 
 .inlineActionBtn.delete:hover {
-  background: #ef4444;
-  border-color: #ef4444;
+  background: #ff0000;
+  border-color: #ff0000;
   color: white;
 }
