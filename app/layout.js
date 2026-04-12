@@ -1,3 +1,4 @@
+import { ThemeProvider } from "@/app/components/providers/ThemeProvider";
 import "./globals.css";
 import "./animations.css";
 import LayoutShell from "@/app/components/layout/LayoutShell";
@@ -16,9 +17,16 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" data-scroll-behavior="smooth">
+    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
       <body>
-        <LayoutShell>{children}</LayoutShell>
+        <ThemeProvider
+          attribute="data-theme"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <LayoutShell>{children}</LayoutShell>
+        </ThemeProvider>
       </body>
     </html>
   );

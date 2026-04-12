@@ -78,7 +78,7 @@
     top: var(--navbar-height);
     left: 0;
     bottom: 0;
-    z-index: var(--z-overlay);
+    z-index: var(--z-sidebar);
     transform: translateX(-100%);
     transition: transform var(--transition-base);
     box-shadow: none;
@@ -86,7 +86,7 @@
 
   .sidebar.open {
     transform: translateX(0);
-    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.5);
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.4);
   }
 
   .mobileToggle {
@@ -97,7 +97,8 @@
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: calc(var(--z-overlay) - 1);
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(2px);
+    z-index: calc(var(--z-sidebar) - 1);
   }
 }

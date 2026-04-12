@@ -4,32 +4,30 @@
   gap: var(--space-3);
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
-  border-radius: var(--radius-xl);
-  padding: var(--space-2) var(--space-3);
-  transition: all var(--transition-base);
+  border-radius: 0px;
+  padding: var(--space-2) var(--space-4);
+  transition: all 0.2s ease;
   max-width: 580px;
   width: 100%;
 }
 
 .form:focus-within {
-  border-color: var(--neon-cyan);
-  box-shadow: var(--glow-cyan);
+  border-color: var(--text-primary);
+  box-shadow: 4px 4px 0px var(--text-primary);
 }
 
 .form.large {
-  padding: var(--space-3) var(--space-5);
+  padding: var(--space-3) var(--space-6);
   max-width: 640px;
-  border-radius: var(--radius-xl);
 }
 
 .icon {
   color: var(--text-muted);
   flex-shrink: 0;
-  transition: color var(--transition-fast);
 }
 
 .form:focus-within .icon {
-  color: var(--neon-cyan);
+  color: var(--text-primary);
 }
 
 .input {
@@ -39,37 +37,40 @@
   color: var(--text-primary);
   font-size: 0.95rem;
   padding: var(--space-1) 0;
+  font-family: var(--font-mono);
 }
 
 .form.large .input {
-  font-size: 1.05rem;
-  padding: var(--space-2) 0;
+  font-size: 1.1rem;
 }
 
 .input:focus {
+  outline: none;
   box-shadow: none;
   border: none;
 }
 
 .button {
   padding: var(--space-2) var(--space-5);
-  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
+  background: var(--text-primary);
   color: var(--bg-primary);
-  font-weight: 600;
-  font-size: 0.85rem;
-  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-size: 0.8rem;
+  border-radius: 0px;
   border: none;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.2s ease;
   white-space: nowrap;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .button:hover {
-  box-shadow: 0 0 16px rgba(0, 240, 255, 0.3);
-  transform: scale(1.03);
+  transform: translate(-2px, -2px);
+  box-shadow: 4px 4px 0px var(--text-muted);
 }
 
 .form.large .button {
-  padding: var(--space-3) var(--space-6);
-  font-size: 0.95rem;
+  padding: var(--space-3) var(--space-8);
+  font-size: 0.9rem;
 }

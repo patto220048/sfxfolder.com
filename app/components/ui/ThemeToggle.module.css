@@ -1,0 +1,32 @@
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 0; /* xAI style: sharp corners */
+  border: 1px solid var(--border-default);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0;
+}
+
+.toggle:hover {
+  background: var(--bg-hover);
+  border-color: var(--text-primary);
+}
+
+.icon {
+  transition: transform 0.3s ease;
+}
+
+.toggle:active .icon {
+  transform: scale(0.9);
+}
+
+.placeholder {
+  width: 40px;
+  height: 40px;
+}

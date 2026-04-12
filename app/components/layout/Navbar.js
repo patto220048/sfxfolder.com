@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { Search, Menu, X } from "lucide-react";
+import ThemeToggle from "@/app/components/ui/ThemeToggle";
 import styles from "./Navbar.module.css";
 
 const categories = [
@@ -34,7 +35,7 @@ export default function Navbar() {
       <div className={styles.inner}>
         {/* Logo */}
         <Link href="/" className={styles.logo}>
-          <span className={styles.logoText} data-text="EditerLor">
+          <span className={styles.logoText}>
             EditerLor
           </span>
         </Link>
@@ -64,6 +65,8 @@ export default function Navbar() {
 
         {/* Actions */}
         <div className={styles.actions}>
+          <ThemeToggle />
+          
           <Link href="/search" className={styles.searchBtn} aria-label="Search">
             <Search size={20} />
           </Link>
