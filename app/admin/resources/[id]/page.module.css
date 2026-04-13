@@ -22,15 +22,13 @@
 }
 
 .backBtn:hover {
-  color: var(--neon-cyan);
+  color: var(--text-primary);
 }
 
 .title {
   font-size: 2rem;
   font-weight: 700;
-  background: linear-gradient(to right, #fff, var(--neon-cyan));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text-primary);
 }
 
 .form {
@@ -41,7 +39,7 @@
 
 .mainGrid {
   display: grid;
-  grid-template-columns: 1.5fr 1fr;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
   gap: var(--space-6);
 }
 
@@ -57,17 +55,22 @@
   border-radius: 16px;
   padding: var(--space-6);
   backdrop-filter: blur(10px);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .sectionTitle {
   font-size: 1.1rem;
   font-weight: 600;
   margin-bottom: var(--space-6);
-  color: var(--neon-cyan);
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .inputGroup {
   margin-bottom: var(--space-5);
+  min-width: 0;
 }
 
 .inputGroup label {
@@ -92,31 +95,39 @@
 
 .inputGroup input:focus,
 .inputGroup select:focus {
-  border-color: var(--neon-cyan);
+  border-color: var(--text-primary);
 }
 
 .inputRow {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-4);
 }
 
 /* File Section Styles */
 .currentFile, .newFileStaging {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: 16px;
   background: rgba(255, 255, 255, 0.05);
-  padding: 16px;
-  border-radius: 12px;
-  margin-bottom: 20px;
+  padding: 20px;
+  border-radius: 16px;
+  margin-bottom: 24px;
+}
+
+.fileInfo {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
 }
 
 .fileIcon {
   width: 48px;
   height: 48px;
-  background: rgba(var(--neon-cyan-rgb), 0.1);
-  color: var(--neon-cyan);
+  background: var(--bg-surface);
+  color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -143,18 +154,32 @@
 
 .replaceBtn {
   background: transparent;
-  border: 1px solid var(--neon-cyan);
-  color: var(--neon-cyan);
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 0.8rem;
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
+  white-space: nowrap;
+  width: 100%;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .replaceBtn {
+    width: 100%;
+    margin-left: 0;
+    text-align: center;
+    margin-top: 8px;
+  }
 }
 
 .replaceBtn:hover {
-  background: var(--neon-cyan);
-  color: #000;
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border-color: var(--text-primary);
 }
 
 .cancelFileBtn {
@@ -200,13 +225,13 @@
 
 .progressBar {
   height: 100%;
-  background: var(--neon-cyan);
+  background: var(--text-primary);
   transition: width 0.3s ease;
 }
 
 .progressText {
   font-size: 0.8rem;
-  color: var(--neon-cyan);
+  color: var(--text-primary);
   margin-top: 8px;
   text-align: right;
 }
@@ -218,8 +243,8 @@
 }
 
 .saveBtn {
-  background: var(--neon-cyan);
-  color: #000;
+  background: var(--text-primary);
+  color: var(--bg-primary);
   border: none;
   padding: 14px 32px;
   border-radius: 12px;
@@ -229,12 +254,11 @@
   gap: 10px;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 4px 20px rgba(var(--neon-cyan-rgb), 0.3);
 }
 
 .saveBtn:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(var(--neon-cyan-rgb), 0.4);
+  filter: brightness(0.9);
 }
 
 .saveBtn:disabled {

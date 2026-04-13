@@ -240,14 +240,16 @@ export default function EditResource() {
             {/* Current File Info */}
             {!newFile && (
               <div className={styles.currentFile}>
-                <div className={styles.fileIcon}>
-                  <FileIcon size={24} />
-                </div>
-                <div className={styles.fileDetails}>
-                  <p className={styles.fileName}>{resource.fileName}</p>
-                  <p className={styles.fileMeta}>
-                    {resource.fileFormat} • {(resource.fileSize / 1024 / 1024).toFixed(2)} MB
-                  </p>
+                <div className={styles.fileInfo}>
+                  <div className={styles.fileIcon}>
+                    <FileIcon size={24} />
+                  </div>
+                  <div className={styles.fileDetails}>
+                    <p className={styles.fileName}>{resource.fileName}</p>
+                    <p className={styles.fileMeta}>
+                      {resource.fileFormat} • {(resource.fileSize / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
                 </div>
                 <button 
                   type="button" 
@@ -262,22 +264,25 @@ export default function EditResource() {
             {/* New File Staging */}
             {newFile && (
               <div className={styles.newFileStaging}>
-                <div className={styles.fileIcon}>
-                  <Upload size={24} className={styles.uploadIcon} />
+                <div className={styles.fileInfo}>
+                  <div className={styles.fileIcon}>
+                    <Upload size={24} className={styles.uploadIcon} />
+                  </div>
+                  <div className={styles.fileDetails}>
+                    <p className={styles.fileName}>{newFile.name} (New)</p>
+                    <p className={styles.fileMeta}>
+                      {(newFile.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                  <button 
+                    type="button" 
+                    className={styles.cancelFileBtn}
+                    onClick={() => setNewFile(null)}
+                    style={{ marginLeft: 'auto' }}
+                  >
+                    <X size={16} />
+                  </button>
                 </div>
-                <div className={styles.fileDetails}>
-                  <p className={styles.fileName}>{newFile.name} (New)</p>
-                  <p className={styles.fileMeta}>
-                    {(newFile.size / 1024 / 1024).toFixed(2)} MB
-                  </p>
-                </div>
-                <button 
-                  type="button" 
-                  className={styles.cancelFileBtn}
-                  onClick={() => setNewFile(null)}
-                >
-                  <X size={16} />
-                </button>
               </div>
             )}
 
