@@ -23,28 +23,18 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
   useEffect(() => {
     if (resource && mediaRef.current && ["video-meme", "green-screen", "animation"].includes(resource.category)) {
       mediaManager.play(mediaRef.current, 'video');
-      mediaManager.setMuted(!isHovering, 'video');
     }
     return () => {
       if (mediaRef.current) mediaManager.stop(mediaRef.current);
     };
   }, [resource]);
 
-  // Handle mute synchronization separately to avoid re-playing
-  useEffect(() => {
-    if (mediaRef.current) {
-      mediaManager.setMuted(!isHovering, 'video');
-    }
-  }, [isHovering]);
-
   const handleMediaEnter = () => {
     setIsHovering(true);
-    mediaManager.setMuted(false, 'video');
   };
 
   const handleMediaLeave = () => {
     setIsHovering(false);
-    mediaManager.setMuted(true, 'video');
   };
 
   if (!resource) return null;

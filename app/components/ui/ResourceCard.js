@@ -97,7 +97,15 @@ export default function ResourceCard({
         p.then(() => {
           rafRef.current = requestAnimationFrame(updateVideoProgress);
         }).catch((err) => {
-          if (err.name !== "AbortError") console.error(err);
+          // If unmuted autoplay is blocked, fallback to muted
+          if (err.name === "NotAllowedError" && videoRef.current) {
+            videoRef.current.muted = true;
+            videoRef.current.play().catch(() => {});
+          }
+          // Suppress noise in console
+          if (err.name !== "AbortError" && err.name !== "NotAllowedError") {
+            console.error("Playback failed:", err);
+          }
         });
       }
     }
