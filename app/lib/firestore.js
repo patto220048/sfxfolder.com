@@ -263,32 +263,53 @@ export async function updateSettings(data) {
  */
 export async function syncTagsCount(addedTags = [], removedTags = []) {
   if (!db || (addedTags.length === 0 && removedTags.length === 0)) return;
-  const batch = writeBatch(db);
 
-  // Xử lý tag thêm mới
+  const tagDeltas = {}; // { tagId: { name: string, delta: number } }
+
+  // Tổng hợp tag thêm mới
   addedTags.forEach(tagName => {
-    const tagId = tagName.toLowerCase().trim();
+    const name = tagName.trim();
+    const tagId = name.toLowerCase();
     if (!tagId) return;
+    
+    if (!tagDeltas[tagId]) {
+      tagDeltas[tagId] = { name: name, delta: 0 };
+    }
+    tagDeltas[tagId].delta += 1;
+  });
+
+  // Tổng hợp tag bị xóa
+  removedTags.forEach(tagName => {
+    const name = tagName.trim();
+    const tagId = name.toLowerCase();
+    if (!tagId) return;
+
+    if (!tagDeltas[tagId]) {
+      tagDeltas[tagId] = { name: name, delta: 0 };
+    }
+    tagDeltas[tagId].delta -= 1;
+  });
+
+  const batch = writeBatch(db);
+  let hasChanges = false;
+
+  Object.entries(tagDeltas).forEach(([tagId, info]) => {
+    if (info.delta === 0) return; // Không thay đổi thì bỏ qua
+
     const tagRef = doc(db, 'tags', tagId);
+    hasChanges = true;
+
+    // Sử dụng set với merge: true để tạo mới nếu chưa có, hoặc cập nhật nếu đã có
     batch.set(tagRef, {
-      name: tagName.trim(),
-      usageCount: increment(1),
+      name: info.name,
+      usageCount: increment(info.delta),
       updatedAt: serverTimestamp()
     }, { merge: true });
   });
 
-  // Xử lý tag bị xóa
-  removedTags.forEach(tagName => {
-    const tagId = tagName.toLowerCase().trim();
-    if (!tagId) return;
-    const tagRef = doc(db, 'tags', tagId);
-    batch.update(tagRef, {
-      usageCount: increment(-1),
-      updatedAt: serverTimestamp()
-    });
-  });
-
-  await batch.commit();
+  if (hasChanges) {
+    await batch.commit();
+  }
 }
 
 /**
