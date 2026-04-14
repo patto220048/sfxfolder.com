@@ -50,13 +50,11 @@
 }
 
 .section {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 16px;
-  padding: var(--space-6);
-  backdrop-filter: blur(10px);
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: 0;
+  padding: var(--space-8);
   min-width: 0;
-  overflow: hidden;
 }
 
 .sectionTitle {
@@ -75,22 +73,26 @@
 
 .inputGroup label {
   display: block;
-  font-size: 0.85rem;
+  font-size: 0.7rem;
+  font-weight: 700;
   color: var(--text-muted);
   margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .inputGroup input,
 .inputGroup select {
   width: 100%;
-  padding: 12px 16px;
-  background: rgba(0, 0, 0, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  color: #fff;
-  font-size: 1rem;
+  padding: 12px 14px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-default);
+  border-radius: 0;
+  color: var(--text-primary);
+  font-size: 0.875rem;
   outline: none;
   transition: border-color 0.2s;
+  font-family: var(--font-body);
 }
 
 .inputGroup input:focus,
@@ -109,9 +111,10 @@
   display: flex;
   flex-direction: column;
   gap: 16px;
-  background: rgba(255, 255, 255, 0.05);
-  padding: 20px;
-  border-radius: 16px;
+  background: var(--bg-surface);
+  padding: 24px;
+  border: 1px solid var(--border-default);
+  border-radius: 0;
   margin-bottom: 24px;
 }
 
@@ -126,12 +129,13 @@
 .fileIcon {
   width: 48px;
   height: 48px;
-  background: var(--bg-surface);
+  background: var(--bg-primary);
   color: var(--text-primary);
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 8px;
+  border: 1px solid var(--border-default);
+  border-radius: 0;
 }
 
 .fileDetails {
@@ -153,18 +157,20 @@
 }
 
 .replaceBtn {
-  background: transparent;
+  background: var(--bg-primary);
   border: 1px solid var(--border-default);
   color: var(--text-primary);
-  padding: 10px 20px;
-  border-radius: 10px;
-  font-size: 0.875rem;
-  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
   width: 100%;
   text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 @media (max-width: 480px) {
@@ -203,12 +209,12 @@
 .warningBox {
   display: flex;
   gap: 12px;
-  padding: 12px;
-  background: rgba(245, 158, 11, 0.05);
-  border: 1px solid rgba(245, 158, 11, 0.2);
-  border-radius: 8px;
+  padding: 16px;
+  background: var(--bg-surface);
+  border: 1px solid #f59e0b;
+  border-radius: 0;
   color: #f59e0b;
-  font-size: 0.85rem;
+  font-size: 0.8125rem;
 }
 
 .progressArea {
@@ -218,8 +224,9 @@
 .progressBarWrap {
   width: 100%;
   height: 6px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-default);
+  border-radius: 0;
   overflow: hidden;
 }
 
@@ -245,20 +252,22 @@
 .saveBtn {
   background: var(--text-primary);
   color: var(--bg-primary);
-  border: none;
-  padding: 14px 32px;
-  border-radius: 12px;
-  font-weight: 600;
+  border: 1px solid var(--text-primary);
+  padding: 16px 40px;
+  border-radius: 0;
+  font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   cursor: pointer;
   transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 .saveBtn:hover:not(:disabled) {
-  transform: translateY(-2px);
-  filter: brightness(0.9);
+  background: var(--bg-primary);
+  color: var(--text-primary);
 }
 
 .saveBtn:disabled {

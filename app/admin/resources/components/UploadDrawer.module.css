@@ -89,7 +89,7 @@
   padding: var(--space-5);
   transition: all var(--transition-base);
   position: relative;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .fileCard:hover {
@@ -194,19 +194,24 @@
   text-transform: uppercase;
   letter-spacing: 0.05em;
   position: relative;
-  z-index: 1;
+
 }
 
-.pending .statusBadge { color: var(--text-muted); }
-.uploading .statusBadge { 
+.pending .statusBadge {
+  color: var(--text-muted);
+}
+
+.uploading .statusBadge {
   color: var(--text-primary);
   border-color: var(--text-primary);
 }
-.success .statusBadge { 
+
+.success .statusBadge {
   color: #00ff00;
   border-color: #00ff00;
 }
-.error .statusBadge { 
+
+.error .statusBadge {
   color: #ff0000;
   border-color: #ff0000;
 }
@@ -289,4 +294,3 @@
 .emptyIcon {
   opacity: 0.2;
 }
-

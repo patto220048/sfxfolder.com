@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { 
   ArrowLeft, 
@@ -15,7 +15,8 @@ import {
 import Link from "next/link";
 import styles from "./page.module.css";
 import TagInput from "../../../components/ui/TagInput";
-import { getResource, updateResource, getFolders } from "../../../lib/firestore";
+import TreeSelect from "../../../components/ui/TreeSelect";
+import { getResource, updateResource, getAllFolders } from "../../../lib/firestore";
 import { uploadFile, deleteFile, generateStoragePath } from "../../../lib/storage";
 import { revalidateResourceData } from "../../../lib/actions";
 
@@ -71,9 +72,9 @@ export default function EditResource() {
         setFolderId(resData.folderId || "");
         setTags(resData.tags || []);
         
-        // Load folders for this category
+        // Load all folders for this category to build hierarchy
         if (resData.category) {
-          const folders = await getFolders(resData.category, null);
+          const folders = await getAllFolders(resData.category);
           setAllFolders(folders);
         }
       } catch (e) {
@@ -84,6 +85,24 @@ export default function EditResource() {
     loadData();
   }, [id, router]);
 
+  // Hierarchical folder list for the dropdown
+  const hierarchicalFolders = useMemo(() => {
+    const buildTree = (parentId = null, depth = 0) => {
+      let result = [];
+      // allFolders is a flat array from getAllFolders
+      const children = allFolders.filter(f => f.parentId === parentId);
+      children.forEach(folder => {
+        result.push({ 
+          ...folder, 
+          label: `${depth > 0 ? '—'.repeat(depth) + ' ' : ''}${folder.name}` 
+        });
+        result = [...result, ...buildTree(folder.id, depth + 1)];
+      });
+      return result;
+    };
+    return buildTree();
+  }, [allFolders]);
+
   // Refetch folders when category changes
   useEffect(() => {
     if (!category) {
@@ -92,7 +111,7 @@ export default function EditResource() {
     }
     async function loadFolders() {
       try {
-        const folders = await getFolders(category, null);
+        const folders = await getAllFolders(category);
         setAllFolders(folders);
       } catch (e) {
         console.error("Failed to load folders:", e);
@@ -213,13 +232,13 @@ export default function EditResource() {
               </div>
 
               <div className={styles.inputGroup}>
-                <label>Folder (Optional)</label>
-                <select value={folderId} onChange={(e) => setFolderId(e.target.value)}>
-                  <option value="">Root / None</option>
-                  {allFolders.map(f => (
-                    <option key={f.id} value={f.id}>{f.name}</option>
-                  ))}
-                </select>
+                <label>Thư mục hiện tại (Tùy chọn)</label>
+                <TreeSelect 
+                  options={hierarchicalFolders}
+                  value={folderId}
+                  onChange={(id) => setFolderId(id)}
+                  placeholder="Chọn thư mục trung tâm..."
+                />
               </div>
             </div>
 

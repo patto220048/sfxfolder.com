@@ -1,8 +1,10 @@
 "use client";
 
+import { useMemo } from "react";
 import { X, CheckCircle, AlertCircle, Loader2, Upload, FileIcon, Trash2 } from "lucide-react";
 import styles from "./UploadDrawer.module.css";
 import TagInput from "../../../components/ui/TagInput";
+import TreeSelect from "../../../components/ui/TreeSelect";
 
 const CATEGORIES = [
   { slug: "sound-effects", name: "Sound Effects" },
@@ -17,6 +19,7 @@ const CATEGORIES = [
 
 export default function UploadDrawer({ 
   files, 
+  folders = [],
   isOpen, 
   onClose, 
   onUpdate, 
@@ -25,6 +28,27 @@ export default function UploadDrawer({
   isUploading, 
   progress 
 }) {
+  const getHierarchicalFolders = useMemo(() => {
+    return (categorySlug) => {
+      const categoryFolders = folders.filter(f => f.categorySlug === categorySlug);
+      
+      const buildTree = (parentId = null, depth = 0) => {
+        let result = [];
+        const children = categoryFolders.filter(f => f.parentId === parentId);
+        children.forEach(folder => {
+          result.push({ 
+            ...folder, 
+            label: `${depth > 0 ? '—'.repeat(depth) + ' ' : ''}${folder.name}` 
+          });
+          result = [...result, ...buildTree(folder.id, depth + 1)];
+        });
+        return result;
+      };
+      
+      return buildTree();
+    };
+  }, [folders]);
+
   if (!isOpen && files.length === 0) return null;
 
   return (
@@ -86,6 +110,17 @@ export default function UploadDrawer({
                         <option key={c.slug} value={c.slug}>{c.name}</option>
                       ))}
                     </select>
+                  </div>
+                  
+                  <div className={styles.inputGroup}>
+                    <label>Thư mục đầu vào (Tùy chọn)</label>
+                    <TreeSelect 
+                      options={getHierarchicalFolders(file.category)}
+                      value={file.folderId || ""}
+                      onChange={(id) => onUpdate(file.id, 'folderId', id)}
+                      disabled={isUploading || file.status === 'success' || !file.category}
+                      placeholder="Chọn thư mục..."
+                    />
                   </div>
 
                   <div className={styles.inputGroup}>

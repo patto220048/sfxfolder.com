@@ -317,6 +317,7 @@ export default function AdminResources() {
       <AdminDropOverlay isDragging={isDragging} />
       <UploadDrawer 
         files={stagingFiles}
+        folders={folders}
         isOpen={stagingFiles.length > 0}
         onClose={clearAll} 
         onUpdate={updateFileMeta}
