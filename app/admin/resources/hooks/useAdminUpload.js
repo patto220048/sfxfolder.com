@@ -57,6 +57,21 @@ export function useAdminUpload() {
     );
   }, []);
 
+  const updateBulkMeta = useCallback((updates) => {
+    setStagingFiles((prev) =>
+      prev.map((f) => {
+        if (f.status === "success" || f.status === "uploading") return f;
+        const newFile = { ...f };
+        Object.entries(updates).forEach(([field, value]) => {
+          if (value !== undefined && value !== null && value !== "") {
+            newFile[field] = value;
+          }
+        });
+        return newFile;
+      })
+    );
+  }, []);
+
   const removeFile = useCallback((id) => {
     setStagingFiles((prev) => prev.filter((f) => f.id !== id));
   }, []);
@@ -143,6 +158,7 @@ export function useAdminUpload() {
     uploadProgress,
     addFiles,
     updateFileMeta,
+    updateBulkMeta,
     removeFile,
     clearCompleted,
     clearAll: () => setStagingFiles([]),

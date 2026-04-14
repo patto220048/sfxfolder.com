@@ -1,7 +1,7 @@
 "use client";
 
-import { useMemo } from "react";
-import { X, CheckCircle, AlertCircle, Loader2, Upload, FileIcon, Trash2 } from "lucide-react";
+import { useState, useMemo } from "react";
+import { X, CheckCircle, AlertCircle, Loader2, Upload, FileIcon, Trash2, ChevronDown, ChevronUp } from "lucide-react";
 import styles from "./UploadDrawer.module.css";
 import TagInput from "../../../components/ui/TagInput";
 import TreeSelect from "../../../components/ui/TreeSelect";
@@ -23,11 +23,15 @@ export default function UploadDrawer({
   isOpen, 
   onClose, 
   onUpdate, 
+  onUpdateBulk,
   onRemove, 
   onUpload, 
   isUploading, 
   progress 
 }) {
+  const [bulkMeta, setBulkMeta] = useState({ category: "", folderId: "", tags: [] });
+  const [showBulk, setShowBulk] = useState(false);
+
   const getHierarchicalFolders = useMemo(() => {
     return (categorySlug) => {
       const categoryFolders = folders.filter(f => f.categorySlug === categorySlug);
@@ -71,8 +75,70 @@ export default function UploadDrawer({
           </div>
         ) : (
           <div className={styles.fileList}>
-            {files.map((file) => (
-              <div key={file.id} className={`${styles.fileCard} ${styles[file.status]}`}>
+            <div className={styles.bulkSection}>
+              <button 
+                className={styles.bulkToggle}
+                onClick={() => setShowBulk(!showBulk)}
+              >
+                <span>Thiết lập nhanh cho tất cả ({files.length} file)</span>
+                {showBulk ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              </button>
+              
+              {showBulk && (
+                <div className={styles.bulkForm}>
+                  <div className={styles.bulkGrid}>
+                    <div className={styles.inputGroup}>
+                      <label>Danh mục chung</label>
+                      <select 
+                        value={bulkMeta.category}
+                        onChange={(e) => setBulkMeta({ ...bulkMeta, category: e.target.value })}
+                      >
+                        <option value="">Giữ nguyên...</option>
+                        {CATEGORIES.map(c => (
+                          <option key={c.slug} value={c.slug}>{c.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className={styles.inputGroup}>
+                      <label>Thư mục chung</label>
+                      <TreeSelect 
+                        options={getHierarchicalFolders(bulkMeta.category)}
+                        value={bulkMeta.folderId}
+                        onChange={(id) => setBulkMeta({ ...bulkMeta, folderId: id })}
+                        placeholder="Giữ nguyên..."
+                        disabled={!bulkMeta.category}
+                      />
+                    </div>
+
+                    <div className={styles.inputGroup}>
+                      <label>Tags chung</label>
+                      <TagInput 
+                        tags={bulkMeta.tags}
+                        onChange={(tags) => setBulkMeta({ ...bulkMeta, tags })}
+                      />
+                    </div>
+                  </div>
+                  
+                  <button 
+                    className={styles.applyBtn}
+                    onClick={() => {
+                      onUpdateBulk(bulkMeta);
+                      setShowBulk(false);
+                    }}
+                  >
+                    Áp dụng cho tất cả
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {files.map((file, index) => (
+              <div 
+                key={file.id} 
+                className={`${styles.fileCard} ${styles[file.status]}`}
+                style={{ zIndex: files.length - index }}
+              >
                 <div className={styles.fileHeader}>
                   <FileIcon size={18} className={styles.fileIcon} />
                   <span className={styles.fileName} title={file.name}>{file.name}</span>

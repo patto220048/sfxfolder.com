@@ -82,6 +82,67 @@
   gap: var(--space-5);
 }
 
+.bulkSection {
+  background: var(--bg-surface);
+  border: 2px solid var(--text-primary);
+  margin-bottom: var(--space-4);
+  position: relative;
+  z-index: 1000;
+}
+
+.bulkToggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border: none;
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.bulkToggle:hover {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.bulkForm {
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  border-top: 1px solid var(--border-default);
+}
+
+.bulkGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-5);
+}
+
+.applyBtn {
+  background: var(--bg-primary);
+  border: 1px solid var(--text-primary);
+  padding: 12px;
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.applyBtn:hover {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+}
+
 .fileCard {
   background: var(--bg-surface);
   border: 1px solid var(--border-default);

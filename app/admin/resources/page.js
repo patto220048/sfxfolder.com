@@ -55,6 +55,7 @@ export default function AdminResources() {
     uploadProgress, 
     addFiles, 
     updateFileMeta, 
+    updateBulkMeta,
     removeFile, 
     clearAll,
     uploadAll 
@@ -500,6 +501,7 @@ export default function AdminResources() {
         isOpen={stagingFiles.length > 0}
         onClose={clearAll} 
         onUpdate={updateFileMeta}
+        onUpdateBulk={updateBulkMeta}
         onRemove={removeFile}
         onUpload={uploadAll}
         isUploading={isUploading}
