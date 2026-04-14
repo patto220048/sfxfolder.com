@@ -41,7 +41,7 @@ export function useAdminUpload() {
       size: file.size,
       category: category,
       folderId: initialFolderId,
-      tags: "",
+      tags: [],
       status: "pending", // pending, uploading, success, error
     };
   }, []);
@@ -105,12 +105,7 @@ export function useAdminUpload() {
           slug: convertToSlug(item.displayName || item.name),
           category: item.category,
           folderId: item.folderId || null,
-          tags: item.tags
-            ? item.tags
-                .split(",")
-                .map((t) => t.trim())
-                .filter(Boolean)
-            : [],
+          tags: item.tags || [],
           fileName: item.name,
           fileSize: item.size,
           fileType: item.rawFile.type,

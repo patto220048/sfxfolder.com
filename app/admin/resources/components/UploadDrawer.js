@@ -2,6 +2,7 @@
 
 import { X, CheckCircle, AlertCircle, Loader2, Upload, FileIcon, Trash2 } from "lucide-react";
 import styles from "./UploadDrawer.module.css";
+import TagInput from "../../../components/ui/TagInput";
 
 const CATEGORIES = [
   { slug: "sound-effects", name: "Sound Effects" },
@@ -88,13 +89,11 @@ export default function UploadDrawer({
                   </div>
 
                   <div className={styles.inputGroup}>
-                    <label>Tags (cách nhau bằng dấu phẩy)</label>
-                    <input 
-                      type="text" 
-                      value={file.tags} 
-                      onChange={(e) => onUpdate(file.id, 'tags', e.target.value)}
+                    <label>Tags (Nhấn Enter để tách thẻ)</label>
+                    <TagInput 
+                      tags={file.tags} 
+                      onChange={(newTags) => onUpdate(file.id, 'tags', newTags)}
                       disabled={isUploading || file.status === 'success'}
-                      placeholder="nature, cinematic, fast..."
                     />
                   </div>
                 </div>

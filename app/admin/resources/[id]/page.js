@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import styles from "./page.module.css";
+import TagInput from "../../../components/ui/TagInput";
 import { getResource, updateResource, getFolders } from "../../../lib/firestore";
 import { uploadFile, deleteFile, generateStoragePath } from "../../../lib/storage";
 import { revalidateResourceData } from "../../../lib/actions";
@@ -42,7 +43,7 @@ export default function EditResource() {
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
   const [folderId, setFolderId] = useState("");
-  const [tags, setTags] = useState("");
+  const [tags, setTags] = useState([]);
   
   // New file upload state
   const [newFile, setNewFile] = useState(null);
@@ -68,7 +69,7 @@ export default function EditResource() {
         setName(resData.name || "");
         setCategory(resData.category || "");
         setFolderId(resData.folderId || "");
-        setTags(resData.tags ? resData.tags.join(", ") : "");
+        setTags(resData.tags || []);
         
         // Load folders for this category
         if (resData.category) {
@@ -117,7 +118,7 @@ export default function EditResource() {
         slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
         category,
         folderId: folderId || null,
-        tags: tags.split(",").map(t => t.trim()).filter(Boolean),
+        tags: tags || [],
       };
 
       // If a new file is uploaded
@@ -223,12 +224,11 @@ export default function EditResource() {
             </div>
 
             <div className={styles.inputGroup}>
-              <label>Tags (comma separated)</label>
-              <input 
-                type="text" 
-                value={tags} 
-                onChange={(e) => setTags(e.target.value)} 
-                placeholder="impact, cinematic, cinematic dark..."
+              <label>Tags (Nhấn Enter để tách thẻ)</label>
+              <TagInput 
+                tags={tags} 
+                onChange={setTags}
+                disabled={saving}
               />
             </div>
           </div>
