@@ -29,7 +29,7 @@ export default function UploadDrawer({
   isUploading, 
   progress 
 }) {
-  const [bulkMeta, setBulkMeta] = useState({ category: "", folderId: "", tags: [] });
+  const [bulkMeta, setBulkMeta] = useState({ displayName: "", category: "", folderId: "", tags: [] });
   const [showBulk, setShowBulk] = useState(false);
 
   const getHierarchicalFolders = useMemo(() => {
@@ -87,6 +87,16 @@ export default function UploadDrawer({
               {showBulk && (
                 <div className={styles.bulkForm}>
                   <div className={styles.bulkGrid}>
+                    <div className={styles.inputGroup}>
+                      <label>Tên hiển thị chung</label>
+                      <input 
+                        type="text"
+                        value={bulkMeta.displayName}
+                        onChange={(e) => setBulkMeta({ ...bulkMeta, displayName: e.target.value })}
+                        placeholder="Giữ nguyên..."
+                      />
+                    </div>
+
                     <div className={styles.inputGroup}>
                       <label>Danh mục chung</label>
                       <select 
