@@ -96,16 +96,7 @@ export default function TreeSelect({
           </div>
 
           <div className={styles.list}>
-            {/* Root Option */}
-            {!searchTerm && (
-              <div 
-                className={`${styles.item} ${!value ? styles.active : ""}`}
-                onClick={() => handleSelect("")}
-              >
-                <Folder size={14} className={styles.itemIcon} />
-                <span className={styles.itemName}>{label}</span>
-              </div>
-            )}
+            {/* Removed hardcoded Root Option because options should provide it if needed */}
 
             {filteredOptions.length > 0 ? (
               filteredOptions.map((opt) => {

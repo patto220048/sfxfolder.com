@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/app/lib/firebase";
+import { supabase } from "@/app/lib/supabase";
 import { useAuth } from "@/app/lib/auth-context";
 import { LogIn, Eye, EyeOff } from "lucide-react";
 import styles from "./page.module.css";
@@ -32,17 +31,16 @@ export default function AdminLogin() {
     setLoading(true);
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      const { error: authError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (authError) throw authError;
+      
       router.push("/admin/dashboard");
     } catch (err) {
-      const code = err.code;
-      if (code === "auth/user-not-found" || code === "auth/wrong-password" || code === "auth/invalid-credential") {
-        setError("Invalid email or password");
-      } else if (code === "auth/too-many-requests") {
-        setError("Too many attempts. Please try again later.");
-      } else {
-        setError(err.message);
-      }
+      setError(err.message || "Invalid email or password");
     } finally {
       setLoading(false);
     }

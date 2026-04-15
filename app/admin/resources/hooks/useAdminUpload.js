@@ -2,19 +2,19 @@
 
 import { useState, useCallback } from "react";
 import { uploadFile, generateStoragePath } from "../../../lib/storage";
-import { addResource } from "../../../lib/firestore";
+import { addResource } from "../../../lib/api";
 import { revalidateResourceData } from "../../../lib/actions";
 import { cleanFileName, convertToSlug } from "../../../lib/stringUtils";
 
 const CATEGORIES = [
+  { slug: "video-overlay", name: "Video Overlay", extensions: [".mp4", ".mov", ".webm"] },
   { slug: "sound-effects", name: "Sound Effects", extensions: [".mp3", ".wav", ".ogg"] },
+  { slug: "fonts", name: "Fonts", extensions: [".otf", ".ttf", ".woff", ".woff2"] },
+  { slug: "graphics", name: "Graphics", extensions: [".png", ".jpg", ".jpeg", ".gif", ".svg"] },
+  { slug: "transitions", name: "Transitions", extensions: [".mp4", ".mov", ".webm"] },
+  // Adding placeholders for others found in previous code if they exist in DB
   { slug: "music", name: "Music", extensions: [".mp3", ".wav", ".m4a"] },
-  { slug: "video-meme", name: "Video Meme", extensions: [".mp4", ".mov", ".webm"] },
   { slug: "green-screen", name: "Green Screen", extensions: [".mp4", ".mov"] },
-  { slug: "animation", name: "Animation", extensions: [".mp4", ".json", ".lottie"] },
-  { slug: "image-overlay", name: "Image & Overlay", extensions: [".png", ".jpg", ".jpeg", ".gif", ".svg"] },
-  { slug: "font", name: "Font", extensions: [".otf", ".ttf", ".woff", ".woff2"] },
-  { slug: "preset-lut", name: "Preset & LUT", extensions: [".cube", ".xmp", ".prset"] },
 ];
 
 export function useAdminUpload() {
@@ -39,7 +39,7 @@ export function useAdminUpload() {
       name: name,
       displayName: displayName,
       size: file.size,
-      category: category,
+      categoryId: category,
       folderId: initialFolderId,
       tags: [],
       status: "pending", // pending, uploading, success, error
@@ -98,17 +98,17 @@ export function useAdminUpload() {
     let completedCount = 0;
 
     for (const item of toUpload) {
-      if (!item.category) {
+      if (!item.categoryId) {
         console.error("Missing category for file:", item.name);
         updateFileMeta(item.id, "status", "error");
         continue;
       }
 
-      console.log(`Uploading: ${item.name} -> ${item.category}`);
+      console.log(`Uploading: ${item.name} -> ${item.categoryId}`);
       updateFileMeta(item.id, "status", "uploading");
 
       try {
-        const path = generateStoragePath(item.category, item.name);
+        const path = generateStoragePath(item.categoryId, item.name);
         const downloadUrl = await uploadFile(item.rawFile, path);
 
         const fileExtension = item.name.includes(".")
@@ -118,7 +118,7 @@ export function useAdminUpload() {
         const resourceData = {
           name: item.displayName || item.name,
           slug: convertToSlug(item.displayName || item.name),
-          category: item.category,
+          categoryId: item.categoryId,
           folderId: item.folderId || null,
           tags: item.tags || [],
           fileName: item.name,

@@ -1,56 +1,63 @@
-import {
-  ref,
-  uploadBytesResumable,
-  getDownloadURL,
-  deleteObject,
-} from 'firebase/storage';
-import { storage } from './firebase';
+import { supabase } from './supabase';
 import { convertToSlug } from './stringUtils';
 
 /**
- * Upload a file to Firebase Storage
+ * Upload a file to Supabase Storage
  * @param {File} file - The file to upload
  * @param {string} path - Storage path (e.g., "resources/sound-effects/whoosh.mp3")
- * @param {function} onProgress - Progress callback (0-100)
- * @returns {Promise<string>} Download URL
+ * @param {function} onProgress - Progress callback (0-100) (Supabase doesn't natively support progress in getSession upload, but we can simulate or use browser XHR)
+ * @returns {Promise<string>} Public URL
  */
 export async function uploadFile(file, path, onProgress = null) {
-  const storageRef = ref(storage, path);
-  const uploadTask = uploadBytesResumable(storageRef, file);
+  // Note: Supabase JS client doesn't have a built-in progress callback like Firebase.
+  // For production, you might want to use XMLHttpRequest or a special library if progress is critical.
+  const { data, error } = await supabase.storage
+    .from('resources')
+    .upload(path, file, {
+      cacheControl: '3600',
+      upsert: true,
+    });
 
-  return new Promise((resolve, reject) => {
-    uploadTask.on(
-      'state_changed',
-      (snapshot) => {
-        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-        if (onProgress) onProgress(progress);
-      },
-      (error) => reject(error),
-      async () => {
-        const url = await getDownloadURL(uploadTask.snapshot.ref);
-        resolve(url);
-      }
-    );
-  });
+  if (error) {
+    console.error('Error uploading file:', error);
+    throw error;
+  }
+
+  // Get the public URL
+  const { data: { publicUrl } } = supabase.storage
+    .from('resources')
+    .getPublicUrl(path);
+
+  return publicUrl;
 }
 
 /**
  * Get download URL for a file
  * @param {string} path - Storage path
- * @returns {Promise<string>} Download URL
+ * @returns {string} Public URL
  */
 export async function getFileUrl(path) {
-  const storageRef = ref(storage, path);
-  return getDownloadURL(storageRef);
+  const { data: { publicUrl } } = supabase.storage
+    .from('resources')
+    .getPublicUrl(path);
+
+  return publicUrl;
 }
 
 /**
- * Delete a file from Firebase Storage
+ * Delete a file from Supabase Storage
  * @param {string} path - Storage path
  */
 export async function deleteFile(path) {
-  const storageRef = ref(storage, path);
-  return deleteObject(storageRef);
+  const { error } = await supabase.storage
+    .from('resources')
+    .remove([path]);
+
+  if (error) {
+    console.error('Error deleting file:', error);
+    throw error;
+  }
+  return true;
 }
 
 /**
@@ -64,5 +71,6 @@ export function generateStoragePath(category, filename) {
   const nameWithoutExt = filename.replace(/\.[^/.]+$/, "");
   const ext = filename.includes(".") ? "." + filename.split(".").pop() : "";
   const safeBase = convertToSlug(nameWithoutExt);
-  return `resources/${category}/${timestamp}-${safeBase}${ext}`;
+  // Using category name as bucket folder
+  return `${category}/${timestamp}-${safeBase}${ext}`;
 }

@@ -12,7 +12,7 @@ export default function MoveSelectionModal({
   selectedCount, 
   folders 
 }) {
-  const [targetId, setTargetId] = useState("");
+  const [targetId, setTargetId] = useState("root_folder");
 
   const folderOptions = useMemo(() => {
     const buildOptions = (items, level = 0) => {
@@ -33,7 +33,7 @@ export default function MoveSelectionModal({
 
     // Group folders by category for a cleaner list
     const categories = Array.from(new Set(folders.map(f => f.categorySlug)));
-    let allOptions = [{ id: "root", label: "📁 — Thư mục gốc —", name: "Thư mục gốc" }];
+    let allOptions = [{ id: "root_folder", label: "📁 — Thư mục gốc —", name: "Thư mục gốc" }];
 
     categories.forEach(catSlug => {
       const catFolders = folders.filter(f => f.categorySlug === catSlug);
@@ -93,7 +93,7 @@ export default function MoveSelectionModal({
           </button>
           <button 
             className={styles.confirmBtn} 
-            onClick={() => onConfirm(targetId === "root" ? null : targetId)}
+            onClick={() => onConfirm(targetId === "root_folder" ? null : targetId)}
             disabled={!targetId}
           >
             <Move size={16} />

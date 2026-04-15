@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { FileText, Download, FolderTree, TrendingUp } from "lucide-react";
-import { collection, getDocs, query, where, orderBy, limit } from "firebase/firestore";
-import { db } from "@/app/lib/firebase";
+import { supabase } from "@/app/lib/supabase";
 import styles from "./page.module.css";
 
 export default function AdminDashboard() {
@@ -18,24 +17,32 @@ export default function AdminDashboard() {
   useEffect(() => {
     async function loadStats() {
       try {
-        // Count resources
-        const resSnap = await getDocs(collection(db, "resources"));
-        const resources = resSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        // Count resources and sum downloads
+        const { data: resources, error: resError } = await supabase
+          .from('resources')
+          .select('id, name, file_format, download_count, created_at, categories(name)')
+          .order('created_at', { ascending: false });
+
+        if (resError) throw resError;
+
         const totalResources = resources.length;
-        const totalDownloads = resources.reduce((sum, r) => sum + (r.downloadCount || 0), 0);
+        const totalDownloads = resources.reduce((sum, r) => sum + (r.download_count || 0), 0);
 
         // Count folders
-        const folderSnap = await getDocs(collection(db, "folders"));
-        const totalFolders = folderSnap.size;
+        const { count: totalFolders, error: folderError } = await supabase
+          .from('folders')
+          .select('*', { count: 'exact', head: true });
 
-        // Recent resources (last 5)
-        const recentResources = [...resources]
-          .sort((a, b) => {
-            const aTime = a.createdAt?.seconds || 0;
-            const bTime = b.createdAt?.seconds || 0;
-            return bTime - aTime;
-          })
-          .slice(0, 5);
+        if (folderError) throw folderError;
+
+        // Recent resources (last 5 - already sorted by server)
+        const recentResources = resources.slice(0, 5).map(r => ({
+          id: r.id,
+          name: r.name,
+          category: r.categories?.name || "Uncategorized",
+          fileFormat: r.file_format,
+          downloadCount: r.download_count
+        }));
 
         setStats({ totalResources, totalDownloads, totalFolders, recentResources });
       } catch (e) {

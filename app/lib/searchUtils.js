@@ -1,5 +1,4 @@
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "./firebase";
+import { supabase } from "./supabase";
 import Fuse from "fuse.js";
 
 const CACHE_KEY = "dam_search_index";
@@ -35,37 +34,41 @@ export async function getOrBuildSearchIndex(forceRebuild = false) {
         }
       }
 
-      // If no cache or expired, fetch from Firestore
-      if (!db) throw new Error("Firebase DB not initialized");
-      const ref = collection(db, "resources");
-      // Fetch ALL published resources (no limit, since < 1000 items)
-      const q = query(ref, where("isPublished", "==", true));
-      const snapshot = await getDocs(q);
+      // If no cache or expired, fetch from Supabase
+      const { data: allResources, error } = await supabase
+        .from('resources')
+        .select('id, name, description, category_id, file_format, tags, slug, download_url, preview_url, thumbnail_url, file_size, download_count, categories(slug, name)')
+        .eq('is_published', true);
       
-      const allResources = snapshot.docs.map((d) => {
-        const data = d.data();
-        return {
-          id: d.id,
-          name: data.name || "",
-          description: data.description || "",
-          category: data.category || "",
-          fileFormat: data.fileFormat || data.format || "",
-          tags: data.tags || [],
-          slug: data.slug || "",
-          downloadUrl: data.downloadUrl || data.fileUrl || "",
-        };
-      });
+      if (error) throw error;
+
+      // Transform snake_case to camelCase for Fuse.js
+      const transformed = allResources.map(res => ({
+        id: res.id,
+        name: res.name || "",
+        description: res.description || "",
+        category: res.categories?.name || "",
+        categorySlug: res.categories?.slug || "",
+        fileFormat: res.file_format || "",
+        tags: res.tags || [],
+        slug: res.slug || "",
+        downloadUrl: res.download_url || "",
+        previewUrl: res.preview_url || "",
+        thumbnailUrl: res.thumbnail_url || "",
+        fileSize: res.file_size || 0,
+        downloadCount: res.download_count || 0
+      }));
 
       // Save to sessionStorage
       try {
-        sessionStorage.setItem(CACHE_KEY, JSON.stringify(allResources));
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify(transformed));
         sessionStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
       } catch (e) {
         // QuotaExceededError is possible but unlikely with < 5000 items
         console.warn("Could not save search index to sessionStorage", e);
       }
 
-      fuseInstance = createFuseInstance(allResources);
+      fuseInstance = createFuseInstance(transformed);
       return fuseInstance;
     } catch (e) {
       console.error("Error building search index:", e);

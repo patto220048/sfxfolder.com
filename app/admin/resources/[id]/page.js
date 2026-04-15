@@ -16,7 +16,7 @@ import Link from "next/link";
 import styles from "./page.module.css";
 import TagInput from "../../../components/ui/TagInput";
 import TreeSelect from "../../../components/ui/TreeSelect";
-import { getResource, updateResource, getAllFolders } from "../../../lib/firestore";
+import { getResource, updateResource, getFolders, getCategories } from "../../../lib/api";
 import { uploadFile, deleteFile, generateStoragePath } from "../../../lib/storage";
 import { revalidateResourceData } from "../../../lib/actions";
 
@@ -43,6 +43,7 @@ export default function EditResource() {
   // Form state
   const [name, setName] = useState("");
   const [category, setCategory] = useState("");
+  const [allCategories, setAllCategories] = useState([]);
   const [folderId, setFolderId] = useState("");
   const [tags, setTags] = useState([]);
   
@@ -54,10 +55,10 @@ export default function EditResource() {
   useEffect(() => {
     async function loadData() {
       try {
-        const [resData, foldersData] = await Promise.all([
+        const [resData, foldersData, catsData] = await Promise.all([
           getResource(id),
-          // We can't easily get folders for all categories without a dedicated function, 
-          // so let's fetch for the current category once it's known
+          getFolders(""), // Placeholder or just handle separately
+          getCategories()
         ]);
         
         if (!resData) {
@@ -65,16 +66,18 @@ export default function EditResource() {
           router.push("/admin/resources");
           return;
         }
-        
+
+        setAllCategories(catsData || []);
         setResource(resData);
         setName(resData.name || "");
-        setCategory(resData.category || "");
+        setCategory(resData.categoryId || "");
         setFolderId(resData.folderId || "");
         setTags(resData.tags || []);
         
         // Load all folders for this category to build hierarchy
-        if (resData.category) {
-          const folders = await getAllFolders(resData.category);
+        // resData.categoryId contains the slug string in this system
+        if (resData.categoryId) {
+          const folders = await getFolders(resData.categoryId);
           setAllFolders(folders);
         }
       } catch (e) {
@@ -89,7 +92,6 @@ export default function EditResource() {
   const hierarchicalFolders = useMemo(() => {
     const buildTree = (parentId = null, depth = 0) => {
       let result = [];
-      // allFolders is a flat array from getAllFolders
       const children = allFolders.filter(f => f.parentId === parentId);
       children.forEach(folder => {
         result.push({ 
@@ -100,25 +102,37 @@ export default function EditResource() {
       });
       return result;
     };
-    return buildTree();
+    
+    const tree = buildTree();
+    // Add Root option
+    return [
+      { id: "", label: "Gốc / Không có", name: "Gốc" },
+      ...tree
+    ];
   }, [allFolders]);
 
   // Refetch folders when category changes
   useEffect(() => {
-    if (!category) {
-      setAllFolders([]);
+    // Only skip if loading is true (initial load is handled by loadData)
+    if (loading || !category) {
+      if (!category) setAllFolders([]);
       return;
     }
-    async function loadFolders() {
+    
+    async function updateFolders() {
       try {
-        const folders = await getAllFolders(category);
+        const folders = await getFolders(category);
         setAllFolders(folders);
+        // Reset folder selection if current category changed away from original
+        if (category !== resource?.categoryId) {
+          setFolderId("");
+        }
       } catch (e) {
-        console.error("Failed to load folders:", e);
+        console.error("Failed to update folders:", e);
       }
     }
-    loadFolders();
-  }, [category]);
+    updateFolders();
+  }, [category, loading, resource?.categoryId]);
 
   const handleFileSelect = (e) => {
     if (e.target.files?.[0]) {
@@ -135,7 +149,7 @@ export default function EditResource() {
       let updateData = {
         name,
         slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-        category,
+        categoryId: category,
         folderId: folderId || null,
         tags: tags || [],
       };
@@ -225,7 +239,7 @@ export default function EditResource() {
                 <label>Category</label>
                 <select value={category} onChange={(e) => setCategory(e.target.value)} required>
                   <option value="">Select category...</option>
-                  {CATEGORIES.map(c => (
+                  {allCategories.map(c => (
                     <option key={c.slug} value={c.slug}>{c.name}</option>
                   ))}
                 </select>
@@ -264,7 +278,7 @@ export default function EditResource() {
                     <FileIcon size={24} />
                   </div>
                   <div className={styles.fileDetails}>
-                    <p className={styles.fileName}>{resource.fileName}</p>
+                    <p className={styles.fileName}>{resource.fileName || "Chưa có thông tin tên file"}</p>
                     <p className={styles.fileMeta}>
                       {resource.fileFormat} • {(resource.fileSize / 1024 / 1024).toFixed(2)} MB
                     </p>

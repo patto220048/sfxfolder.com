@@ -1,6 +1,6 @@
 import CategoryCard from "@/app/components/ui/CategoryCard";
 import SearchBar from "@/app/components/ui/SearchBar";
-import { getCategoriesWithCounts } from "@/app/lib/firestore";
+import { getCategoriesWithCounts } from "@/app/lib/api";
 import styles from "./page.module.css";
 
 export const revalidate = 3600; // Revalidate every hour

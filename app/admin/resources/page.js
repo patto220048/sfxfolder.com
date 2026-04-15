@@ -3,10 +3,21 @@
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
 import { Plus, Search, Trash2, Edit2, MoreVertical, LayoutGrid, List as ListIcon, FolderPlus, Loader2, Play, Pause, Eye } from "lucide-react";
-import { collection, getDocs, doc, deleteDoc, query, where, orderBy, writeBatch, serverTimestamp } from "firebase/firestore";
-import { db } from "@/app/lib/firebase";
 import { revalidateResourceData } from "@/app/lib/actions";
-import { getAllAdminFolders, getCategories, addFolder, updateResource, updateFolder, deleteFolder, deleteResource, syncTagsCount } from "@/app/lib/firestore";
+import { 
+  getAllAdminFolders, 
+  getCategories, 
+  addFolder, 
+  updateResource, 
+  updateFolder, 
+  deleteFolder, 
+  deleteResource, 
+  syncTagsCount,
+  getResources,
+  getTags,
+  bulkUpdateResources,
+  bulkDeleteResources
+} from "@/app/lib/api";
 import styles from "./page.module.css";
 import { mediaManager } from "@/app/lib/mediaManager";
 import PreviewOverlay from "@/app/components/ui/PreviewOverlay";
@@ -26,6 +37,7 @@ export default function AdminResources() {
   const [resources, setResources] = useState([]);
   const [folders, setFolders] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [tags, setTags] = useState([]);
   const [loading, setLoading] = useState(true);
   
   const [selectedFolderId, setSelectedFolderId] = useState(null);
@@ -64,15 +76,17 @@ export default function AdminResources() {
   useEffect(() => {
     async function loadInitial() {
       try {
-        const [resSnap, folderData, catData] = await Promise.all([
-          getDocs(query(collection(db, "resources"), orderBy("createdAt", "desc"))),
+        const [resData, folderData, catData, tagsData] = await Promise.all([
+          getResources({ limit: 1000 }), // Fetch more for admin list
           getAllAdminFolders(),
-          getCategories()
+          getCategories(),
+          getTags()
         ]);
         
-        setResources(resSnap.docs.map((d) => ({ id: d.id, ...d.data() })));
+        setResources(resData);
         setFolders(folderData);
         setCategories(catData);
+        setTags(tagsData);
       } catch (e) {
         console.error("Failed to load initial data:", e.message);
       }
@@ -124,13 +138,11 @@ export default function AdminResources() {
   // Handle Internal Resource Move (Grid to Sidebar)
   const handleResourceDragStart = (e, resource) => {
     // If dragging a selected item, we move all selected items
-    if (selectedIds.includes(resource.id)) {
-      e.dataTransfer.setData("resourceIds", JSON.stringify(selectedIds));
-      e.dataTransfer.setData("text/plain", `Moving ${selectedIds.length} items`);
-    } else {
-      e.dataTransfer.setData("resourceId", resource.id);
-      e.dataTransfer.setData("text/plain", `Moving ${resource.name || 'item'}`);
-    }
+    const ids = selectedIds.includes(resource.id) ? selectedIds : [resource.id];
+    const data = JSON.stringify(ids);
+    
+    e.dataTransfer.setData("resourceIds", data);
+    e.dataTransfer.setData("text/plain", `resources:${data}`);
     e.dataTransfer.effectAllowed = "move";
   };
 
@@ -138,16 +150,13 @@ export default function AdminResources() {
     try {
       const idsToMove = Array.isArray(idOrIds) ? idOrIds : [idOrIds];
       
-      // 1. Update Firestore in batch
-      const batch = writeBatch(db);
-      idsToMove.forEach(id => {
-        const ref = doc(db, "resources", id);
-        batch.update(ref, { 
-          folderId: targetFolderId,
-          updatedAt: serverTimestamp()
-        });
-      });
-      await batch.commit();
+      // 1. Update Supabase in bulk
+      const updates = idsToMove.map(id => ({
+        id,
+        folder_id: targetFolderId,
+        updated_at: new Date().toISOString()
+      }));
+      await bulkUpdateResources(updates);
       
       // 2. Update local state
       setResources(prev => prev.map(r => 
@@ -166,27 +175,36 @@ export default function AdminResources() {
   };
 
   const filtered = useMemo(() => {
-    let result = resources;
+    let result = Array.isArray(resources) ? [...resources] : [];
     
-    // Filter by Tree Selection
+    // 1. Filter by Tree Selection (Category or Folder)
     if (selectedFolderId) {
       if (selectedFolderId.startsWith('cat-')) {
         const catSlug = selectedFolderId.replace('cat-', '');
-        result = result.filter(r => r.category === catSlug);
+        result = result.filter(r => 
+          r.category?.slug === catSlug || 
+          r.categoryId === catSlug || 
+          r.category_id === catSlug
+        );
       } else {
-        result = result.filter(r => r.folderId === selectedFolderId);
+        result = result.filter(r => r.folderId === selectedFolderId || r.folder_id === selectedFolderId);
       }
     }
 
-    // Filter by Search
-    if (!searchQuery.trim()) return result;
-    const term = searchQuery.toLowerCase();
-    return result.filter(
-      (r) =>
-        r.name?.toLowerCase().includes(term) ||
-        r.category?.toLowerCase().includes(term) ||
-        r.tags?.some((t) => t.toLowerCase().includes(term))
-    );
+    // 2. Filter by Search Query
+    if (searchQuery && typeof searchQuery === 'string' && searchQuery.trim() !== '') {
+      const term = searchQuery.toLowerCase();
+      result = result.filter((r) => {
+        const nameMatch = r.name?.toLowerCase().includes(term);
+        const catMatch = r.category?.name?.toLowerCase().includes(term);
+        const tagMatch = Array.isArray(r.tags) && r.tags.some((t) => 
+          typeof t === 'string' && t.toLowerCase().includes(term)
+        );
+        return nameMatch || catMatch || tagMatch;
+      });
+    }
+
+    return result;
   }, [resources, searchQuery, selectedFolderId]);
 
   const handleAddFolder = async (parentId, categorySlug) => {
@@ -200,8 +218,8 @@ export default function AdminResources() {
         categorySlug,
         order: folders.length,
       };
-      const docRef = await addFolder(newFolder);
-      setFolders(prev => [...prev, { id: docRef.id, ...newFolder }]);
+      const resp = await addFolder(newFolder);
+      setFolders(prev => [...prev, resp]);
       
       // Refresh frontend cache
       await revalidateResourceData();
@@ -261,10 +279,10 @@ export default function AdminResources() {
       
       // 3. Orphan resources (set folderId to null)
       const folderResources = resources.filter(r => r.folderId === folder.id);
-      await Promise.all(folderResources.map(r => updateResource(r.id, { folderId: null })));
+      await bulkUpdateResources(folderResources.map(r => ({ id: r.id, folder_id: null })));
 
       // 4. Delete the folder itself
-      await deleteDoc(doc(db, "folders", folder.id));
+      await deleteFolder(folder.id);
       
       // 5. Update local state
       setFolders(prev => {
@@ -275,12 +293,12 @@ export default function AdminResources() {
       setResources(prev => prev.map(r => r.folderId === folder.id ? { ...r, folderId: null } : r));
 
       
-      // 5. If we were viewing this folder, switch to category root
+      // 6. If we were viewing this folder, switch to category root
       if (selectedFolderId === folder.id) {
         setSelectedFolderId(`cat-${folder.categorySlug}`);
       }
       
-      // 6. Refresh frontend
+      // 7. Refresh frontend
       await revalidateResourceData();
     } catch (e) {
       alert("Xóa thư mục thất bại: " + e.message);
@@ -376,16 +394,13 @@ export default function AdminResources() {
     if (!confirm(`Xóa ${selectedIds.length} tài nguyên đã chọn? Thao tác này không thể hoàn tác.`)) return;
 
     try {
-      const batch = writeBatch(db);
       const deletedTags = [];
-      
       selectedIds.forEach(id => {
         const res = resources.find(r => r.id === id);
         if (res && res.tags) deletedTags.push(...res.tags);
-        batch.delete(doc(db, "resources", id));
       });
 
-      await batch.commit();
+      await bulkDeleteResources(selectedIds);
 
       // Đồng bộ tag count: Giảm usageCount của các tag bị xóa
       if (deletedTags.length > 0) {
@@ -403,7 +418,6 @@ export default function AdminResources() {
 
   const handleBulkEditSave = async (updatedItems) => {
     try {
-      const batch = writeBatch(db);
       const addedTotal = [];
       const removedTotal = [];
 
@@ -416,18 +430,16 @@ export default function AdminResources() {
           addedTotal.push(...newTags.filter(t => !oldTags.includes(t)));
           removedTotal.push(...oldTags.filter(t => !newTags.includes(t)));
         }
-
-        const ref = doc(db, "resources", item.id);
-        batch.update(ref, {
-          name: item.name,
-          tags: item.tags,
-          category: item.category,
-          folderId: item.folderId,
-          updatedAt: serverTimestamp()
-        });
       });
 
-      await batch.commit();
+      await bulkUpdateResources(updatedItems.map(item => ({
+        id: item.id,
+        name: item.name,
+        tags: item.tags,
+        category_id: item.categoryId,
+        folder_id: item.folderId,
+        updated_at: new Date().toISOString()
+      })));
 
       // Đồng bộ tag count
       if (addedTotal.length > 0 || removedTotal.length > 0) {
@@ -498,6 +510,7 @@ export default function AdminResources() {
       <UploadDrawer 
         files={stagingFiles}
         folders={folders}
+        categories={categories}
         isOpen={stagingFiles.length > 0}
         onClose={clearAll} 
         onUpdate={updateFileMeta}
@@ -637,7 +650,7 @@ export default function AdminResources() {
                 <div 
                   key={r.id} 
                   className={`${styles.card} ${viewMode === 'list' ? styles.listRow : ''} ${selectedIds.includes(r.id) ? styles.selectedCard : ''}`}
-                  draggable
+                  draggable="true"
                   onDragStart={(e) => handleResourceDragStart(e, r)}
                   onClick={() => viewMode === 'list' && toggleSelect(r.id)}
                 >
@@ -718,7 +731,7 @@ export default function AdminResources() {
                         )}
                         <div className={styles.cardMeta}>
                           <span className={styles.formatBadge}>{r.fileFormat}</span>
-                          <span className={styles.categoryName}>{r.category}</span>
+                          <span className={styles.categoryName}>{r.category?.name || "Uncategorized"}</span>
                         </div>
 
                         {r.tags && r.tags.length > 0 && (
@@ -783,8 +796,8 @@ export default function AdminResources() {
                           </div>
                         </div>
                       </div>
-                      <div className={styles.listColDate}>
-                        {r.createdAt ? new Date(r.createdAt.seconds * 1000).toLocaleDateString('vi-VN') : '---'}
+                      <div className={styles.listColDate} suppressHydrationWarning>
+                        {r.createdAt ? new Date(r.createdAt).toLocaleDateString('vi-VN') : '---'}
                       </div>
                       <div className={styles.listColSize}>
                         {r.fileSize ? (r.fileSize / 1024 / 1024).toFixed(2) + ' MB' : '---'}

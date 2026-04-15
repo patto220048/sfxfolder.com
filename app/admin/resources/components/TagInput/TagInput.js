@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { X } from "lucide-react";
-import { getTags } from "@/app/lib/firestore";
+import { getTags } from "@/app/lib/api";
 import styles from "./TagInput.module.css";
 
 export default function TagInput({ tags = [], onChange }) {

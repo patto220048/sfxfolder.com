@@ -17,7 +17,7 @@ import {
   renameTagGlobally, 
   deleteTagGlobally, 
   syncAllTagsFromResources 
-} from "@/app/lib/firestore";
+} from "@/app/lib/api";
 import styles from "./page.module.css";
 
 export default function AdminTags() {

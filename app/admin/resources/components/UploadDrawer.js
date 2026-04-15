@@ -6,20 +6,10 @@ import styles from "./UploadDrawer.module.css";
 import TagInput from "../../../components/ui/TagInput";
 import TreeSelect from "../../../components/ui/TreeSelect";
 
-const CATEGORIES = [
-  { slug: "sound-effects", name: "Sound Effects" },
-  { slug: "music", name: "Music" },
-  { slug: "video-meme", name: "Video Meme" },
-  { slug: "green-screen", name: "Green Screen" },
-  { slug: "animation", name: "Animation" },
-  { slug: "image-overlay", name: "Image & Overlay" },
-  { slug: "font", name: "Font" },
-  { slug: "preset-lut", name: "Preset & LUT" },
-];
-
 export default function UploadDrawer({ 
   files, 
   folders = [],
+  categories = [], 
   isOpen, 
   onClose, 
   onUpdate, 
@@ -103,9 +93,9 @@ export default function UploadDrawer({
                         value={bulkMeta.category}
                         onChange={(e) => setBulkMeta({ ...bulkMeta, category: e.target.value })}
                       >
-                        <option value="">Giữ nguyên...</option>
-                        {CATEGORIES.map(c => (
-                          <option key={c.slug} value={c.slug}>{c.name}</option>
+                        <option value="">Chọn danh mục...</option>
+                        {categories.map(cat => (
+                          <option key={cat.slug} value={cat.slug}>{cat.name}</option>
                         ))}
                       </select>
                     </div>
@@ -173,31 +163,31 @@ export default function UploadDrawer({
                     />
                   </div>
 
-                  <div className={styles.inputGroup}>
-                    <label>Danh mục</label>
-                    <select 
-                      value={file.category} 
-                      onChange={(e) => onUpdate(file.id, 'category', e.target.value)}
-                      disabled={isUploading || file.status === 'success'}
-                      className={!file.category ? styles.inputError : ""}
-                    >
-                      <option value="">Chọn danh mục...</option>
-                      {CATEGORIES.map(c => (
-                        <option key={c.slug} value={c.slug}>{c.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  
-                  <div className={styles.inputGroup}>
-                    <label>Thư mục đầu vào (Tùy chọn)</label>
-                    <TreeSelect 
-                      options={getHierarchicalFolders(file.category)}
-                      value={file.folderId || ""}
-                      onChange={(id) => onUpdate(file.id, 'folderId', id)}
-                      disabled={isUploading || file.status === 'success' || !file.category}
-                      placeholder="Chọn thư mục..."
-                    />
-                  </div>
+                    <div className={styles.inputGroup}>
+                      <label>Danh mục</label>
+                      <select 
+                        value={file.categoryId} 
+                        onChange={(e) => onUpdate(file.id, 'categoryId', e.target.value)}
+                        disabled={isUploading || file.status === 'success'}
+                        className={!file.categoryId ? styles.inputError : ""}
+                      >
+                        <option value="">Chọn danh mục...</option>
+                        {categories.map(cat => (
+                          <option key={cat.slug} value={cat.slug}>{cat.name}</option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div className={styles.inputGroup}>
+                      <label>Thư mục đầu vào (Tùy chọn)</label>
+                      <TreeSelect 
+                        options={getHierarchicalFolders(file.categoryId)}
+                        value={file.folderId || ""}
+                        onChange={(id) => onUpdate(file.id, 'folderId', id)}
+                        disabled={isUploading || file.status === 'success'}
+                        placeholder="Chọn thư mục..."
+                      />
+                    </div>
 
                   <div className={styles.inputGroup}>
                     <label>Tags (Nhấn Enter để tách thẻ)</label>

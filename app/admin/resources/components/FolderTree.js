@@ -37,6 +37,8 @@ const FolderItem = ({
     e.stopPropagation();
     e.dataTransfer.setData("folderId", folder.id);
     e.dataTransfer.setData("sourceCategory", folder.categorySlug);
+    // Add text/plain fallback for folders
+    e.dataTransfer.setData("text/plain", `folder:${folder.id}:${folder.categorySlug}`);
     e.dataTransfer.effectAllowed = "move";
   };
 
@@ -64,23 +66,30 @@ const FolderItem = ({
     e.stopPropagation();
     setIsDragOver(false);
     
-    const resourceId = e.dataTransfer.getData("resourceId");
+    const plainText = e.dataTransfer.getData("text/plain");
     const resourceIdsStr = e.dataTransfer.getData("resourceIds");
-    const draggedFolderId = e.dataTransfer.getData("folderId");
+    const folderIdStr = e.dataTransfer.getData("folderId");
 
-    if (resourceIdsStr && onDropResource) {
-      try {
-        const ids = JSON.parse(resourceIdsStr);
-        onDropResource(ids, folder.id);
-      } catch (err) {
-        console.error("Failed to parse resourceIds", err);
-      }
-    } else if (resourceId && onDropResource) {
-      onDropResource(resourceId, folder.id);
-    } else if (draggedFolderId && onMoveFolder) {
-      if (draggedFolderId !== folder.id) {
-        onMoveFolder(draggedFolderId, folder.id, folder.categorySlug);
-      }
+    // 1. Try Resource Move
+    let rIds = null;
+    if (resourceIdsStr) {
+      try { rIds = JSON.parse(resourceIdsStr); } catch (e) {}
+    } else if (plainText && plainText.startsWith("resources:")) {
+      try { rIds = JSON.parse(plainText.replace("resources:", "")); } catch (e) {}
+    }
+
+    if (rIds && rIds.length > 0 && onDropResource) {
+      return onDropResource(rIds, folder.id);
+    }
+
+    // 2. Try Folder Move
+    let fId = folderIdStr;
+    if (!fId && plainText && plainText.startsWith("folder:")) {
+      fId = plainText.split(":")[1];
+    }
+
+    if (fId && fId !== folder.id && onMoveFolder) {
+      onMoveFolder(fId, folder.id, folder.categorySlug);
     }
   };
 
@@ -101,7 +110,7 @@ const FolderItem = ({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        draggable
+        draggable="true"
         onDragStart={handleDragStart}
       >
         <button 
@@ -111,7 +120,7 @@ const FolderItem = ({
           {folder.children.length > 0 ? (
             isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />
           ) : (
-            <div style={{ width: 14 }} />
+            <span style={{ width: 14 }} />
           )}
         </button>
         
@@ -263,23 +272,31 @@ export default function FolderTree({
     e.preventDefault();
     e.stopPropagation();
     setDragOverCat(null);
-    const draggedFolderId = e.dataTransfer.getData("folderId");
-    const resourceId = e.dataTransfer.getData("resourceId");
+    
+    const plainText = e.dataTransfer.getData("text/plain");
     const resourceIdsStr = e.dataTransfer.getData("resourceIds");
+    const folderIdStr = e.dataTransfer.getData("folderId");
 
-    if (draggedFolderId && onMoveFolder) {
-      // Move to root of category
-      onMoveFolder(draggedFolderId, null, cat.slug);
-    } else if (resourceIdsStr && onDropResource) {
-      try {
-        const ids = JSON.parse(resourceIdsStr);
-        onDropResource(ids, null);
-      } catch (err) {
-        console.error("Failed to parse resourceIds", err);
-      }
-    } else if (resourceId && onDropResource) {
-      // Moves resource to category "root" (optional, but handled)
-      onDropResource(resourceId, null);
+    // 1. Try Resource Move
+    let rIds = null;
+    if (resourceIdsStr) {
+      try { rIds = JSON.parse(resourceIdsStr); } catch (e) {}
+    } else if (plainText && plainText.startsWith("resources:")) {
+      try { rIds = JSON.parse(plainText.replace("resources:", "")); } catch (e) {}
+    }
+
+    if (rIds && rIds.length > 0 && onDropResource) {
+      return onDropResource(rIds, null);
+    }
+
+    // 2. Try Folder Move
+    let fId = folderIdStr;
+    if (!fId && plainText && plainText.startsWith("folder:")) {
+      fId = plainText.split(":")[1];
+    }
+
+    if (fId && onMoveFolder) {
+      onMoveFolder(fId, null, cat.slug);
     }
   };
 

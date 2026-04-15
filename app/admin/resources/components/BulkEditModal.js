@@ -22,7 +22,7 @@ export default function BulkEditModal({
         id: r.id,
         name: r.name || r.fileName || "",
         tags: r.tags || [],
-        category: r.category || "",
+        categoryId: r.categoryId || "",
         folderId: r.folderId || ""
       })));
     }
@@ -70,7 +70,7 @@ export default function BulkEditModal({
     );
     
     // If category changes, we should clear folder if it belongs to a different category
-    if (field === 'category') {
+    if (field === 'categoryId') {
       const changedItem = newItems.find(i => i.id === id);
       if (changedItem.folderId) {
         const folder = folders.find(f => f.id === changedItem.folderId);
@@ -93,7 +93,7 @@ export default function BulkEditModal({
       const newItem = { ...item, [field]: valueToApply };
       
       // Safety check for category change
-      if (field === 'category' && item.folderId) {
+      if (field === 'categoryId' && item.folderId) {
         const folder = folders.find(f => f.id === item.folderId);
         if (folder && folder.categorySlug !== valueToApply) {
           newItem.folderId = "";
@@ -141,7 +141,7 @@ export default function BulkEditModal({
                       <span>Danh mục</span>
                       <button 
                         className={styles.applyAllBtn} 
-                        onClick={() => handleApplyToAll('category')}
+                        onClick={() => handleApplyToAll('categoryId')}
                         title="Áp dụng Danh mục của dòng đầu cho tất cả"
                       >
                         <Copy size={12} /> Áp dụng hết
@@ -181,8 +181,8 @@ export default function BulkEditModal({
                     </td>
                     <td>
                       <select 
-                        value={item.category} 
-                        onChange={(e) => handleChange(item.id, 'category', e.target.value)}
+                        value={item.categoryId} 
+                        onChange={(e) => handleChange(item.id, 'categoryId', e.target.value)}
                         className={styles.select}
                       >
                         <option value="">Chọn danh mục...</option>
@@ -193,7 +193,7 @@ export default function BulkEditModal({
                     </td>
                     <td>
                       <TreeSelect 
-                        options={getHierarchicalFolders[item.category] || getHierarchicalFolders.global}
+                        options={getHierarchicalFolders[item.categoryId] || getHierarchicalFolders.global}
                         value={item.folderId}
                         onChange={(val) => handleChange(item.id, 'folderId', val)}
                         placeholder="Chọn thư mục..."

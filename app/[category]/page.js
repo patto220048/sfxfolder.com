@@ -1,12 +1,6 @@
-import { getAllFolders } from "@/app/lib/firestore";
-import { collection, query, where, getDocs } from "firebase/firestore";
-import { db } from "@/app/lib/firebase";
+import { getFolders, getResources } from "@/app/lib/api";
 import ClientPage from "./ClientPage";
-
-// Remove static revalidate to allow on-demand revalidation via tags
-// export const revalidate = 3600; 
-
-
+import { unstable_cache } from "next/cache";
 
 const CATEGORY_INFO = {
   "sound-effects": { name: "Sound Effects", color: "#00F0FF", formats: ["mp3", "wav", "ogg"], layout: "sound" },
@@ -47,46 +41,20 @@ function buildFolderTree(flatList) {
   return roots;
 }
 
-// Convert Firestore Timestamps to strings so they can be passed to Client Components
-function serializeList(list) {
-  return list.map(item => {
-    const obj = { ...item };
-    if (obj.createdAt?.toDate) {
-      obj.createdAt = obj.createdAt.toDate().toISOString();
-    } else if (obj.createdAt) {
-      obj.createdAt = String(obj.createdAt);
-    }
-    
-    if (obj.updatedAt?.toDate) {
-      obj.updatedAt = obj.updatedAt.toDate().toISOString();
-    } else if (obj.updatedAt) {
-      obj.updatedAt = String(obj.updatedAt);
-    }
-    return obj;
-  });
-}
-
-import { unstable_cache } from "next/cache";
-
 const getCachedCategoryData = unstable_cache(
   async (slug) => {
-    const fetchedFolders = await getAllFolders(slug);
+    // 1. Fetch folders for this category
+    const fetchedFolders = await getFolders(slug);
     
-    const ref = collection(db, "resources");
-    const constraints = [
-      where("category", "==", slug),
-      where("isPublished", "==", true),
-    ];
-    const q = query(ref, ...constraints);
-    const snapshot = await getDocs(q);
-    const fetchedResources = snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+    // 2. Fetch resources for this category
+    const fetchedResources = await getResources({ categorySlug: slug, limit: 1000 });
 
     return {
-      flatFolders: serializeList(fetchedFolders),
-      allResources: serializeList(fetchedResources)
+      flatFolders: fetchedFolders,
+      allResources: fetchedResources
     };
   },
-  ['category-data'], // Base key
+  ['category-data'],
   { 
     revalidate: 3600, 
     tags: ['resources'] 

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Download } from "lucide-react";
-import { incrementDownloadCount } from "@/app/lib/firestore";
+import { incrementDownloadCount } from "@/app/lib/api";
 import { mediaManager } from "@/app/lib/mediaManager";
 import styles from "./SoundButton.module.css";
 

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Download, Check, Loader2 } from "lucide-react";
-import { incrementDownloadCount } from "@/app/lib/firestore";
+import { incrementDownloadCount } from "@/app/lib/api";
 import styles from "./DownloadButton.module.css";
 
 export default function DownloadButton({ downloadUrl, fileUrl, fileName, fileFormat, resourceId, size }) {
