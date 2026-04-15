@@ -39,6 +39,10 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
 
   if (!resource) return null;
 
+  const categorySlug = typeof resource.category === 'string' 
+    ? resource.category 
+    : (resource.category?.slug || resource.category_id || "");
+
   return (
     <div className={styles.previewOverlay} onClick={onClose}>
       <div 
@@ -54,10 +58,11 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
           onMouseEnter={handleMediaEnter}
           onMouseLeave={handleMediaLeave}
         >
-          {["video-meme", "green-screen", "animation"].includes(resource.category) && (
+          {(categorySlug.includes('video') || ["video-meme", "green-screen", "animation"].includes(categorySlug)) && (
             <video 
               ref={mediaRef}
               src={resource.downloadUrl || resource.fileUrl} 
+              poster={resource.thumbnailUrl || resource.previewUrl}
               controls 
               autoPlay 
               muted
@@ -66,14 +71,14 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
               className={styles.largePreviewVideo} 
             />
           )}
-          {["image-overlay", "image"].includes(resource.category) && (
+          {(categorySlug.includes('image') || ["image-overlay", "graphics", "background"].includes(categorySlug)) && (
             <img 
               src={resource.downloadUrl || resource.fileUrl} 
               alt={resource.name} 
               className={styles.largePreviewImage} 
             />
           )}
-          {resource.category === "font" && (
+          {categorySlug === "font" && (
             <div className={styles.largePreviewFont}>
                <p>ABCDEFGHIJKLMNOPQRSTUVWXYZ</p>
                <p>abcdefghijklmnopqrstuvwxyz</p>
@@ -84,10 +89,11 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
             </div>
           )}
           {/* Default fallback if category not matched but has fileUrl */}
-          {!["video-meme", "green-screen", "animation", "image-overlay", "image", "font"].includes(resource.category) && (
+          {!categorySlug.includes('video') && !categorySlug.includes('image') && 
+           !["video-meme", "green-screen", "animation", "image-overlay", "graphics", "background", "font"].includes(categorySlug) && (
             <div className={styles.largePreviewFont}>
               <p>Preview not available for this type</p>
-              <p style={{ fontSize: '1rem', opacity: 0.7 }}>{resource.fileName}</p>
+              <p style={{ fontSize: '1rem', opacity: 0.7 }}>{resource.fileName} ({categorySlug})</p>
             </div>
           )}
         </div>
@@ -110,7 +116,7 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
           </div>
 
           <div className={styles.previewMeta}>
-            <span className={styles.previewCategory}>{resource.category?.replace(/-/g, ' ')}</span>
+            <span className={styles.previewCategory}>{categorySlug.replace(/-/g, ' ')}</span>
             <span className={styles.previewDot}>•</span>
             <span className={styles.previewFormat}>{resource.fileFormat?.toUpperCase()}</span>
             <span className={styles.previewDot}>•</span>

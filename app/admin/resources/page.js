@@ -473,6 +473,11 @@ export default function AdminResources() {
     e.stopPropagation();
     e.preventDefault();
 
+    if (!isAudio(resource.category)) {
+      setPreviewResource(resource);
+      return;
+    }
+
     if (playingId === resource.id) {
       if (audioRef.current) {
         audioRef.current.pause();
@@ -515,8 +520,8 @@ export default function AdminResources() {
   };
   
   const isVisual = (cat) => {
-    const slug = typeof cat === 'string' ? cat : cat?.slug;
-    return ["video-meme", "green-screen", "animation", "image-overlay", "font"].includes(slug);
+    const slug = typeof cat === 'string' ? cat : (cat?.slug || "");
+    return slug.includes('video') || slug.includes('image') || ["video-meme", "green-screen", "animation", "image-overlay", "graphics", "background", "font"].includes(slug);
   };
 
   return (
@@ -696,24 +701,13 @@ export default function AdminResources() {
                           <LayoutGrid size={48} strokeWidth={1} />
                         </div>
                         <div className={styles.cardOverlay}>
-                          {isAudio(r.category) && (
-                            <button
-                              className={`${styles.actionBtn} ${playingId === r.id ? styles.active : ''}`}
-                              onClick={(e) => handlePlay(e, r)}
-                              title="Nghe thử"
-                            >
-                              {playingId === r.id ? <Pause size={18} /> : <Play size={18} />}
-                            </button>
-                          )}
-                          {isVisual(r.category) && (
-                            <button
-                              className={styles.actionBtn}
-                              onClick={(e) => { e.stopPropagation(); setPreviewResource(r); }}
-                              title="Xem trước"
-                            >
-                              <Eye size={18} />
-                            </button>
-                          )}
+                          <button
+                            className={`${styles.actionBtn} ${playingId === r.id ? styles.active : ''}`}
+                            onClick={(e) => handlePlay(e, r)}
+                            title={isAudio(r.category) ? "Nghe thử" : "Xem trước"}
+                          >
+                            {playingId === r.id ? <Pause size={18} /> : <Play size={18} />}
+                          </button>
                           <Link href={`/admin/resources/${r.id}`} className={`${styles.actionBtn} ${styles.edit}`} title="Chỉnh sửa">
                             <Edit2 size={18} />
                           </Link>
@@ -843,24 +837,13 @@ export default function AdminResources() {
                         {r.fileSize ? (r.fileSize / 1024 / 1024).toFixed(2) + ' MB' : '---'}
                       </div>
                       <div className={styles.listColActions}>
-                        {isAudio(r.category) && (
-                          <button
-                            className={`${styles.inlineActionBtn} ${playingId === r.id ? styles.active : ''}`}
-                            onClick={(e) => handlePlay(e, r)}
-                            title="Nghe thử"
-                          >
-                            {playingId === r.id ? <Pause size={14} /> : <Play size={14} />}
-                          </button>
-                        )}
-                        {isVisual(r.category) && (
-                          <button
-                            className={styles.inlineActionBtn}
-                            onClick={(e) => { e.stopPropagation(); setPreviewResource(r); }}
-                            title="Xem trước"
-                          >
-                            <Eye size={14} />
-                          </button>
-                        )}
+                        <button
+                          className={`${styles.inlineActionBtn} ${playingId === r.id ? styles.active : ''}`}
+                          onClick={(e) => handlePlay(e, r)}
+                          title={isAudio(r.category) ? "Nghe thử" : "Xem trước"}
+                        >
+                          {playingId === r.id ? <Pause size={14} /> : <Play size={14} />}
+                        </button>
                         <Link href={`/admin/resources/${r.id}`} className={styles.inlineActionBtn} title="Chỉnh sửa">
                           <Edit2 size={16} />
                         </Link>
