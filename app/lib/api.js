@@ -395,17 +395,19 @@ export async function deleteCategory(id) {
 /**
  * Get folders for a category, optionally filtered by parent.
  */
-export async function getFolders(categorySlug, parentId = null) {
+export async function getFolders(categorySlug, parentId) {
   let query = supabase
     .from('folders')
     .select('*, category:categories!inner(slug)')
     .eq('categories.slug', categorySlug)
     .order('order', { ascending: true });
 
-  if (parentId) {
-    query = query.eq('parent_id', parentId);
-  } else {
-    query = query.is('parent_id', null);
+  if (parentId !== undefined) {
+    if (parentId === null) {
+      query = query.is('parent_id', null);
+    } else {
+      query = query.eq('parent_id', parentId);
+    }
   }
 
   const { data, error } = await query;
