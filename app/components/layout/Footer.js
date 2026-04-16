@@ -75,7 +75,7 @@ export default function Footer() {
               <h4 className={styles.colTitle}>Resources</h4>
               <ul className={styles.links}>
                 {categories.length > 0 ? (
-                  categories.map((cat) => (
+                  categories.slice(0, 4).map((cat) => (
                     <li key={cat.id}>
                       <Link href={`/${cat.slug}`}>{cat.name}</Link>
                     </li>
@@ -88,6 +88,19 @@ export default function Footer() {
                 )}
               </ul>
             </div>
+
+            {categories.length > 4 && (
+              <div className={styles.col}>
+                <h4 className={styles.colTitle}>More</h4>
+                <ul className={styles.links}>
+                  {categories.slice(4).map((cat) => (
+                    <li key={cat.id}>
+                      <Link href={`/${cat.slug}`}>{cat.name}</Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             <div className={styles.col}>
               <h4 className={styles.colTitle}>Support</h4>
