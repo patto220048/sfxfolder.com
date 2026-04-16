@@ -62,6 +62,14 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
     setVisibleCount(PAGE_SIZE_DISPLAY);
   }, [selectedFolderId, selectedFormat, sortBy, inPageSearch]);
 
+  // Synchronize internal state with server-provided initialResources when they change (navigation/refresh)
+  useEffect(() => {
+    setAllLoadedResources(initialResources);
+    setServerOffset(initialResources.length);
+    setHasMoreDB(initialResources.length === PAGE_SIZE_BATCH);
+    setVisibleCount(PAGE_SIZE_DISPLAY);
+  }, [initialResources]);
+
   // --- Core Filtering ---
   const filteredResources = useMemo(() => {
     let results = [...allLoadedResources];
@@ -101,6 +109,9 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
 
   const handleLoadMore = useCallback(async () => {
     if (isFetchLoading) return;
+
+    // SAFETY GUARD: If we have no more DB items AND we've shown all local items, stop.
+    if (!hasMoreDB && visibleCount >= filteredResources.length) return;
 
     // 1. Check if we have more in our LOCAL pool of loaded resources
     if (visibleCount + PAGE_SIZE_DISPLAY <= filteredResources.length) {

@@ -8,26 +8,22 @@ import GlobalAudioSettings from "@/app/components/ui/GlobalAudioSettings";
 import { getCategories } from "@/app/lib/api";
 import styles from "./Navbar.module.css";
 
-export default function Navbar() {
+export default function Navbar({ initialCategories = [] }) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState(initialCategories);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
-    
-    // Fetch categories
-    const fetchCats = async () => {
-      const data = await getCategories();
-      // Sort by order
-      const sorted = (data || []).sort((a, b) => (a.order || 0) - (b.order || 0));
-      setCategories(sorted);
-    };
-    fetchCats();
+
+    // Sync state if initialCategories change significantly
+    if (initialCategories.length > 0 && categories.length === 0) {
+      setCategories(initialCategories);
+    }
 
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [initialCategories, categories.length]);
 
   return (
     <nav

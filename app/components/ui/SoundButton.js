@@ -263,7 +263,10 @@ export default function SoundButton({
             {(downloadCount || 0).toLocaleString()}
           </span>
           {/* Time display container handles jumpy layout */}
-          <span className={`${styles.time} ${(isPlaying || currentTime > 0) ? styles.timeVisible : ""}`}>
+          <span 
+            className={`${styles.time} ${(isPlaying || currentTime > 0) ? styles.timeVisible : ""}`}
+            style={{ color: isPlaying ? primaryColor : 'inherit' }}
+          >
             {duration > 0 ? `${formatTime(currentTime)} / ${formatTime(duration)}` : ""}
           </span>
         </div>

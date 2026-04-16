@@ -2,6 +2,7 @@ import { ThemeProvider } from "@/app/components/providers/ThemeProvider";
 import "./globals.css";
 import "./animations.css";
 import LayoutShell from "@/app/components/layout/LayoutShell";
+import { getCategories } from "@/app/lib/api";
 
 export const metadata = {
   title: "EditerLor — Free Resources for Video Editors",
@@ -15,7 +16,10 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  // Fetch categories on the server (cached)
+  const categories = await getCategories();
+
   return (
     <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
       <body>
@@ -26,7 +30,7 @@ export default function RootLayout({ children }) {
           disableTransitionOnChange
           scriptProps={{ async: true }}
         >
-          <LayoutShell>{children}</LayoutShell>
+          <LayoutShell initialCategories={categories}>{children}</LayoutShell>
         </ThemeProvider>
       </body>
     </html>

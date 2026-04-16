@@ -1,4 +1,5 @@
 import { supabase } from './supabase';
+import { unstable_cache } from 'next/cache';
 
 /* ========================================
    RESOURCES
@@ -270,29 +271,50 @@ export async function incrementDownloadCount(id) {
 
 /**
  * Get all categories with resource counts using SQL Joins.
- * This is much more efficient than the old Firebase way.
+ * Cached for 1 hour.
  */
-export async function getCategoriesWithCounts() {
-  const { data, error } = await supabase
-    .from('categories')
-    .select(`
-      *,
-      resources:resources(count)
-    `)
-    .order('order', { ascending: true });
+export const getCategoriesWithCounts = unstable_cache(
+  async () => {
+    const { data, error } = await supabase
+      .from('categories')
+      .select(`
+        *,
+        resources:resources(count)
+      `)
+      .order('order', { ascending: true });
 
-  if (error) {
-    console.error('Error fetching categories:', error);
-    return [];
-  }
+    if (error) {
+      console.error('Error fetching categories:', error);
+      return [];
+    }
 
-  // Map resources(count) to resourceCount for the frontend
-  return (data || []).map(cat => ({
-    ...cat,
-    resourceCount: cat.resources?.[0]?.count || 0,
-    formats: cat.formats || [] // Ensure formats is always an array
-  }));
-}
+    // Map resources(count) to resourceCount for the frontend
+    return (data || []).map(cat => ({
+      ...cat,
+      resourceCount: cat.resources?.[0]?.count || 0,
+      formats: cat.formats || [] // Ensure formats is always an array
+    }));
+  },
+  ['categories-with-counts'],
+  { revalidate: 3600, tags: ['categories'] }
+);
+
+export const getCategories = unstable_cache(
+  async () => {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('order', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching categories (simple):', error);
+      return [];
+    }
+    return data || [];
+  },
+  ['categories-simple'],
+  { revalidate: 3600, tags: ['categories'] }
+);
 
 export async function getCategoryBySlug(slug) {
   const { data, error } = await supabase
@@ -308,18 +330,6 @@ export async function getCategoryBySlug(slug) {
   return data;
 }
 
-export async function getCategories() {
-  const { data, error } = await supabase
-    .from('categories')
-    .select('*')
-    .order('order', { ascending: true });
-
-  if (error) {
-    console.error('Error fetching categories:', error);
-    return [];
-  }
-  return data;
-}
 
 /**
  * Add a new category.
