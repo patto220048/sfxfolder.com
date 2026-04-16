@@ -4,7 +4,7 @@ import { useState } from "react";
 import { ChevronRight, Folder, FolderOpen } from "lucide-react";
 import styles from "./TreeFolder.module.css";
 
-function TreeItem({ folder, selectedFolderId, onSelect, level = 0 }) {
+function TreeItem({ folder, selectedFolderId, onSelect, primaryColor, level = 0 }) {
   const [expanded, setExpanded] = useState(false);
   const hasChildren = folder.children && folder.children.length > 0;
   const isSelected = selectedFolderId === folder.id;
@@ -44,6 +44,7 @@ function TreeItem({ folder, selectedFolderId, onSelect, level = 0 }) {
               folder={child}
               selectedFolderId={selectedFolderId}
               onSelect={onSelect}
+              primaryColor={primaryColor}
               level={level + 1}
             />
           ))}
@@ -53,9 +54,13 @@ function TreeItem({ folder, selectedFolderId, onSelect, level = 0 }) {
   );
 }
 
-export default function TreeFolder({ folders = [], selectedFolderId, onSelect }) {
+export default function TreeFolder({ folders = [], selectedFolderId, onSelect, primaryColor }) {
   return (
-    <nav className={styles.tree} aria-label="Folder navigation">
+    <nav 
+      className={styles.tree} 
+      aria-label="Folder navigation"
+      style={{ "--cat-color": primaryColor }}
+    >
       <ul className={styles.list}>
         {folders.map((folder) => (
           <TreeItem
@@ -63,6 +68,7 @@ export default function TreeFolder({ folders = [], selectedFolderId, onSelect })
             folder={folder}
             selectedFolderId={selectedFolderId}
             onSelect={onSelect}
+            primaryColor={primaryColor}
           />
         ))}
       </ul>

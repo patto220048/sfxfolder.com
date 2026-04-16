@@ -30,13 +30,17 @@ export default function SoundButton({
   fileSize,
   downloadCount = 0,
   index = 0,
-  onPreview, // Added prop
-  ...otherProps // To catch full resource if passed
+  onPreview,
+  primaryColor = "#00F0FF",
+  ...otherProps
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
-  // ... existing state ...
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const audioRef = useRef(null);
+  const rafRef = useRef(null);
 
-  // Create a pseudo-resource for utility functions
   const resourceObj = { id, name, fileName, fileFormat, downloadUrl, ...otherProps };
   const hasPreview = isVideoFormat(resourceObj) || isImageFormat(resourceObj) || isFontFormat(resourceObj);
 
@@ -44,11 +48,6 @@ export default function SoundButton({
     e.stopPropagation();
     if (onPreview) onPreview(resourceObj);
   };
-  const [isDownloading, setIsDownloading] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const audioRef = useRef(null);
-  const rafRef = useRef(null);
 
   // Update time via requestAnimationFrame for smooth progress
   const updateTime = useCallback(() => {
@@ -232,8 +231,9 @@ export default function SoundButton({
         onClick={togglePlay}
         aria-label={isPlaying ? `Pause ${displayName}` : `Play ${displayName}`}
         disabled={!downloadUrl}
+        style={{ '--cat-color': primaryColor }}
       >
-        <span className={styles.ring} />
+        <span className={styles.ring} style={{ borderColor: primaryColor }} />
         {isPlaying ? (
           <span className={styles.pauseIcon}>
             <span className={styles.pauseBar} />
@@ -246,15 +246,15 @@ export default function SoundButton({
 
       {/* Sound wave bars - Always rendered, CSS handles width/opacity animation */}
       <div className={styles.waveBars}>
-        <span className={styles.bar} />
-        <span className={styles.bar} />
-        <span className={styles.bar} />
-        <span className={styles.bar} />
+        <span className={styles.bar} style={{ backgroundColor: primaryColor }} />
+        <span className={styles.bar} style={{ backgroundColor: primaryColor }} />
+        <span className={styles.bar} style={{ backgroundColor: primaryColor }} />
+        <span className={styles.bar} style={{ backgroundColor: primaryColor }} />
       </div>
 
       {/* Info */}
       <div className={styles.info}>
-        <span className={styles.name} title={name}>{displayName}</span>
+        <span className={styles.name} title={name} style={{ color: isPlaying ? primaryColor : 'inherit' }}>{displayName}</span>
         <div className={styles.meta}>
           {fileFormat && <span className={styles.format}>{fileFormat}</span>}
           {sizeStr && <span className={styles.size}>{sizeStr}</span>}
@@ -272,7 +272,10 @@ export default function SoundButton({
         {(isPlaying || currentTime > 0) && duration > 0 && (
           <div className={styles.progressWrapper} onClick={handleProgressClick}>
             <div className={styles.progressTrack}>
-              <div className={styles.progressFill} style={{ width: `${progress}%` }} />
+              <div 
+                className={styles.progressFill} 
+                style={{ width: `${progress}%`, backgroundColor: primaryColor }} 
+              />
             </div>
           </div>
         )}

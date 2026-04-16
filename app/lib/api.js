@@ -250,8 +250,23 @@ export async function getCategoriesWithCounts() {
   // Map resources(count) to resourceCount for the frontend
   return (data || []).map(cat => ({
     ...cat,
-    resourceCount: cat.resources?.[0]?.count || 0
+    resourceCount: cat.resources?.[0]?.count || 0,
+    formats: cat.formats || [] // Ensure formats is always an array
   }));
+}
+
+export async function getCategoryBySlug(slug) {
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*')
+    .eq('slug', slug)
+    .single();
+
+  if (error) {
+    console.error('Error fetching category by slug:', error);
+    return null;
+  }
+  return data;
 }
 
 export async function getCategories() {
@@ -279,6 +294,9 @@ export async function addCategory(categoryData) {
       slug: categoryData.slug,
       order: categoryData.order || 0,
       description: categoryData.description || null,
+      layout: categoryData.layout || 'media',
+      color: categoryData.color || '#00F0FF',
+      formats: categoryData.formats || [],
       created_at: now
     }])
     .select();

@@ -44,13 +44,15 @@
 }
 
 .allBtn:hover {
-  background: rgba(0, 240, 255, 0.04);
-  color: var(--text-primary);
+  background: var(--cat-color, rgba(0, 240, 255, 0.04));
+  filter: brightness(1.2);
+  color: #000;
 }
 
 .allBtn.allActive {
-  background: rgba(0, 240, 255, 0.08);
-  color: var(--neon-cyan);
+  background: var(--cat-color, var(--neon-cyan));
+  color: #000;
+  font-weight: 700;
 }
 
 /* Mobile */

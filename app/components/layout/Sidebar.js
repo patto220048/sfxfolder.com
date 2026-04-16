@@ -10,6 +10,7 @@ export default function Sidebar({
   folders = [],
   selectedFolderId,
   onSelectFolder,
+  primaryColor = "#00F0FF",
 }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -28,6 +29,7 @@ export default function Sidebar({
       <aside
         className={`${styles.sidebar} ${mobileOpen ? styles.open : ""}`}
         id="category-sidebar"
+        style={{ "--cat-color": primaryColor }}
       >
         <div className={styles.header}>
           <h3 className={styles.title}>{categoryName || "Folders"}</h3>

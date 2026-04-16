@@ -14,9 +14,9 @@
 }
 
 .card:hover {
-  border-color: var(--text-primary);
+  border-color: var(--cat-color, var(--text-primary));
   transform: translate(-3px, -3px);
-  box-shadow: 6px 6px 0px var(--text-primary);
+  box-shadow: 6px 6px 0px var(--cat-color, var(--text-primary));
 }
 
 /* ---------- Preview ---------- */
@@ -82,8 +82,8 @@
   font-weight: 700;
   text-transform: uppercase;
   padding: 4px 10px;
-  background: var(--text-primary);
-  color: var(--bg-primary);
+  background: var(--cat-color, var(--text-primary));
+  color: #000;
   z-index: 10;
 }
 
@@ -101,8 +101,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--text-primary);
-  color: var(--bg-primary);
+  background: var(--cat-color, var(--text-primary));
+  color: #000;
   transition: all 0.2s ease;
 }
 
@@ -129,7 +129,7 @@
 
 .videoProgressFill {
   height: 100%;
-  background: var(--text-primary);
+  background: var(--cat-color, var(--text-primary));
   width: 0;
   transition: width 0.1s linear;
 }

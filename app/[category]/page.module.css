@@ -200,14 +200,14 @@
 
 .loadMoreBtn:hover {
   transform: translate(-4px, -4px);
-  box-shadow: 4px 4px 0px var(--text-muted);
+  box-shadow: 4px 4px 0px var(--cat-color, var(--text-primary));
 }
 
 .loadingBtn {
   opacity: 0.7;
   cursor: wait;
-  border-color: rgba(var(--neon-cyan-rgb), 0.5);
-  box-shadow: 0 0 15px rgba(var(--neon-cyan-rgb), 0.2);
+  border-color: var(--cat-color, var(--text-primary));
+  box-shadow: 0 0 15px var(--cat-color, rgba(var(--neon-cyan-rgb), 0.2));
   animation: loading_pulse 1s infinite ease-in-out;
 }
 

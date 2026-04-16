@@ -47,13 +47,15 @@
 }
 
 .row:hover {
-  background: rgba(0, 240, 255, 0.04);
-  color: var(--text-primary);
+  background: var(--cat-color, rgba(0, 240, 255, 0.04));
+  color: #000;
+  filter: brightness(1.2);
 }
 
 .row.active {
-  background: rgba(0, 240, 255, 0.08);
-  color: var(--neon-cyan);
+  background: var(--cat-color, rgba(0, 240, 255, 0.08));
+  color: #000;
+  font-weight: 700;
 }
 
 .row.active::before {
@@ -64,9 +66,9 @@
   transform: translateY(-50%);
   width: 3px;
   height: 60%;
-  background: var(--neon-cyan);
+  background: var(--cat-color, var(--neon-cyan));
   border-radius: var(--radius-full);
-  box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
+  box-shadow: 0 0 8px var(--cat-color, rgba(0, 240, 255, 0.4));
 }
 
 .chevron {
@@ -91,7 +93,7 @@
 }
 
 .row.active .folderIcon {
-  color: var(--neon-cyan);
+  color: #000;
   opacity: 1;
 }
 

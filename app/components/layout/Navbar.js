@@ -5,26 +5,27 @@ import Link from "next/link";
 import { Search, Menu, X } from "lucide-react";
 import ThemeToggle from "@/app/components/ui/ThemeToggle";
 import GlobalAudioSettings from "@/app/components/ui/GlobalAudioSettings";
+import { getCategories } from "@/app/lib/api";
 import styles from "./Navbar.module.css";
-
-const categories = [
-  { name: "Sound Effects", slug: "sound-effects" },
-  { name: "Music", slug: "music" },
-  { name: "Video Meme", slug: "video-meme" },
-  { name: "Green Screen", slug: "green-screen" },
-  { name: "Animation", slug: "animation" },
-  { name: "Image & Overlay", slug: "image-overlay" },
-  { name: "Font", slug: "font" },
-  { name: "Preset & LUT", slug: "preset-lut" },
-];
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [categories, setCategories] = useState([]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
+    
+    // Fetch categories
+    const fetchCats = async () => {
+      const data = await getCategories();
+      // Sort by order
+      const sorted = (data || []).sort((a, b) => (a.order || 0) - (b.order || 0));
+      setCategories(sorted);
+    };
+    fetchCats();
+
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 

@@ -94,7 +94,7 @@ export default function ClientPage({ slug, info, folders, resources }) {
     const displayResources = filteredResources.slice(0, visibleCount);
 
     let gridContent;
-    if (info.layout === "sound") {
+    if (info.layout === "audio" || info.layout === "sound") {
       gridContent = (
         <div className={styles.soundGrid}>
           {displayResources.map((resource, idx) => (
@@ -104,6 +104,7 @@ export default function ClientPage({ slug, info, folders, resources }) {
               downloadUrl={resource.downloadUrl || resource.fileUrl}
               index={idx % PAGE_SIZE}
               onPreview={() => setPreviewResource(resource)}
+              primaryColor={info.color}
             />
           ))}
         </div>
@@ -140,6 +141,7 @@ export default function ClientPage({ slug, info, folders, resources }) {
               }
               index={idx % PAGE_SIZE}
               onPreview={() => setPreviewResource(resource)}
+              primaryColor={info.color}
             />
           ))}
         </div>
@@ -169,12 +171,13 @@ export default function ClientPage({ slug, info, folders, resources }) {
   return (
     <>
       <InitialLoader isReady={isReady} />
-      <div className={styles.page}>
+      <div className={styles.page} style={{ "--cat-color": info.color }}>
       <Sidebar
         categoryName={info.name}
         folders={folders}
         selectedFolderId={selectedFolderId}
         onSelectFolder={handleSelectFolder}
+        primaryColor={info.color}
       />
 
       <div className={styles.main}>

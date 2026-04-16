@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback, useEffect } from "react";
+import { useState, useRef, useCallback, useEffect, useMemo } from "react";
 import Image from "next/image";
 import { Download as DownloadCount, Play, Eye, Volume2, VolumeX } from "lucide-react";
 import DownloadButton from "./DownloadButton";
@@ -30,6 +30,7 @@ export default function ResourceCard({
   cardType = "default",
   index = 0,
   onPreview,
+  primaryColor = "#00F0FF",
   ...otherProps
 }) {
   const resourceObj = { id, name, fileName, fileFormat, downloadUrl, ...otherProps };
@@ -307,7 +308,10 @@ export default function ResourceCard({
   return (
     <div
       className={styles.card}
-      style={{ "--stagger-index": index }}
+      style={{ 
+        "--stagger-index": index,
+        "--cat-color": primaryColor
+      }}
       id={`resource-${id}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}

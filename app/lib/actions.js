@@ -26,3 +26,16 @@ export async function revalidateResourceData() {
     return { success: false, error: error.message };
   }
 }
+
+export async function revalidateCategoryData() {
+  try {
+    revalidatePath("/");
+    revalidateTag("categories");
+    revalidatePath("/[category]", "page");
+    console.log("Successfully triggered on-demand revalidation for categories.");
+    return { success: true };
+  } catch (error) {
+    console.error("Failed to revalidate categories:", error);
+    return { success: false, error: error.message };
+  }
+}
