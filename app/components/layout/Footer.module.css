@@ -6,7 +6,8 @@
   padding-top: var(--space-12);
 }
 
-.inner, .innerBottom {
+.inner,
+.innerBottom {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 var(--space-6);
@@ -27,9 +28,20 @@
 }
 
 @keyframes pulse {
-  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 240, 255, 0.7); }
-  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(0, 240, 255, 0); }
-  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(0, 240, 255, 0); }
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(0, 240, 255, 0.7);
+  }
+
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(0, 240, 255, 0);
+  }
+
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(0, 240, 255, 0);
+  }
 }
 
 /* ---------- Brand Section ---------- */
@@ -78,13 +90,14 @@
   background: var(--bg-hover);
   border-color: var(--text-primary);
   transform: translateY(-3px);
-  box-shadow: 0 8px 15px -5px rgba(0,0,0,0.5);
+  box-shadow: 0 8px 15px -5px rgba(0, 0, 0, 0.5);
 }
 
 .svgIcon {
   width: 20px;
   height: 20px;
-  filter: invert(1); /* Ensure icons are white in dark theme if they are black SVGs */
+  filter: invert(1);
+  /* Ensure icons are white in dark theme if they are black SVGs */
   transition: transform 0.3s;
 }
 
@@ -112,7 +125,7 @@
 .linksGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: var(--space-8);
+  gap: var(--space-16);
 }
 
 .colTitle {
@@ -164,7 +177,7 @@
 .bottomBar {
   padding: var(--space-6) 0;
   border-top: 1px solid var(--border-default);
-  background: rgba(0,0,0,0.2);
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .innerBottom {
@@ -183,7 +196,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  background: rgba(0,0,0,0.3);
+  background: rgba(0, 0, 0, 0.3);
   padding: var(--space-1) var(--space-3);
   border: 1px solid var(--border-default);
   font-family: monospace;
@@ -207,7 +220,7 @@
     grid-template-columns: 1fr;
     gap: var(--space-8);
   }
-  
+
   .innerBottom {
     flex-direction: column;
     gap: var(--space-4);

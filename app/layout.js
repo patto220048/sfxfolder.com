@@ -30,7 +30,6 @@ export default async function RootLayout({ children }) {
           defaultTheme="dark"
           enableSystem
           disableTransitionOnChange
-          scriptProps={{ async: true }}
         >
           <ToastProvider>
             <LayoutShell initialCategories={categories}>{children}</LayoutShell>

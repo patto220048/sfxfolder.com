@@ -29,7 +29,7 @@ export default function AdminSettings() {
           });
         }
       } catch (err) {
-        console.error("Failed to load settings:", err);
+        // Error handled silently
       } finally {
         setLoading(false);
       }
@@ -43,7 +43,6 @@ export default function AdminSettings() {
       await updateSiteSettings(settings);
       showToast("Settings saved successfully!", "success");
     } catch (err) {
-      console.error("Save failed:", err);
       showToast("Error: Failed to save settings.", "error");
     } finally {
       setSaving(false);
@@ -239,7 +238,7 @@ export default function AdminSettings() {
             onClick={handleSave}
             disabled={saving}
             style={{
-              padding: "var(--space-4) var(--space-20)", 
+              padding: "var(--space-4) var(--space-12)", 
               background: saving ? "var(--bg-hover)" : "white",
               color: "black", 
               fontWeight: "900", 
@@ -248,11 +247,10 @@ export default function AdminSettings() {
               textTransform: "uppercase",
               letterSpacing: "0.15em",
               fontSize: "1rem",
-              boxShadow: "8px 8px 0px black",
-              transition: "transform 0.1s"
+              boxShadow: "4px 4px 0px black",
+              transition: "all 0.15s cubic-bezier(0.23, 1, 0.32, 1)",
+              transform: saving ? "translate(2px, 2px)" : "none"
             }}
-            onMouseDown={(e) => e.currentTarget.style.transform = "translate(2px, 2px)"}
-            onMouseUp={(e) => e.currentTarget.style.transform = "translate(0, 0)"}
           >
             {saving ? "SAVING..." : "SAVE ALL CHANGES"}
           </button>
