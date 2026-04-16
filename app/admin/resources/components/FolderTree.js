@@ -213,7 +213,7 @@ export default function FolderTree({
   const [expandedFolders, setExpandedFolders] = useState({});
   const [dragOverCat, setDragOverCat] = useState(null);
 
-  // Load initial state from localStorage
+  // 1. Load initial state from localStorage (Run once on mount)
   useEffect(() => {
     const savedCats = localStorage.getItem('admin_sidebar_collapsed_cats');
     if (savedCats) {
@@ -223,15 +223,46 @@ export default function FolderTree({
     const savedFolders = localStorage.getItem('admin_sidebar_expanded_folders');
     if (savedFolders) {
       try { setExpandedFolders(JSON.parse(savedFolders)); } catch (e) {}
-    } else {
-      // Default: Expand first level folders if no saved state
+    } else if (folders.length > 0) {
+      // Default: Expand first level if no saved state
       const initial = {};
       folders.forEach(f => {
         if (!f.parentId) initial[f.id] = true;
       });
       setExpandedFolders(initial);
     }
-  }, [folders.length > 0]); // Only run once we have folders
+  }, []); // Run only once
+
+  // 2. Auto-expand path to selectedId (Run when selection or folders change)
+  useEffect(() => {
+    if (!selectedId || folders.length === 0) return;
+
+    if (!selectedId.startsWith('cat-')) {
+      let currentId = selectedId;
+      const newExpansions = {};
+      let foundAny = false;
+      let targetCat = null;
+
+      while (currentId) {
+        const folder = folders.find(f => f.id === currentId);
+        if (!folder) break;
+        newExpansions[folder.id] = true;
+        targetCat = folder.categorySlug;
+        foundAny = true;
+        currentId = folder.parentId;
+      }
+
+      if (foundAny) {
+        setExpandedFolders(prev => ({ ...prev, ...newExpansions }));
+        if (targetCat) {
+          setCollapsedCats(prev => prev.filter(s => s !== targetCat));
+        }
+      }
+    } else {
+      const slug = selectedId.replace('cat-', '');
+      setCollapsedCats(prev => prev.filter(s => s !== slug));
+    }
+  }, [selectedId, folders.length]);
 
   const toggleCategory = (slug, e) => {
     e.stopPropagation();

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Plus, Search, Trash2, Edit2, MoreVertical, LayoutGrid, List as ListIcon, FolderPlus, Loader2, Play, Pause, Eye } from "lucide-react";
 import { revalidateResourceData } from "@/app/lib/actions";
 import { 
@@ -33,15 +34,36 @@ import BulkEditModal from "./components/BulkEditModal";
 import MoveSelectionModal from "./components/MoveSelectionModal";
 
 export default function AdminResources() {
-  const [searchQuery, setSearchQuery] = useState("");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const [searchQuery, setSearchQuery] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('q') || "";
+    }
+    return "";
+  });
   const [resources, setResources] = useState([]);
   const [folders, setFolders] = useState([]);
   const [categories, setCategories] = useState([]);
   const [tags, setTags] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  const [selectedFolderId, setSelectedFolderId] = useState(null);
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [selectedFolderId, setSelectedFolderId] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('folder') || null;
+    }
+    return null;
+  });
+  const [viewMode, setViewMode] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('admin_view_mode') || 'grid';
+    }
+    return 'grid';
+  });
   
   // Renaming State
   const [renamingResourceId, setRenamingResourceId] = useState(null);
@@ -60,6 +82,48 @@ export default function AdminResources() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [isBulkEditOpen, setIsBulkEditOpen] = useState(false);
   const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
+
+  // Load persistence: viewMode
+  useEffect(() => {
+    const saved = localStorage.getItem('admin_view_mode');
+    if (saved) setViewMode(saved);
+  }, []);
+
+  // Sync state to URL & localStorage
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    
+    if (searchQuery) {
+      params.set('q', searchQuery);
+    } else {
+      params.delete('q');
+    }
+    
+    if (selectedFolderId) {
+      params.set('folder', selectedFolderId);
+    } else {
+      params.delete('folder');
+    }
+    
+    const newPath = `${pathname}?${params.toString()}`;
+    // Use replace to avoid polluting history with every keystroke in search
+    // But maybe for folder navigation we want push. 
+    // Let's use push for folder changes and replace for search query typing.
+    const isSearchChange = searchParams.get('q') !== (searchQuery || null);
+    
+    if (isSearchChange) {
+      router.replace(newPath, { scroll: false });
+    } else if (searchParams.get('folder') !== (selectedFolderId || null)) {
+      router.push(newPath, { scroll: false });
+    }
+  }, [selectedFolderId, searchQuery, pathname, router, searchParams]);
+
+  // Sync viewMode to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('admin_view_mode', viewMode);
+    }
+  }, [viewMode]);
   
   const { 
     stagingFiles, 
@@ -158,18 +222,35 @@ export default function AdminResources() {
     try {
       const idsToMove = Array.isArray(idOrIds) ? idOrIds : [idOrIds];
       
+      // Find target folder to get its category
+      const targetFolder = folders.find(f => f.id === targetFolderId);
+      const targetCatId = targetFolder?.categorySlug || targetFolder?.category_id;
+      const targetCategoryNode = categories.find(c => c.id === targetCatId || c.slug === targetCatId);
+
       // 1. Update Supabase in bulk
       const updates = idsToMove.map(id => ({
         id,
         folder_id: targetFolderId,
+        category_id: targetCatId || undefined, // Update category if found
         updated_at: new Date().toISOString()
       }));
       await bulkUpdateResources(updates);
       
       // 2. Update local state
-      setResources(prev => prev.map(r => 
-        idsToMove.includes(r.id) ? { ...r, folderId: targetFolderId } : r
-      ));
+      setResources(prev => prev.map(r => {
+        if (idsToMove.includes(r.id)) {
+          return { 
+            ...r, 
+            folderId: targetFolderId, 
+            folder_id: targetFolderId,
+            categoryId: targetCatId || r.categoryId,
+            category_id: targetCatId || r.category_id,
+            // Update nested category object for UI consistency (chips, labels)
+            category: targetCategoryNode ? { ...targetCategoryNode } : r.category
+          };
+        }
+        return r;
+      }));
       
       // 3. Clear selection
       setSelectedIds([]);
@@ -298,7 +379,7 @@ export default function AdminResources() {
         return filtered.map(f => f.parentId === folder.id ? { ...f, parentId: null } : f);
       });
       
-      setResources(prev => prev.map(r => r.folderId === folder.id ? { ...r, folderId: null } : r));
+      setResources(prev => prev.map(r => (r.folderId === folder.id || r.folder_id === folder.id) ? { ...r, folderId: null, folder_id: null } : r));
 
       
       // 6. If we were viewing this folder, switch to category root
@@ -457,7 +538,16 @@ export default function AdminResources() {
       // Update local state
       setResources(prev => prev.map(r => {
         const updated = updatedItems.find(ui => ui.id === r.id);
-        return updated ? { ...r, ...updated } : r;
+        if (updated) {
+          // Ensure both casing versions are sync'd for local state
+          return { 
+            ...r, 
+            ...updated, 
+            folder_id: updated.folderId !== undefined ? updated.folderId : r.folder_id,
+            category_id: updated.categoryId !== undefined ? updated.categoryId : r.category_id
+          };
+        }
+        return r;
       }));
       
       setIsBulkEditOpen(false);
