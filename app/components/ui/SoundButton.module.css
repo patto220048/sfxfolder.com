@@ -265,8 +265,8 @@
   opacity: 0.7;
 }
 
-/* ---------- Download button ---------- */
-.downloadBtn {
+.downloadBtn,
+.previewBtn {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -281,17 +281,29 @@
   transition: all var(--transition-base);
 }
 
-.downloadBtn:hover {
+.previewBtn {
+  margin-right: 8px;
+}
+
+.downloadBtn:hover,
+.previewBtn:hover {
   border-color: rgba(255, 255, 255, 0.2);
   color: var(--text-primary);
   background: rgba(255, 255, 255, 0.04);
 }
 
-.downloadBtn:active {
+.previewBtn:hover {
+  color: var(--neon-cyan, #00F0FF);
+  border-color: rgba(0, 240, 255, 0.3);
+}
+
+.downloadBtn:active,
+.previewBtn:active {
   transform: scale(0.9);
 }
 
-.downloadBtn:disabled {
+.downloadBtn:disabled,
+.previewBtn:disabled {
   opacity: 0.3;
   cursor: not-allowed;
 }

@@ -22,6 +22,7 @@ import {
 import styles from "./page.module.css";
 import { mediaManager } from "@/app/lib/mediaManager";
 import PreviewOverlay from "@/app/components/ui/PreviewOverlay";
+import { isAudioFormat, isVideoFormat, isImageFormat, isFontFormat } from "@/app/lib/mediaUtils";
 
 // New Components & Hooks
 import { useAdminUpload } from "./hooks/useAdminUpload";
@@ -218,20 +219,24 @@ export default function AdminResources() {
     e.dataTransfer.effectAllowed = "move";
   };
 
-  const handleDropResource = async (idOrIds, targetFolderId) => {
+  const handleDropResource = async (idOrIds, targetFolderId, targetCatIdFromUI) => {
     try {
       const idsToMove = Array.isArray(idOrIds) ? idOrIds : [idOrIds];
       
-      // Find target folder to get its category
-      const targetFolder = folders.find(f => f.id === targetFolderId);
-      const targetCatId = targetFolder?.categorySlug || targetFolder?.category_id;
+      // Resolve target category ID
+      let targetCatId = targetCatIdFromUI;
+      if (!targetCatId && targetFolderId) {
+        const targetFolder = folders.find(f => f.id === targetFolderId);
+        targetCatId = targetFolder?.categorySlug || targetFolder?.category_id;
+      }
+      
       const targetCategoryNode = categories.find(c => c.id === targetCatId || c.slug === targetCatId);
 
       // 1. Update Supabase in bulk
       const updates = idsToMove.map(id => ({
         id,
         folder_id: targetFolderId,
-        category_id: targetCatId || undefined, // Update category if found
+        category_id: targetCatId || undefined, 
         updated_at: new Date().toISOString()
       }));
       await bulkUpdateResources(updates);
@@ -563,7 +568,7 @@ export default function AdminResources() {
     e.stopPropagation();
     e.preventDefault();
 
-    if (!isAudio(resource.category)) {
+    if (!isAudioFormat(resource)) {
       setPreviewResource(resource);
       return;
     }
@@ -604,15 +609,9 @@ export default function AdminResources() {
     };
   };
 
-  const isAudio = (cat) => {
-    const slug = typeof cat === 'string' ? cat : cat?.slug;
-    return ["sound-effects", "music"].includes(slug);
-  };
+  const isAudio = (res) => isAudioFormat(res);
   
-  const isVisual = (cat) => {
-    const slug = typeof cat === 'string' ? cat : (cat?.slug || "");
-    return slug.includes('video') || slug.includes('image') || ["video-meme", "green-screen", "animation", "image-overlay", "graphics", "background", "font"].includes(slug);
-  };
+  const isVisual = (res) => isVideoFormat(res) || isImageFormat(res) || isFontFormat(res);
 
   return (
     <>
@@ -794,7 +793,7 @@ export default function AdminResources() {
                           <button
                             className={`${styles.actionBtn} ${playingId === r.id ? styles.active : ''}`}
                             onClick={(e) => handlePlay(e, r)}
-                            title={isAudio(r.category) ? "Nghe thử" : "Xem trước"}
+                            title={isAudioFormat(r) ? "Nghe thử" : "Xem trước"}
                           >
                             {playingId === r.id ? <Pause size={18} /> : <Play size={18} />}
                           </button>
@@ -930,7 +929,7 @@ export default function AdminResources() {
                         <button
                           className={`${styles.inlineActionBtn} ${playingId === r.id ? styles.active : ''}`}
                           onClick={(e) => handlePlay(e, r)}
-                          title={isAudio(r.category) ? "Nghe thử" : "Xem trước"}
+                          title={isAudioFormat(r) ? "Nghe thử" : "Xem trước"}
                         >
                           {playingId === r.id ? <Pause size={14} /> : <Play size={14} />}
                         </button>

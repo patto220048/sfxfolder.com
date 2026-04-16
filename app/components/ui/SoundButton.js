@@ -1,9 +1,10 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
-import { Download } from "lucide-react";
+import { Download, Eye } from "lucide-react";
 import { incrementDownloadCount } from "@/app/lib/api";
 import { mediaManager } from "@/app/lib/mediaManager";
+import { isVideoFormat, isImageFormat, isFontFormat } from "@/app/lib/mediaUtils";
 import styles from "./SoundButton.module.css";
 
 function formatSize(bytes) {
@@ -29,8 +30,20 @@ export default function SoundButton({
   fileSize,
   downloadCount = 0,
   index = 0,
+  onPreview, // Added prop
+  ...otherProps // To catch full resource if passed
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
+  // ... existing state ...
+
+  // Create a pseudo-resource for utility functions
+  const resourceObj = { id, name, fileName, fileFormat, downloadUrl, ...otherProps };
+  const hasPreview = isVideoFormat(resourceObj) || isImageFormat(resourceObj) || isFontFormat(resourceObj);
+
+  const handlePreview = (e) => {
+    e.stopPropagation();
+    if (onPreview) onPreview(resourceObj);
+  };
   const [isDownloading, setIsDownloading] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -264,6 +277,18 @@ export default function SoundButton({
           </div>
         )}
       </div>
+
+      {/* Preview Overlay Trigger */}
+      {hasPreview && (
+        <button
+          className={styles.previewBtn}
+          onClick={handlePreview}
+          title="Xem trước"
+          aria-label={`Xem trước ${displayName}`}
+        >
+          <Eye size={16} />
+        </button>
+      )}
 
       {/* Download */}
       <button

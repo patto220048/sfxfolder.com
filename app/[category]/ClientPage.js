@@ -100,14 +100,10 @@ export default function ClientPage({ slug, info, folders, resources }) {
           {displayResources.map((resource, idx) => (
             <SoundButton
               key={resource.id}
-              id={resource.id}
-              name={resource.name}
-              fileName={resource.fileName}
+              {...resource} // Pass everything for mediaUtils
               downloadUrl={resource.downloadUrl || resource.fileUrl}
-              fileFormat={resource.fileFormat}
-              fileSize={resource.fileSize}
-              downloadCount={resource.downloadCount}
               index={idx % PAGE_SIZE}
+              onPreview={() => setPreviewResource(resource)}
             />
           ))}
         </div>

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Download as DownloadCount, Play, Eye, Volume2, VolumeX } from "lucide-react";
 import DownloadButton from "./DownloadButton";
 import { mediaManager } from "@/app/lib/mediaManager";
+import { isVideoFormat, isImageFormat, isFontFormat } from "@/app/lib/mediaUtils";
 import styles from "./ResourceCard.module.css";
 
 function formatSize(bytes) {
@@ -29,7 +30,18 @@ export default function ResourceCard({
   cardType = "default",
   index = 0,
   onPreview,
+  ...otherProps
 }) {
+  const resourceObj = { id, name, fileName, fileFormat, downloadUrl, ...otherProps };
+  
+  // Determine effective card type based on format if not explicitly set to something else
+  const effectiveCardType = useMemo(() => {
+    if (cardType !== "default" && cardType !== "preview") return cardType;
+    if (isVideoFormat(resourceObj)) return "video";
+    if (isImageFormat(resourceObj)) return "image";
+    if (isFontFormat(resourceObj)) return "font";
+    return cardType;
+  }, [cardType, resourceObj]);
   const resolvedUrl = downloadUrl || fileUrl;
   const [isHovering, setIsHovering] = useState(false);
   const [videoProgress, setVideoProgress] = useState(0);
@@ -88,7 +100,7 @@ export default function ResourceCard({
     setIsMuted(mediaManager.getMuted());
     setVolume(mediaManager.getVolume());
 
-    if (cardType === "video" && videoRef.current) {
+    if (effectiveCardType === "video" && videoRef.current) {
       mediaManager.play(videoRef.current, 'video', () => {
         setVideoProgress(0);
       });
@@ -113,7 +125,7 @@ export default function ResourceCard({
 
   const handleMouseLeave = () => {
     setIsHovering(false);
-    if (cardType === "video" && videoRef.current) {
+    if (effectiveCardType === "video" && videoRef.current) {
       videoRef.current.pause();
       videoRef.current.currentTime = 0;
       mediaManager.stop(videoRef.current);
@@ -123,7 +135,7 @@ export default function ResourceCard({
   };
 
   const renderPreview = () => {
-    switch (cardType) {
+    switch (effectiveCardType) {
       case "video":
         return (
           <div className={styles.preview}>
@@ -177,7 +189,7 @@ export default function ResourceCard({
             )}
 
             {/* Volume Control */}
-            {isHovering && cardType === "video" && (
+            {isHovering && effectiveCardType === "video" && (
               <div className={styles.volumeControl} onClick={(e) => e.stopPropagation()}>
                 <button 
                   className={styles.volumeBtn}

@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { X } from "lucide-react";
+import { X, Music } from "lucide-react";
 import { mediaManager } from "@/app/lib/mediaManager";
+import { isVideoFormat, isImageFormat, isFontFormat, isAudioFormat } from "@/app/lib/mediaUtils";
 import DownloadButton from "./DownloadButton";
 import styles from "./PreviewOverlay.module.css";
 
@@ -21,7 +22,7 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
 
   // Sync with mediaManager
   useEffect(() => {
-    if (resource && mediaRef.current && ["video-meme", "green-screen", "animation"].includes(resource.category)) {
+    if (resource && mediaRef.current && isVideoFormat(resource)) {
       mediaManager.play(mediaRef.current, 'video');
     }
     return () => {
@@ -43,6 +44,11 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
     ? resource.category 
     : (resource.category?.slug || resource.category_id || "");
 
+  const isVideo = isVideoFormat(resource);
+  const isImage = isImageFormat(resource);
+  const isFont = isFontFormat(resource);
+  const isAudio = isAudioFormat(resource);
+
   return (
     <div className={styles.previewOverlay} onClick={onClose}>
       <div 
@@ -58,7 +64,7 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
           onMouseEnter={handleMediaEnter}
           onMouseLeave={handleMediaLeave}
         >
-          {(categorySlug.includes('video') || ["video-meme", "green-screen", "animation"].includes(categorySlug)) && (
+          {isVideo && (
             <video 
               ref={mediaRef}
               src={resource.downloadUrl || resource.fileUrl} 
@@ -71,14 +77,14 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
               className={styles.largePreviewVideo} 
             />
           )}
-          {(categorySlug.includes('image') || ["image-overlay", "graphics", "background"].includes(categorySlug)) && (
+          {isImage && (
             <img 
               src={resource.downloadUrl || resource.fileUrl} 
               alt={resource.name} 
               className={styles.largePreviewImage} 
             />
           )}
-          {categorySlug === "font" && (
+          {isFont && (
             <div className={styles.largePreviewFont}>
                <p>ABCDEFGHIJKLMNOPQRSTUVWXYZ</p>
                <p>abcdefghijklmnopqrstuvwxyz</p>
@@ -88,12 +94,25 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
                </p>
             </div>
           )}
-          {/* Default fallback if category not matched but has fileUrl */}
-          {!categorySlug.includes('video') && !categorySlug.includes('image') && 
-           !["video-meme", "green-screen", "animation", "image-overlay", "graphics", "background", "font"].includes(categorySlug) && (
+          {isAudio && (
+            <div className={styles.largePreviewAudio}>
+              <div className={styles.audioIconWrapper}>
+                <Music size={80} />
+              </div>
+              <audio 
+                controls 
+                autoPlay 
+                src={resource.downloadUrl || resource.fileUrl}
+                className={styles.largePreviewAudioPlayer}
+              />
+            </div>
+          )}
+          
+          {/* Default fallback if format not supported */}
+          {!isVideo && !isImage && !isFont && !isAudio && (
             <div className={styles.largePreviewFont}>
-              <p>Preview not available for this type</p>
-              <p style={{ fontSize: '1rem', opacity: 0.7 }}>{resource.fileName} ({categorySlug})</p>
+              <p>Preview not available for this format</p>
+              <p style={{ fontSize: '1rem', opacity: 0.7 }}>{resource.fileName || resource.name} ({resource.fileFormat || "unknown"})</p>
             </div>
           )}
         </div>

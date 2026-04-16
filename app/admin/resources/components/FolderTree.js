@@ -317,7 +317,7 @@ export default function FolderTree({
     }
 
     if (rIds && rIds.length > 0 && onDropResource) {
-      return onDropResource(rIds, null);
+      return onDropResource(rIds, null, cat.slug);
     }
 
     // 2. Try Folder Move
