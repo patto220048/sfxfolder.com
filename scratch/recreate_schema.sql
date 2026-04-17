@@ -14,7 +14,7 @@ CREATE TABLE categories (
     name TEXT NOT NULL,
     slug TEXT UNIQUE NOT NULL,
     description TEXT,
-    icon_name TEXT,
+    icon TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -75,7 +75,7 @@ CREATE INDEX idx_resources_published ON resources(is_published);
 CREATE INDEX idx_resources_created_at ON resources(created_at DESC);
 
 -- 6. Seed dữ liệu cho Categories
-INSERT INTO categories (name, slug, icon_name) VALUES
+INSERT INTO categories (name, slug, icon) VALUES
 ('Video Overlay', 'video-overlay', 'Video'),
 ('Sound Effects', 'sound-effects', 'Music'),
 ('Fonts', 'fonts', 'Type'),

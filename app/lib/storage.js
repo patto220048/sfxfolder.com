@@ -4,15 +4,16 @@ import { convertToSlug } from './stringUtils';
 /**
  * Upload a file to Supabase Storage
  * @param {File} file - The file to upload
- * @param {string} path - Storage path (e.g., "resources/sound-effects/whoosh.mp3")
- * @param {function} onProgress - Progress callback (0-100) (Supabase doesn't natively support progress in getSession upload, but we can simulate or use browser XHR)
+ * @param {string} path - Storage path
+ * @param {string} bucket - Storage bucket name (default: "resources")
+ * @param {function} onProgress - Progress callback
  * @returns {Promise<string>} Public URL
  */
-export async function uploadFile(file, path, onProgress = null) {
+export async function uploadFile(file, path, bucket = 'resources', onProgress = null) {
   // Note: Supabase JS client doesn't have a built-in progress callback like Firebase.
   // For production, you might want to use XMLHttpRequest or a special library if progress is critical.
   const { data, error } = await supabase.storage
-    .from('resources')
+    .from(bucket)
     .upload(path, file, {
       cacheControl: '3600',
       upsert: true,
@@ -25,7 +26,7 @@ export async function uploadFile(file, path, onProgress = null) {
 
   // Get the public URL
   const { data: { publicUrl } } = supabase.storage
-    .from('resources')
+    .from(bucket)
     .getPublicUrl(path);
 
   return publicUrl;
@@ -34,11 +35,12 @@ export async function uploadFile(file, path, onProgress = null) {
 /**
  * Get download URL for a file
  * @param {string} path - Storage path
+ * @param {string} bucket - Bucket name
  * @returns {string} Public URL
  */
-export async function getFileUrl(path) {
+export async function getFileUrl(path, bucket = 'resources') {
   const { data: { publicUrl } } = supabase.storage
-    .from('resources')
+    .from(bucket)
     .getPublicUrl(path);
 
   return publicUrl;
@@ -47,10 +49,11 @@ export async function getFileUrl(path) {
 /**
  * Delete a file from Supabase Storage
  * @param {string} path - Storage path
+ * @param {string} bucket - Bucket name
  */
-export async function deleteFile(path) {
+export async function deleteFile(path, bucket = 'resources') {
   const { error } = await supabase.storage
-    .from('resources')
+    .from(bucket)
     .remove([path]);
 
   if (error) {

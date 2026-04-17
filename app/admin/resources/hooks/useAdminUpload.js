@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { uploadFile, generateStoragePath } from "../../../lib/storage";
 import { addResource } from "../../../lib/api";
-import { revalidateResourceData } from "../../../lib/actions";
+import { revalidateResourceData, revalidateCategoryData, revalidateTagData } from "../../../lib/actions";
 import { cleanFileName, convertToSlug } from "../../../lib/stringUtils";
 
 const CATEGORIES = [
@@ -143,8 +143,12 @@ export function useAdminUpload() {
     }
 
     try {
-      await revalidateResourceData();
-      console.log("Global data revalidated.");
+      await Promise.all([
+        revalidateResourceData(),
+        revalidateCategoryData(),
+        revalidateTagData()
+      ]);
+      console.log("Global data (Resources, Categories, Tags) revalidated.");
     } catch (e) {
       console.warn("Revalidation non-critical failure:", e);
     }

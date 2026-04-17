@@ -1,41 +1,53 @@
 "use server";
 
-import { revalidatePath, revalidateTag } from "next/cache";
+import { revalidateTag } from "next/cache";
 
 /**
- * Revalidates the cached data for resources.
- * This should be called after any Add, Update, or Delete operation in the Admin panel.
+ * Revalidate the site settings cache.
  */
-export async function revalidateResourceData() {
-  try {
-    // 1. Revalidate the homepage (which shows category counts)
-    revalidatePath("/");
-    
-    // 2. Revalidate all category pages using the 'resources' tag
-    // This targets the unstable_cache in app/[category]/page.js
-    revalidateTag("resources");
-    
-    // 3. Specifically revalidate the category path if needed (optional since tag covers it)
-    // we use 'layout' type to be safe
-    revalidatePath("/[category]", "page");
-    
-    console.log("Successfully triggered on-demand revalidation for resources.");
-    return { success: true };
-  } catch (error) {
-    console.error("Failed to revalidate:", error);
-    return { success: false, error: error.message };
-  }
+export async function revalidateSettings() {
+  revalidateTag('settings', 'max');
 }
 
+/**
+ * Revalidate categories cache.
+ */
 export async function revalidateCategoryData() {
-  try {
-    revalidatePath("/");
-    revalidateTag("categories");
-    revalidatePath("/[category]", "page");
-    console.log("Successfully triggered on-demand revalidation for categories.");
-    return { success: true };
-  } catch (error) {
-    console.error("Failed to revalidate categories:", error);
-    return { success: false, error: error.message };
-  }
+  revalidateTag('categories', 'max');
+}
+
+// Alias for compatibility
+export async function revalidateCategories() {
+  return revalidateCategoryData();
+}
+
+/**
+ * Revalidate resource list cache.
+ * Note: This also revalidates folders as they are often displayed together.
+ */
+export async function revalidateResourceData() {
+  revalidateTag('resources', 'max');
+}
+
+/**
+ * Revalidate tags cache.
+ */
+export async function revalidateTagData() {
+  revalidateTag('tags', 'max');
+}
+
+/**
+ * Revalidate folders cache.
+ */
+export async function revalidateFolderData() {
+  revalidateTag('folders', 'max');
+}
+
+/**
+ * Comprehensive revalidation for tag-related changes.
+ * When a tag is renamed or deleted, it affects both tags list and resources.
+ */
+export async function revalidateTagChanges() {
+  revalidateTag('tags', 'max');
+  revalidateTag('resources', 'max');
 }

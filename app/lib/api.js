@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { unstable_cache } from 'next/cache';
+import { deleteFile } from './storage';
 
 /* ========================================
    RESOURCES
@@ -62,27 +63,34 @@ export async function getResource(id) {
  * Implements basic limits and ordering.
  */
 export async function getResources({ categorySlug, folderId, limit = 20, offset = 0 } = {}) {
-  let query = supabase
-    .from('resources')
-    .select(RESOURCE_SUMMARY_COLUMNS)
-    .eq('is_published', true)
-    .order('created_at', { ascending: false })
-    .range(offset, offset + limit - 1);
+  // Wrap with unstable_cache for better server-side performance
+  return unstable_cache(
+    async () => {
+      let query = supabase
+        .from('resources')
+        .select(RESOURCE_SUMMARY_COLUMNS)
+        .eq('is_published', true)
+        .order('created_at', { ascending: false })
+        .range(offset, offset + limit - 1);
 
-  if (categorySlug) {
-    query = query.eq('categories.slug', categorySlug);
-  }
-  if (folderId) {
-    query = query.eq('folder_id', folderId);
-  }
+      if (categorySlug) {
+        query = query.eq('categories.slug', categorySlug);
+      }
+      if (folderId) {
+        query = query.eq('folder_id', folderId);
+      }
 
-  const { data, error } = await query;
+      const { data, error } = await query;
 
-  if (error) {
-    console.error('Error fetching resources:', error);
-    return [];
-  }
-  return data.map(mapResource);
+      if (error) {
+        console.error('Error fetching resources:', error);
+        return [];
+      }
+      return (data || []).map(mapResource);
+    },
+    [`resources-${categorySlug || 'all'}-${folderId || 'all'}-${limit}-${offset}`],
+    { revalidate: 3600, tags: ['resources'] }
+  )();
 }
 
 /**
@@ -236,15 +244,38 @@ export async function updateResource(id, updateData) {
  * Delete a resource.
  */
 export async function deleteResource(id) {
+  try {
+    // 1. Fetch storage_path before deleting
+    const { data: res } = await supabase
+      .from('resources')
+      .select('storage_path')
+      .eq('id', id)
+      .single();
+
+    if (res?.storage_path) {
+      // 2. Clear from storage (background failure ignored as per user request)
+      deleteFile(res.storage_path).catch(err => 
+        console.error(`Storage cleanup failed for resource ${id}:`, err)
+      );
+    }
+  } catch (e) {
+    console.warn(`Could not fetch storage_path for resource ${id}, proceeding with DB delete:`, e);
+  }
+
+  // 3. Delete DB record
   const { error } = await supabase
     .from('resources')
     .delete()
     .eq('id', id);
 
   if (error) {
-    console.error('Error deleting resource:', error);
+    console.error('Error deleting resource record:', error);
     throw error;
   }
+
+  // 4. Re-sync tags to keep counts accurate
+  await syncAllTagsFromResources().catch(e => console.error("Auto tag sync failed after delete:", e));
+
   return true;
 }
 
@@ -416,45 +447,55 @@ export async function deleteCategory(id) {
  * Get folders for a category, optionally filtered by parent.
  */
 export async function getFolders(categorySlug, parentId) {
-  let query = supabase
-    .from('folders')
-    .select('*, category:categories!inner(slug)')
-    .eq('categories.slug', categorySlug)
-    .order('order', { ascending: true });
+  return unstable_cache(
+    async () => {
+      let query = supabase
+        .from('folders')
+        .select('*, category:categories!inner(slug)')
+        .eq('categories.slug', categorySlug)
+        .order('order', { ascending: true });
 
-  if (parentId !== undefined) {
-    if (parentId === null) {
-      query = query.is('parent_id', null);
-    } else {
-      query = query.eq('parent_id', parentId);
-    }
-  }
+      if (parentId !== undefined) {
+        if (parentId === null) {
+          query = query.is('parent_id', null);
+        } else {
+          query = query.eq('parent_id', parentId);
+        }
+      }
 
-  const { data, error } = await query;
+      const { data, error } = await query;
 
-  if (error) {
-    console.error('Error fetching folders:', error);
-    return [];
-  }
-  return (data || []).map(mapFolder);
+      if (error) {
+        console.error('Error fetching folders:', error);
+        return [];
+      }
+      return (data || []).map(mapFolder);
+    },
+    [`folders-${categorySlug}-${parentId || 'root'}`],
+    { revalidate: 3600, tags: ['folders', 'resources'] } // Also clear folders when resources change if they are tightly coupled
+  )();
 }
 
 /* ========================================
    TAGS
    ======================================== */
 
-export async function getTags() {
-  const { data, error } = await supabase
-    .from('tags')
-    .select('*')
-    .order('usage_count', { ascending: false });
+export const getTags = unstable_cache(
+  async () => {
+    const { data, error } = await supabase
+      .from('tags')
+      .select('*')
+      .order('usage_count', { ascending: false });
 
-  if (error) {
-    console.error('Error fetching tags:', error);
-    return [];
-  }
-  return (data || []).map(t => ({ ...t, usageCount: t.usage_count }));
-}
+    if (error) {
+      console.error('Error fetching tags:', error);
+      return [];
+    }
+    return (data || []).map(t => ({ ...t, usageCount: t.usage_count }));
+  },
+  ['tags-list'],
+  { revalidate: 3600, tags: ['tags'] }
+);
 
 /**
  * Helper to sync tags.
@@ -509,18 +550,22 @@ export async function syncTagsCount(addedTags = [], removedTags = []) {
 /**
  * Get all folders (including unpublished/admin)
  */
-export async function getAllAdminFolders() {
-  const { data, error } = await supabase
-    .from('folders')
-    .select('*')
-    .order('order', { ascending: true });
+export const getAllAdminFolders = unstable_cache(
+  async () => {
+    const { data, error } = await supabase
+      .from('folders')
+      .select('*')
+      .order('order', { ascending: true });
 
-  if (error) {
-    console.error('Error fetching admin folders:', error);
-    return [];
-  }
-  return (data || []).map(mapFolder);
-}
+    if (error) {
+      console.error('Error fetching admin folders:', error);
+      return [];
+    }
+    return (data || []).map(mapFolder);
+  },
+  ['admin-folders-list'],
+  { revalidate: 3600, tags: ['folders'] }
+);
 
 /**
  * Add a new folder.
@@ -648,15 +693,48 @@ export async function bulkUpdateResources(updates) {
  * Delete multiple resources.
  */
 export async function bulkDeleteResources(ids) {
+  if (!ids || ids.length === 0) return true;
+
+  try {
+    // 1. Fetch all storage paths
+    const { data: items } = await supabase
+      .from('resources')
+      .select('storage_path')
+      .in('id', ids);
+
+    const paths = (items || [])
+      .map(i => i.storage_path)
+      .filter(p => !!p);
+
+    if (paths.length > 0) {
+      // 2. Delete all files from storage
+      // Use supabase.storage directly for efficiency or loop through deleteFile
+      const { error: storageError } = await supabase.storage
+        .from('resources')
+        .remove(paths);
+      
+      if (storageError) {
+        console.error('Error cleaning up storage in bulk delete:', storageError);
+      }
+    }
+  } catch (e) {
+    console.warn('Failed to fetch storage paths for bulk cleanup, skipping to DB delete:', e);
+  }
+
+  // 3. Delete DB records
   const { error } = await supabase
     .from('resources')
     .delete()
     .in('id', ids);
 
   if (error) {
-    console.error('Error in bulk delete:', error);
+    console.error('Error in bulk delete (DB):', error);
     throw error;
   }
+
+  // 4. Re-sync tags
+  await syncAllTagsFromResources().catch(e => console.error("Auto tag sync failed after bulk delete:", e));
+
   return true;
 }
 
@@ -763,4 +841,56 @@ export async function syncAllTagsFromResources() {
     console.error('Sync all tags failed:', e);
     throw e;
   }
+}
+
+/* ========================================
+   SITE SETTINGS
+   ======================================== */
+
+/**
+ * Get global site settings (version, name, status, etc.)
+ * Cached for performance.
+ */
+export const getSiteSettings = unstable_cache(
+  async () => {
+    const { data, error } = await supabase
+      .from('site_settings')
+      .select('*')
+      .eq('id', 1)
+      .single();
+
+    if (error) {
+      console.warn('Cannot fetch site settings, using defaults:', error);
+      return {
+        site_name: 'EditerLor',
+        tagline: 'Free Resources for Video Editors',
+        project_version: 'v 0.1.16.4',
+        status_text: 'System Online'
+      };
+    }
+    return data;
+  },
+  ['site-settings'],
+  { revalidate: 3600, tags: ['settings'] }
+);
+
+/**
+ * Update site settings.
+ */
+export async function updateSiteSettings(updateData) {
+  const { data, error } = await supabase
+    .from('site_settings')
+    .update({
+      ...updateData,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', 1)
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error updating site settings:', error);
+    throw error;
+  }
+  return data;
 }

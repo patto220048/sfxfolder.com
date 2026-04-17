@@ -6,27 +6,21 @@ import { usePathname } from "next/navigation";
 import { Search, Menu, X } from "lucide-react";
 import ThemeToggle from "@/app/components/ui/ThemeToggle";
 import GlobalAudioSettings from "@/app/components/ui/GlobalAudioSettings";
-import { getCategories } from "@/app/lib/api";
+import { useSiteData } from "@/app/context/SiteContext";
 import styles from "./Navbar.module.css";
 
-export default function Navbar({ initialCategories = [] }) {
+export default function Navbar() {
+  const { settings, categories } = useSiteData();
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [categories, setCategories] = useState(initialCategories);
   const [isNavigating, setIsNavigating] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", handleScroll);
-
-    // Sync state if initialCategories change significantly
-    if (initialCategories.length > 0 && categories.length === 0) {
-      setCategories(initialCategories);
-    }
-
     return () => window.removeEventListener("scroll", handleScroll);
-  }, [initialCategories, categories.length]);
+  }, []);
 
   // Reset navigating state when pathname changes
   useEffect(() => {
@@ -66,7 +60,7 @@ export default function Navbar({ initialCategories = [] }) {
           onClick={(e) => handleLinkClick(e, "/")}
         >
           <span className={styles.logoText}>
-            EditerLor
+            {settings?.site_name || "EditerLor"}
           </span>
         </Link>
 

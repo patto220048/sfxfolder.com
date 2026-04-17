@@ -18,6 +18,7 @@ import {
   deleteTagGlobally, 
   syncAllTagsFromResources 
 } from "@/app/lib/api";
+import { revalidateTagData, revalidateTagChanges } from "@/app/lib/actions";
 import styles from "./page.module.css";
 
 export default function AdminTags() {
@@ -66,6 +67,7 @@ export default function AdminTags() {
     try {
       const count = await syncAllTagsFromResources();
       showToast(`Đã đồng bộ thành công ${count} tag độc nhất.`);
+      await revalidateTagData();
       await loadTags();
     } catch (e) {
       showToast("Lỗi khi đồng bộ dữ liệu", "error");
@@ -96,6 +98,7 @@ export default function AdminTags() {
       const affected = await renameTagGlobally(oldName, newName);
       showToast(`Đã đổi tên và cập nhật ${affected} tài nguyên.`);
       setEditingId(null);
+      await revalidateTagChanges(); 
       await loadTags();
     } catch (e) {
       showToast("Lỗi khi đổi tên tag", "error");
@@ -111,6 +114,7 @@ export default function AdminTags() {
     try {
       const affected = await deleteTagGlobally(tagName);
       showToast(`Đã xóa tag và cập nhật ${affected} tài nguyên.`);
+      await revalidateTagChanges();
       await loadTags();
     } catch (e) {
       showToast("Lỗi khi xóa tag", "error");
