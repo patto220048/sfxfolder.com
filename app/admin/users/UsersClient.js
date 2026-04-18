@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useTransition, useEffect, useCallback } from "react";
+import useSWRInfinite from 'swr/infinite';
+
 import { Search, Shield, User, Crown, ChevronDown, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 import styles from "./page.module.css";
@@ -55,72 +57,55 @@ async function updateUserRole(userId, newRole) {
   if (!res.ok) throw new Error(data.error || "Failed");
 }
 
+const fetcher = url => fetch(url).then(r => r.json());
+
 export default function UsersClient({ users: initialUsers }) {
+
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
-  const [userList, setUserList] = useState(initialUsers || []);
   const [isPending, startTransition] = useTransition();
-  
-  const [loading, setLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const [totalCount, setTotalCount] = useState(0);
-
   const debouncedSearch = useDebounce(query, 500);
 
-  const fetchUsers = useCallback(async (pageNum = 0, isInitial = false) => {
-    if (isInitial) setLoading(true);
-    else setLoadingMore(true);
+  // SWR Configuration
+  const getKey = (pageIndex, previousPageData) => {
+    if (previousPageData && !previousPageData.hasMore) return null;
+    const params = new URLSearchParams({
+      page: pageIndex.toString(),
+      limit: "25",
+      q: debouncedSearch,
+      filter: filter
+    });
+    return `/api/admin/users?${params.toString()}`;
+  };
 
-    try {
-      const params = new URLSearchParams({
-        page: pageNum.toString(),
-        limit: "25",
-        q: debouncedSearch,
-        filter: filter
-      });
+  const { data, error, size, setSize, isValidating, mutate } = useSWRInfinite(getKey, fetcher, {
+    revalidateFirstPage: false,
+    persistSize: true,
+    fallbackData: initialUsers ? [{ data: initialUsers, hasMore: true, count: initialUsers.length }] : undefined
+  });
 
-      const res = await fetch(`/api/admin/users?${params.toString()}`);
-      const result = await res.json();
-      
-      if (result.error) throw new Error(result.error);
-
-      if (isInitial) {
-        setUserList(result.data);
-      } else {
-        setUserList(prev => [...prev, ...result.data]);
-      }
-      
-      setHasMore(result.hasMore);
-      setTotalCount(result.count);
-      setPage(pageNum);
-    } catch (err) {
-      console.error("Fetch users error:", err);
-      toast.error("Failed to load users");
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, [debouncedSearch, filter]);
-
-  // Initial load or search/filter change
-  useEffect(() => {
-    fetchUsers(0, true);
-  }, [fetchUsers]);
+  const userList = data ? data.map(page => page.data).flat() : [];
+  const loading = !data && !error;
+  const loadingMore = size > 0 && data && typeof data[size - 1] === "undefined";
+  const hasMore = data ? data[data.length - 1]?.hasMore : true;
+  const totalCount = data ? data[0]?.count : 0;
 
   // Infinite scroll trigger
-  const loaderRef = useInfiniteScroll(hasMore, loading || loadingMore, () => {
-    fetchUsers(page + 1);
+  const loaderRef = useInfiniteScroll(hasMore, loading || loadingMore || isValidating, () => {
+    if (hasMore && !isValidating) {
+      setSize(size + 1);
+    }
   });
+
 
   const handleRoleChange = (userId, newRole) => {
     startTransition(async () => {
       const toastId = toast.loading("Updating role...");
       try {
         await updateUserRole(userId, newRole);
-        setUserList((prev) => prev.map((u) => u.id === userId ? { ...u, role: newRole } : u));
+        await mutate();
         toast.success("Role updated", { id: toastId });
+
       } catch (err) {
         toast.error(err.message, { id: toastId });
       }

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import useSWRInfinite from 'swr/infinite';
+
 import { Search, CheckCircle2, XCircle, Clock, AlertCircle, ExternalLink, Loader2 } from "lucide-react";
 import styles from "./page.module.css";
 import { useDebounce } from "@/app/hooks/useDebounce";
@@ -30,64 +32,45 @@ function StatusBadge({ status }) {
   );
 }
 
+const fetcher = url => fetch(url).then(r => r.json());
+
 export default function SubscriptionsClient({ subscriptions: initialSubscriptions }) {
+
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
-  const [subList, setSubList] = useState(initialSubscriptions || []);
-  
-  const [loading, setLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const [totalCount, setTotalCount] = useState(0);
-
   const debouncedSearch = useDebounce(query, 500);
 
-  const fetchSubscriptions = useCallback(async (pageNum = 0, isInitial = false) => {
-    if (isInitial) setLoading(true);
-    else setLoadingMore(true);
+  // SWR Configuration
+  const getKey = (pageIndex, previousPageData) => {
+    if (previousPageData && !previousPageData.hasMore) return null;
+    const params = new URLSearchParams({
+      page: pageIndex.toString(),
+      limit: "25",
+      q: debouncedSearch,
+      filter: filter
+    });
+    return `/api/admin/subscriptions?${params.toString()}`;
+  };
 
-    try {
-      const params = new URLSearchParams({
-        page: pageNum.toString(),
-        limit: "25",
-        q: debouncedSearch,
-        filter: filter
-      });
+  const { data, error, size, setSize, isValidating } = useSWRInfinite(getKey, fetcher, {
+    revalidateFirstPage: false,
+    persistSize: true,
+    fallbackData: initialSubscriptions ? [{ data: initialSubscriptions, hasMore: true, count: initialSubscriptions.length }] : undefined
+  });
 
-      const res = await fetch(`/api/admin/subscriptions?${params.toString()}`);
-      const result = await res.json();
-      
-      if (result.error) throw new Error(result.error);
-
-      if (isInitial) {
-        setSubList(result.data);
-      } else {
-        setSubList(prev => [...prev, ...result.data]);
-      }
-      
-      setHasMore(result.hasMore);
-      setTotalCount(result.count);
-      setPage(pageNum);
-    } catch (err) {
-      console.error("Fetch subscriptions error:", err);
-      toast.error("Failed to load subscriptions. Please check your connection or permissions.");
-      setHasMore(false); // Stop loop on error
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, [debouncedSearch, filter]);
-
-  // Initial load or search/filter change
-  useEffect(() => {
-    fetchSubscriptions(0, true);
-  }, [fetchSubscriptions]);
+  const subList = data ? data.map(page => page.data).flat() : [];
+  const loading = !data && !error;
+  const loadingMore = size > 0 && data && typeof data[size - 1] === "undefined";
+  const hasMore = data ? data[data.length - 1]?.hasMore : true;
+  const totalCount = data ? data[0]?.count : 0;
 
   // Infinite scroll trigger
-  const loaderRef = useInfiniteScroll(hasMore, loading || loadingMore, () => {
-    fetchSubscriptions(page + 1);
+  const loaderRef = useInfiniteScroll(hasMore, loading || loadingMore || isValidating, () => {
+    if (hasMore && !isValidating) {
+      setSize(size + 1);
+    }
   });
+
 
   const stats = {
     total:     totalCount,

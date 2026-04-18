@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import useSWRInfinite from 'swr/infinite';
+
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Plus, Search, Trash2, Edit2, MoreVertical, LayoutGrid, List as ListIcon, FolderPlus, Loader2, Play, Pause, Eye } from "lucide-react";
@@ -37,7 +39,10 @@ import BulkToolbar from "./components/BulkToolbar";
 import BulkEditModal from "./components/BulkEditModal";
 import MoveSelectionModal from "./components/MoveSelectionModal";
 
+const fetcher = url => fetch(url).then(r => r.json());
+
 export default function AdminResources() {
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -49,15 +54,6 @@ export default function AdminResources() {
     }
     return "";
   });
-  const [resources, setResources] = useState([]);
-  const [folders, setFolders] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [tags, setTags] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const [totalCount, setTotalCount] = useState(0);
   
   const debouncedSearch = useDebounce(searchQuery, 500);
   
@@ -68,6 +64,34 @@ export default function AdminResources() {
     }
     return null;
   });
+
+  // SWR Keys & Fetching
+  const getKey = (pageIndex, previousPageData) => {
+    if (previousPageData && !previousPageData.hasMore) return null;
+    const params = new URLSearchParams({
+      page: pageIndex.toString(),
+      limit: "25",
+      q: debouncedSearch,
+      folder: selectedFolderId || ""
+    });
+    return `/api/admin/resources?${params.toString()}`;
+  };
+
+  const { data, error, size, setSize, isValidating, mutate } = useSWRInfinite(getKey, fetcher, {
+    revalidateFirstPage: false,
+    persistSize: true
+  });
+
+  const resources = data ? data.map(page => page.data).flat() : [];
+  const loading = !data && !error;
+  const loadingMore = size > 0 && data && typeof data[size - 1] === "undefined";
+  const hasMore = data ? data[data.length - 1]?.hasMore : true;
+  const totalCount = data ? data[0]?.count : 0;
+  
+  const [folders, setFolders] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [tags, setTags] = useState([]);
+
   const [viewMode, setViewMode] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('admin_view_mode') || 'grid';
@@ -166,53 +190,13 @@ export default function AdminResources() {
     loadMeta();
   }, []);
 
-  // Fetch resources (paginated)
-  const fetchResources = useCallback(async (pageNum = 0, isInitial = false) => {
-    if (isInitial) {
-      setLoading(true);
-    } else {
-      setLoadingMore(true);
-    }
-
-    try {
-      const params = new URLSearchParams({
-        page: pageNum.toString(),
-        limit: "25",
-        q: debouncedSearch,
-        folder: selectedFolderId || ""
-      });
-
-      const res = await fetch(`/api/admin/resources?${params.toString()}`);
-      const result = await res.json();
-
-      if (result.error) throw new Error(result.error);
-
-      if (isInitial) {
-        setResources(result.data);
-      } else {
-        setResources(prev => [...prev, ...result.data]);
-      }
-      
-      setHasMore(result.hasMore);
-      setTotalCount(result.count);
-      setPage(pageNum);
-    } catch (e) {
-      console.error("Fetch resources failed:", e);
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, [debouncedSearch, selectedFolderId]);
-
-  // Handle re-fetch on filter change
-  useEffect(() => {
-    fetchResources(0, true);
-  }, [fetchResources]);
-
   // Infinite Scroll Trigger
-  const loaderRef = useInfiniteScroll(hasMore, loading || loadingMore, () => {
-    fetchResources(page + 1);
+  const loaderRef = useInfiniteScroll(hasMore, loading || loadingMore || isValidating, () => {
+    if (hasMore && !isValidating) {
+      setSize(size + 1);
+    }
   });
+
 
   // Handle Global Drag and Drop (Files from OS)
   const handleDragEnter = useCallback((e) => {
@@ -280,21 +264,8 @@ export default function AdminResources() {
       }));
       await bulkUpdateResources(updates);
       
-      // 2. Update local state
-      setResources(prev => prev.map(r => {
-        if (idsToMove.includes(r.id)) {
-          return { 
-            ...r, 
-            folderId: targetFolderId, 
-            folder_id: targetFolderId,
-            categoryId: targetCatId || r.categoryId,
-            category_id: targetCatId || r.category_id,
-            // Update nested category object for UI consistency (chips, labels)
-            category: targetCategoryNode ? { ...targetCategoryNode } : r.category
-          };
-        }
-        return r;
-      }));
+      // 2. Mutate SWR
+      await mutate();
       
       // 3. Clear selection
       setSelectedIds([]);
@@ -400,7 +371,7 @@ export default function AdminResources() {
         return filtered.map(f => f.parentId === folder.id ? { ...f, parentId: null } : f);
       });
       
-      setResources(prev => prev.map(r => (r.folderId === folder.id || r.folder_id === folder.id) ? { ...r, folderId: null, folder_id: null } : r));
+      await mutate();
 
       
       // 6. If we were viewing this folder, switch to category root
@@ -462,10 +433,11 @@ export default function AdminResources() {
 
     try {
       await updateResource(id, { name: newName });
-      setResources(prev => prev.map(r => r.id === id ? { ...r, name: newName } : r));
+      await mutate();
       setRenamingResourceId(null);
       await revalidateResourceData();
       await revalidateTagData();
+
     } catch (e) {
       console.error("Rename failed:", e);
       alert("Đổi tên thất bại.");
@@ -477,10 +449,11 @@ export default function AdminResources() {
     if (!confirm(`Xóa "${displayName}"? Thao tác này không thể hoàn tác.`)) return;
     try {
       await deleteResource(id);
-      setResources((prev) => prev.filter((r) => r.id !== id));
+      await mutate();
       setSelectedIds(prev => prev.filter(sid => sid !== id));
       await revalidateResourceData();
       await revalidateTagData();
+
     } catch (e) {
       console.error("Delete failed:", e);
       alert("Xóa thất bại: " + e.message);
@@ -509,10 +482,11 @@ export default function AdminResources() {
     try {
       await bulkDeleteResources(selectedIds);
 
-      setResources(prev => prev.filter(r => !selectedIds.includes(r.id)));
+      await mutate();
       setSelectedIds([]);
       await revalidateResourceData();
       await revalidateTagData();
+
     } catch (e) {
       console.error("Bulk delete failed:", e);
       alert("Xóa hàng loạt thất bại.");
@@ -549,25 +523,14 @@ export default function AdminResources() {
         await syncTagsCount(addedTotal, removedTotal);
       }
 
-      // Update local state
-      setResources(prev => prev.map(r => {
-        const updated = updatedItems.find(ui => ui.id === r.id);
-        if (updated) {
-          // Ensure both casing versions are sync'd for local state
-          return { 
-            ...r, 
-            ...updated, 
-            folder_id: updated.folderId !== undefined ? updated.folderId : r.folder_id,
-            category_id: updated.categoryId !== undefined ? updated.categoryId : r.category_id
-          };
-        }
-        return r;
-      }));
+      // Update SWR
+      await mutate();
       
       setIsBulkEditOpen(false);
       setSelectedIds([]);
       await revalidateResourceData();
       await revalidateTagData();
+
     } catch (e) {
       console.error("Bulk edit failed:", e);
       alert("Lưu thay đổi hàng loạt thất bại.");
