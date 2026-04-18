@@ -44,14 +44,14 @@
 }
 
 .allBtn:hover {
-  background: var(--cat-color, rgba(0, 240, 255, 0.04));
+  background: var(--cat-color, rgba(255, 255, 255, 0.04));
   filter: brightness(1.2);
   color: #000;
 }
 
 .allBtn.allActive {
-  background: var(--cat-color, var(--neon-cyan));
-  color: #000;
+  background: var(--cat-color, var(--text-primary));
+  color: var(--bg-primary);
   font-weight: 700;
 }
 

@@ -15,7 +15,7 @@
 }
 
 .trigger:hover {
-  border-color: var(--neon-cyan);
+  border-color: var(--text-primary);
 }
 
 .avatar {
@@ -110,12 +110,12 @@
   width: fit-content;
   margin-top: 4px;
   padding: 2px 8px;
-  background: rgba(0, 240, 255, 0.1);
-  border: 1px solid rgba(0, 240, 255, 0.3);
+  background: var(--bg-primary);
+  border: 1px solid var(--border-default);
   border-radius: 6px;
   font-size: 0.7rem;
   font-weight: 600;
-  color: var(--neon-cyan);
+  color: var(--text-primary);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
