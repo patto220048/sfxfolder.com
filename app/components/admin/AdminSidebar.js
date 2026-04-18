@@ -13,7 +13,7 @@ const menuItems = [
   { icon: Upload, label: "Resources", href: "/admin/resources" },
   { icon: FolderTree, label: "Categories", href: "/admin/categories" },
   { icon: Tags, label: "Tags", href: "/admin/tags" },
-  { icon: Settings, label: "Settings", href: "/admin/settings" },
+  { icon: Settings, label: "Settings", href: "/admin/settings", exact: true },
   { icon: CreditCard, label: "PayPal Config", href: "/admin/settings/paypal" },
 ];
 
@@ -45,7 +45,10 @@ export default function AdminSidebar() {
       <nav className={styles.nav}>
         {menuItems.map((item) => {
           const Icon = item.icon;
-          const isActive = pathname?.startsWith(item.href);
+          // Exact match for Settings to avoid matching /admin/settings/paypal
+          const isActive = item.exact
+            ? pathname === item.href
+            : pathname?.startsWith(item.href);
           return (
             <Link
               key={item.href}

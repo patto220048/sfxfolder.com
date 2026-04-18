@@ -61,10 +61,10 @@
   align-items: flex-start;
   gap: 1rem;
   background: var(--bg-primary);
-  border: 2px solid var(--text-primary);
+  border: 1px solid var(--text-primary);
   padding: 1rem;
   margin-bottom: 2rem;
-  box-shadow: 4px 4px 0px var(--text-primary);
+  opacity: 0.75;
 }
 
 .alertIcon {
@@ -80,10 +80,9 @@
 
 .card {
   background: var(--bg-primary);
-  border: 2px solid var(--text-primary);
+  border: 1px solid var(--border-default);
   padding: 2rem;
   margin-bottom: 2rem;
-  box-shadow: 6px 6px 0px var(--text-primary);
 }
 
 .sectionTitle {
@@ -104,21 +103,20 @@
 .toggleLabel {
   flex: 1;
   text-align: center;
-  padding: 1rem;
-  border: 2px solid var(--text-primary);
-  font-weight: 700;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-default);
+  font-weight: 600;
   cursor: pointer;
   background: var(--bg-primary);
-  color: var(--text-primary);
+  color: var(--text-secondary);
   transition: all 0.2s;
-  box-shadow: 4px 4px 0px var(--text-primary);
+  border-radius: 4px;
 }
 
 .toggleLabel.active {
   background: var(--text-primary);
   color: var(--bg-primary);
-  transform: translate(2px, 2px);
-  box-shadow: 2px 2px 0px var(--text-primary);
+  border-color: var(--text-primary);
 }
 
 .formGroup {
@@ -134,16 +132,17 @@
 
 .input {
   width: 100%;
-  padding: 0.75rem;
-  border: 2px solid var(--text-primary);
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--border-default);
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: inherit;
-  font-size: 1rem;
-  transition: box-shadow 0.2s;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  transition: border-color 0.2s;
 }
 
 .input:focus {
   outline: none;
-  box-shadow: 4px 4px 0px var(--text-primary);
+  border-color: var(--text-primary);
 }

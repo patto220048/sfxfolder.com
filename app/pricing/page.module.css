@@ -37,18 +37,18 @@
 
 .card {
   background: var(--bg-primary);
-  border: 2px solid var(--text-primary);
+  border: 1px solid var(--border-default);
   padding: 2.5rem;
   display: flex;
   flex-direction: column;
   position: relative;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
-  box-shadow: 6px 6px 0px var(--text-primary);
+  border-radius: 4px;
 }
 
 .card:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 8px 8px 0px var(--text-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
 }
 
 .popularBadge {

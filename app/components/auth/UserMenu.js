@@ -96,6 +96,13 @@ export default function UserMenu() {
             </a>
           )}
 
+          {isPremium && (
+            <a href="/account/subscription" className={styles.menuItem}>
+              <Crown size={16} />
+              <span>Manage Subscription</span>
+            </a>
+          )}
+
           <div className={styles.divider} />
 
           <button className={styles.menuItem} onClick={handleLogout}>
