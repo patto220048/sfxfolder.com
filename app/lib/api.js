@@ -452,32 +452,27 @@ export async function updateCategory(id, updateData) {
 }
 
 /**
- * Delete a category.
+ * Delete a category using the secure Admin API.
+ * This performs a cascading delete: Resources -> Folders -> Category
  */
 export async function deleteCategory(id) {
-  // First, check if there are resources assigned to this category
-  const { data: category } = await supabase.from('categories').select('slug').eq('id', id).single();
-  
-  if (category) {
-    const { count, error: countError } = await supabase
-      .from('resources')
-      .select('id', { count: 'exact', head: true })
-      .eq('category_id', category.slug);
-
-    if (count > 0) {
-      throw new Error(`Cannot delete category "${category.slug}" because it has ${count} resources assigned to it.`);
-    }
+  // 1. Get the slug first since the API route needs it for cleanup
+  const { data: category, error: fetchError } = await supabase.from('categories').select('slug').eq('id', id).single();
+  if (fetchError || !category) {
+    throw new Error("Không tìm thấy Category để xóa.");
   }
 
-  const { error } = await supabase
-    .from('categories')
-    .delete()
-    .eq('id', id);
+  const response = await fetch('/api/admin/categories', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ slug: category.slug })
+  });
 
-  if (error) {
-    console.error('Error deleting category:', error);
-    throw error;
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Xóa Category thất bại.");
   }
+
   return true;
 }
 
@@ -742,50 +737,25 @@ export async function bulkUpdateResources(updates) {
 }
 
 /**
- * Delete multiple resources.
+ * Delete multiple resources using the secure Admin API.
+ * Handles storage cleanup and uses service role to bypass limitations.
  */
 export async function bulkDeleteResources(ids) {
   if (!ids || ids.length === 0) return true;
 
-  try {
-    // 1. Fetch all storage paths
-    const { data: items } = await supabase
-      .from('resources')
-      .select('storage_path')
-      .in('id', ids);
+  const response = await fetch('/api/admin/resources', {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ ids })
+  });
 
-    const paths = (items || [])
-      .map(i => i.storage_path)
-      .filter(p => !!p);
-
-    if (paths.length > 0) {
-      // 2. Delete all files from storage
-      // Use supabase.storage directly for efficiency or loop through deleteFile
-      const { error: storageError } = await supabase.storage
-        .from('resources')
-        .remove(paths);
-      
-      if (storageError) {
-        console.error('Error cleaning up storage in bulk delete:', storageError);
-      }
-    }
-  } catch (e) {
-    console.warn('Failed to fetch storage paths for bulk cleanup, skipping to DB delete:', e);
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.error || "Xóa hàng loạt thất bại.");
   }
 
-  // 3. Delete DB records
-  const { error } = await supabase
-    .from('resources')
-    .delete()
-    .in('id', ids);
-
-  if (error) {
-    console.error('Error in bulk delete (DB):', error);
-    throw error;
-  }
-
-  // 4. Re-sync tags
-  await syncAllTagsFromResources().catch(e => console.error("Auto tag sync failed after bulk delete:", e));
+  // Re-sync tags on the background
+  syncAllTagsFromResources().catch(e => console.error("Auto tag sync failed after bulk delete:", e));
 
   return true;
 }
