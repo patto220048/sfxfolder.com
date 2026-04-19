@@ -117,9 +117,11 @@
   justify-content: center;
   width: 40px;
   height: 40px;
+  background: var(--bg-surface);
   color: var(--text-secondary);
-  transition: all var(--transition-fast);
   border: 1px solid var(--border-default);
+  border-radius: 0;
+  transition: all var(--transition-fast);
 }
 
 .searchBtn:hover {
@@ -165,22 +167,30 @@
 .signInBtn {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+  height: 40px;
+  padding: 0 16px;
   background: var(--text-primary);
   color: var(--bg-primary);
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 0.85rem;
+  border: 1px solid var(--text-primary);
+  border-radius: 0;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .signInBtn:hover {
-  opacity: 0.9;
-  transform: translateY(-1px);
+  transform: translate(-3px, -3px);
+  box-shadow: 3px 3px 0px var(--text-muted);
+}
+
+.signInBtn:active {
+  transform: translate(-1px, -1px);
+  box-shadow: 1px 1px 0px var(--text-muted);
 }
 
 .signInText {
@@ -191,14 +201,15 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  gap: 10px;
+  height: 48px;
   margin: var(--space-4) var(--space-6) 0;
-  padding: 12px;
   background: var(--text-primary);
   color: var(--bg-primary);
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 0.95rem;
+  border: 2px solid var(--text-primary);
+  border-radius: 0;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1px;
