@@ -207,6 +207,7 @@ export default function EditResource() {
       await revalidateResourceData();
       
       alert("Resource updated successfully!");
+      router.refresh();
       router.push("/admin/resources");
     } catch (e) {
       console.error("Update failed:", e);

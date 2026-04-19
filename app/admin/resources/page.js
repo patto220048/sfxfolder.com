@@ -78,7 +78,6 @@ export default function AdminResources() {
   };
 
   const { data, error, size, setSize, isValidating, mutate } = useSWRInfinite(getKey, fetcher, {
-    revalidateFirstPage: false,
     persistSize: true
   });
 
@@ -170,6 +169,12 @@ export default function AdminResources() {
     clearAll,
     uploadAll 
   } = useAdminUpload();
+
+  const handleUploadAll = async () => {
+    await uploadAll();
+    await mutate();
+    router.refresh();
+  };
 
   // Load folders & categories once
   useEffect(() => {
@@ -266,6 +271,7 @@ export default function AdminResources() {
       
       // 2. Mutate SWR
       await mutate();
+      router.refresh();
       
       // 3. Clear selection
       setSelectedIds([]);
@@ -336,6 +342,8 @@ export default function AdminResources() {
       ));
 
       // Revalidate frontend
+      await mutate();
+      router.refresh();
       await revalidateResourceData();
       await revalidateFolderData();
     } catch (e) {
@@ -372,6 +380,7 @@ export default function AdminResources() {
       });
       
       await mutate();
+      router.refresh();
 
       
       // 6. If we were viewing this folder, switch to category root
@@ -434,6 +443,7 @@ export default function AdminResources() {
     try {
       await updateResource(id, { name: newName });
       await mutate();
+      router.refresh();
       setRenamingResourceId(null);
       await revalidateResourceData();
       await revalidateTagData();
@@ -450,6 +460,7 @@ export default function AdminResources() {
     try {
       await deleteResource(id);
       await mutate();
+      router.refresh();
       setSelectedIds(prev => prev.filter(sid => sid !== id));
       await revalidateResourceData();
       await revalidateTagData();
@@ -483,6 +494,7 @@ export default function AdminResources() {
       await bulkDeleteResources(selectedIds);
 
       await mutate();
+      router.refresh();
       setSelectedIds([]);
       await revalidateResourceData();
       await revalidateTagData();
@@ -525,6 +537,7 @@ export default function AdminResources() {
 
       // Update SWR
       await mutate();
+      router.refresh();
       
       setIsBulkEditOpen(false);
       setSelectedIds([]);
@@ -598,7 +611,7 @@ export default function AdminResources() {
         onUpdate={updateFileMeta}
         onUpdateBulk={updateBulkMeta}
         onRemove={removeFile}
-        onUpload={uploadAll}
+        onUpload={handleUploadAll}
         isUploading={isUploading}
         progress={uploadProgress}
       />

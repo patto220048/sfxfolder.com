@@ -3,6 +3,8 @@ import { supabaseAdmin } from "@/app/lib/supabase-admin";
 import { getServerUser } from "@/app/lib/supabase-server";
 import { mapResource } from "@/app/lib/api";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(req) {
   try {
     const { user: adminUser } = await getServerUser();
