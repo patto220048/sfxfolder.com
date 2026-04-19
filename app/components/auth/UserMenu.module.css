@@ -46,7 +46,7 @@
   right: -2px;
   width: 16px;
   height: 16px;
-  background: var(--border-active);
+  background: var(--premium-gold);
   border-radius: 50%;
   border: 2px solid var(--bg-card);
   display: flex;
@@ -97,8 +97,8 @@
   width: fit-content;
   margin-top: 4px;
   padding: 2px 8px;
-  background: var(--text-primary);
-  border: 1px solid var(--text-primary);
+  background: var(--premium-gold);
+  border: 1px solid var(--premium-gold);
   border-radius: var(--radius-sm);
   font-size: 0.7rem;
   font-weight: 700;
@@ -150,12 +150,12 @@
 }
 
 .upgradeItem {
-  color: var(--text-primary);
+  color: var(--premium-gold);
   font-weight: 700;
 }
 
 .upgradeItem:hover {
-  background: var(--text-primary);
+  background: var(--premium-gold);
   color: var(--bg-primary);
 }
 

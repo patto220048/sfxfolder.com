@@ -24,9 +24,13 @@
   --border-default: #333333;
   --border-active: #FFFFFF;
   
+  /* Premium & Accents */
+  --premium-gold: #FACB11;
+  --premium-gold-rgb: 250, 203, 17;
+  --premium-gold-light: rgba(250, 203, 17, 0.1);
+  
   /* Stark Monochrome Category Colors (Muted) */
   --neo-shadow: #1A1A1A;
-  --neo-yellow: #E0E0E0;
   --neo-orange: #888888;
   --neo-navy: #1C1C1C;
 
