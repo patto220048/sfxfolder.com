@@ -19,7 +19,7 @@ export const RESOURCE_DETAIL_COLUMNS = '*, categories(slug, name), folders(name)
 /**
  * Helper to map DB resource to Frontend resource
  */
-function mapResource(res) {
+export function mapResource(res) {
   if (!res) return null;
   return {
     ...res,
@@ -182,6 +182,14 @@ function mapToDB(data) {
   if ('categorySlug' in data) { result.category_id = data.categorySlug; delete result.categorySlug; }
   if ('category' in data) { result.category_id = data.category; delete result.category; }
   
+  // Normalize empty strings to null for UUID/Foreign Key fields
+  const uuidFields = ['folder_id', 'parent_id'];
+  uuidFields.forEach(field => {
+    if (result[field] === "") {
+      result[field] = null;
+    }
+  });
+
   // Remove frontend-only joined objects
   delete result.category;
   delete result.categories;
@@ -658,13 +666,23 @@ export async function deleteFolder(id) {
 export async function bulkUpdateResources(updates) {
   if (!updates || updates.length === 0) return [];
 
+  // Sanitize updates (e.g. convert empty string folder_id to null for UUID compatibility)
+  const sanitizedUpdates = updates.map(u => {
+    const item = { ...u };
+    if (item.folder_id === "") item.folder_id = null;
+    if (item.folderId === "") item.folderId = null;
+    // category_id is usually a slug string, but keep robust
+    if (item.category_id === "") item.category_id = null;
+    return item;
+  });
+
   // Check if all updates are targeting the same folder_id AND same category_id (common case: Move)
-  const first = updates[0];
-  const allSameFolder = updates.every(u => u.folder_id === first.folder_id);
-  const allSameCategory = updates.every(u => u.category_id === first.category_id);
+  const first = sanitizedUpdates[0];
+  const allSameFolder = sanitizedUpdates.every(u => u.folder_id === first.folder_id);
+  const allSameCategory = sanitizedUpdates.every(u => u.category_id === first.category_id);
 
   if (allSameFolder && allSameCategory) {
-    const ids = updates.map(u => u.id);
+    const ids = sanitizedUpdates.map(u => u.id);
     const { data, error } = await supabase
       .from('resources')
       .update({
@@ -683,7 +701,7 @@ export async function bulkUpdateResources(updates) {
   }
 
   // Fallback for heterogeneous updates: Run in parallel
-  const promises = updates.map(u => {
+  const promises = sanitizedUpdates.map(u => {
     const dbEntry = mapToDB(u);
     return supabase
       .from('resources')

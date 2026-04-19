@@ -177,7 +177,7 @@ export default function EditResource() {
       if (newFile) {
         // ... (existing main file upload logic)
         const path = generateStoragePath(category, newFile.name);
-        const downloadUrl = await uploadFile(newFile, path, (p) => setUploadProgress(Math.round(p)));
+        const downloadUrl = await uploadFile(newFile, path, 'resources', (p) => setUploadProgress(Math.round(p)));
         
         const fileExtension = newFile.name.includes('.') ? newFile.name.split('.').pop() : 'UNKNOWN';
         

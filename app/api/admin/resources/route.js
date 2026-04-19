@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/app/lib/supabase-admin";
 import { getServerUser } from "@/app/lib/supabase-server";
+import { mapResource } from "@/app/lib/api";
 
 export async function GET(req) {
   try {
@@ -53,7 +54,7 @@ export async function GET(req) {
     if (error) throw error;
 
     return NextResponse.json({
-      data: data || [],
+      data: (data || []).map(mapResource),
       count: count || 0,
       hasMore: (offset + (data?.length || 0)) < (count || 0)
     });

@@ -513,8 +513,8 @@ export default function AdminResources() {
         id: item.id,
         name: item.name,
         tags: item.tags,
-        category_id: item.categoryId,
-        folder_id: item.folderId,
+        category_id: item.categoryId || null,
+        folder_id: item.folderId || null,
         updated_at: new Date().toISOString()
       })));
 
@@ -831,6 +831,16 @@ export default function AdminResources() {
                         <div className={styles.cardMeta}>
                           <span className={styles.formatBadge}>{r.fileFormat}</span>
                           <span className={styles.categoryName}>{r.category?.name || "Uncategorized"}</span>
+                        </div>
+                        
+                        <div className={styles.cardDetails}>
+                          <span className={styles.cardDetailItem}>
+                            {r.fileSize ? (r.fileSize / 1024 / 1024).toFixed(2) + ' MB' : '---'}
+                          </span>
+                          <span className={styles.cardDetailDivider}>•</span>
+                          <span className={styles.cardDetailItem}>
+                            {r.createdAt ? new Date(r.createdAt).toLocaleDateString('vi-VN') : '---'}
+                          </span>
                         </div>
 
                         {r.tags && r.tags.length > 0 && (

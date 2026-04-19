@@ -10,6 +10,12 @@ import { convertToSlug } from './stringUtils';
  * @returns {Promise<string>} Public URL
  */
 export async function uploadFile(file, path, bucket = 'resources', onProgress = null) {
+  // Handle case where bucket is omitted but onProgress is provided as 3rd arg
+  if (typeof bucket === 'function') {
+    onProgress = bucket;
+    bucket = 'resources';
+  }
+
   // Note: Supabase JS client doesn't have a built-in progress callback like Firebase.
   // For production, you might want to use XMLHttpRequest or a special library if progress is critical.
   const { data, error } = await supabase.storage
