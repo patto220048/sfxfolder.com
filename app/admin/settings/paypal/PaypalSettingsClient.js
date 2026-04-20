@@ -14,7 +14,22 @@ export default function PaypalSettingsClient({ initialConfig }) {
     setIsSaving(true);
     const toastId = toast.loading("Saving configuration...");
     
-    const result = await updatePaypalConfig(config);
+    // Ensure all numeric fields are properly parsed and not NaN
+    const sanitizedConfig = {
+      ...config,
+      sandbox: {
+        ...config.sandbox,
+        monthly_price: parseFloat(config.sandbox.monthly_price) || 0,
+        yearly_price: parseFloat(config.sandbox.yearly_price) || 0
+      },
+      live: {
+        ...config.live,
+        monthly_price: parseFloat(config.live.monthly_price) || 0,
+        yearly_price: parseFloat(config.live.yearly_price) || 0
+      }
+    };
+    
+    const result = await updatePaypalConfig(sanitizedConfig);
     
     if (result.success) {
       toast.success("Settings saved successfully!", { id: toastId });
@@ -25,11 +40,17 @@ export default function PaypalSettingsClient({ initialConfig }) {
   };
 
   const handleNestedChange = (env, field, value) => {
+    // If it's a numeric field, handle empty string vs number
+    let processedValue = value;
+    if (field.includes('price')) {
+      processedValue = value === "" ? "" : parseFloat(value);
+    }
+
     setConfig(prev => ({
       ...prev,
       [env]: {
         ...prev[env],
-        [field]: value
+        [field]: processedValue
       }
     }));
   };

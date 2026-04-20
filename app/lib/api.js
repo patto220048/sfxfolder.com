@@ -348,51 +348,75 @@ export async function incrementDownloadCount(id) {
    ======================================== */
 
 /**
- * Get all categories with resource counts using SQL Joins.
- * Cached for 1 hour.
+ * Internal logic for categories with counts.
+ */
+async function fetchCategoriesWithCountsInternal() {
+  const { data, error } = await supabase
+    .from('categories')
+    .select(`
+      *,
+      resources:resources(count)
+    `)
+    .order('order', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching categories:', error);
+    return [];
+  }
+
+  // Map resources(count) to resourceCount for the frontend
+  return (data || []).map(cat => ({
+    ...cat,
+    resourceCount: cat.resources?.[0]?.count || 0,
+    formats: cat.formats || [] // Ensure formats is always an array
+  }));
+}
+
+/**
+ * Public version: Get all categories with resource counts using SQL Joins.
+ * Cached for frontend performance.
  */
 export const getCategoriesWithCounts = unstable_cache(
-  async () => {
-    const { data, error } = await supabase
-      .from('categories')
-      .select(`
-        *,
-        resources:resources(count)
-      `)
-      .order('order', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching categories:', error);
-      return [];
-    }
-
-    // Map resources(count) to resourceCount for the frontend
-    return (data || []).map(cat => ({
-      ...cat,
-      resourceCount: cat.resources?.[0]?.count || 0,
-      formats: cat.formats || [] // Ensure formats is always an array
-    }));
-  },
+  fetchCategoriesWithCountsInternal,
   ['categories-with-counts'],
   { revalidate: REVALIDATE_TIME, tags: ['categories'] }
 );
 
-export const getCategories = unstable_cache(
-  async () => {
-    const { data, error } = await supabase
-      .from('categories')
-      .select('*')
-      .order('order', { ascending: true });
+/**
+ * Admin version: Always fresh, bypasses cache.
+ */
+export const getAdminCategoriesWithCounts = fetchCategoriesWithCountsInternal;
 
-    if (error) {
-      console.error('Error fetching categories (simple):', error);
-      return [];
-    }
-    return data || [];
-  },
+/**
+ * Internal logic for simple categories list.
+ */
+async function fetchCategoriesInternal() {
+  const { data, error } = await supabase
+    .from('categories')
+    .select('*')
+    .order('order', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching categories (simple):', error);
+    return [];
+  }
+  return data || [];
+}
+
+/**
+ * Public version: Cached for frontend.
+ */
+export const getCategories = unstable_cache(
+  fetchCategoriesInternal,
   ['categories-simple'],
   { revalidate: REVALIDATE_TIME, tags: ['categories'] }
 );
+
+/**
+ * Admin version: Always fresh.
+ */
+export const getAdminCategories = fetchCategoriesInternal;
+
 
 export async function getCategoryBySlug(slug) {
   const { data, error } = await supabase
@@ -522,22 +546,35 @@ export async function getFolders(categorySlug, parentId) {
    TAGS
    ======================================== */
 
-export const getTags = unstable_cache(
-  async () => {
-    const { data, error } = await supabase
-      .from('tags')
-      .select('*')
-      .order('usage_count', { ascending: false });
+/**
+ * Internal logic for tags list.
+ */
+async function fetchTagsInternal() {
+  const { data, error } = await supabase
+    .from('tags')
+    .select('*')
+    .order('usage_count', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching tags:', error);
-      return [];
-    }
-    return (data || []).map(t => ({ ...t, usageCount: t.usage_count }));
-  },
+  if (error) {
+    console.error('Error fetching tags:', error);
+    return [];
+  }
+  return (data || []).map(t => ({ ...t, usageCount: t.usage_count }));
+}
+
+/**
+ * Public version: Cached for frontend.
+ */
+export const getTags = unstable_cache(
+  fetchTagsInternal,
   ['tags-list'],
   { revalidate: REVALIDATE_TIME, tags: ['tags'] }
 );
+
+/**
+ * Admin version: Always fresh.
+ */
+export const getAdminTags = fetchTagsInternal;
 
 /**
  * Helper to sync tags.
@@ -590,24 +627,35 @@ export async function syncTagsCount(addedTags = [], removedTags = []) {
    ======================================== */
 
 /**
- * Get all folders (including unpublished/admin)
+ * Internal logic for admin folders.
+ */
+async function fetchAllAdminFoldersInternal() {
+  const { data, error } = await supabase
+    .from('folders')
+    .select('*')
+    .order('order', { ascending: true });
+
+  if (error) {
+    console.error('Error fetching admin folders:', error);
+    return [];
+  }
+  return (data || []).map(mapFolder);
+}
+
+/**
+ * Public version: Get all folders (including unpublished/admin)
+ * Cached for frontend.
  */
 export const getAllAdminFolders = unstable_cache(
-  async () => {
-    const { data, error } = await supabase
-      .from('folders')
-      .select('*')
-      .order('order', { ascending: true });
-
-    if (error) {
-      console.error('Error fetching admin folders:', error);
-      return [];
-    }
-    return (data || []).map(mapFolder);
-  },
+  fetchAllAdminFoldersInternal,
   ['admin-folders-list'],
   { revalidate: REVALIDATE_TIME, tags: ['folders'] }
 );
+
+/**
+ * Admin version: Always fresh.
+ */
+export const getAdminFolders = fetchAllAdminFoldersInternal;
 
 /**
  * Add a new folder.
@@ -698,7 +746,16 @@ export async function bulkUpdateResources(updates) {
   const allSameFolder = sanitizedUpdates.every(u => u.folder_id === first.folder_id);
   const allSameCategory = sanitizedUpdates.every(u => u.category_id === first.category_id);
 
-  if (allSameFolder && allSameCategory) {
+  // Check if updates contain ONLY id, folder_id, category_id, and updated_at
+  // If they contain 'name', 'tags', etc., we MUST use the heterogeneous path
+  // because those values are likely unique per item.
+  const isPurelyStructural = sanitizedUpdates.every(u => {
+    const keys = Object.keys(u);
+    const structuralKeys = ['id', 'folder_id', 'folderId', 'category_id', 'categoryId', 'updated_at'];
+    return keys.every(k => structuralKeys.includes(k));
+  });
+
+  if (allSameFolder && allSameCategory && isPurelyStructural) {
     const ids = sanitizedUpdates.map(u => u.id);
     const { data, error } = await supabase
       .from('resources')

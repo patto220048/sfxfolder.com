@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import { useToast } from "@/app/context/ToastContext";
 import { uploadFile, generateStoragePath } from "../../../lib/storage";
 import { addResource } from "../../../lib/api";
 import { revalidateResourceData, revalidateCategoryData, revalidateTagData } from "../../../lib/actions";
@@ -21,6 +22,7 @@ export function useAdminUpload() {
   const [stagingFiles, setStagingFiles] = useState([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const { showToast } = useToast();
 
   const guessCategory = (fileName) => {
     const ext = fileName.slice(fileName.lastIndexOf(".")).toLowerCase();
@@ -136,6 +138,13 @@ export function useAdminUpload() {
       } catch (error) {
         console.error(`Failed to upload ${item.name}:`, error);
         updateFileMeta(item.id, "status", "error");
+        
+        // Handle duplicate name error (Postgres 23505) and other errors
+        if (error.code === '23505') {
+          showToast(`"${item.name}" already exists! Please use a unique name.`, 'error');
+        } else {
+          showToast(`Failed to upload "${item.name}": ${error.message || 'Unknown error'}`, 'error');
+        }
       }
 
       completedCount++;

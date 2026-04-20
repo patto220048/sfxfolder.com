@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import useSWR from 'swr';
 import useSWRInfinite from 'swr/infinite';
 
 import Link from "next/link";
@@ -8,16 +9,12 @@ import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Plus, Search, Trash2, Edit2, MoreVertical, LayoutGrid, List as ListIcon, FolderPlus, Loader2, Play, Pause, Eye } from "lucide-react";
 import { revalidateResourceData, revalidateCategoryData, revalidateFolderData, revalidateTagData } from "@/app/lib/actions";
 import { 
-  getAllAdminFolders, 
-  getCategories, 
   addFolder, 
   updateResource, 
   updateFolder, 
   deleteFolder, 
   deleteResource, 
   syncTagsCount,
-  getResources,
-  getTags,
   bulkUpdateResources,
   bulkDeleteResources
 } from "@/app/lib/api";
@@ -65,7 +62,7 @@ export default function AdminResources() {
     return null;
   });
 
-  // SWR Keys & Fetching
+  // SWR Keys & Fetching for Resources
   const getKey = (pageIndex, previousPageData) => {
     if (previousPageData && !previousPageData.hasMore) return null;
     const params = new URLSearchParams({
@@ -81,16 +78,18 @@ export default function AdminResources() {
     persistSize: true
   });
 
+  // Metadata Fetching via SWR
+  const { data: metadata, mutate: mutateMeta } = useSWR('/api/admin/metadata', fetcher);
+  const folders = metadata?.folders || [];
+  const categories = metadata?.categories || [];
+  const tags = metadata?.tags || [];
+
   const resources = data ? data.map(page => page.data).flat() : [];
   const loading = !data && !error;
   const loadingMore = size > 0 && data && typeof data[size - 1] === "undefined";
   const hasMore = data ? data[data.length - 1]?.hasMore : true;
   const totalCount = data ? data[0]?.count : 0;
   
-  const [folders, setFolders] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [tags, setTags] = useState([]);
-
   const [viewMode, setViewMode] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('admin_view_mode') || 'grid';
@@ -172,28 +171,10 @@ export default function AdminResources() {
 
   const handleUploadAll = async () => {
     await uploadAll();
-    await mutate();
+    // Invalidate everything to show new items and update counts
+    await Promise.all([mutate(), mutateMeta()]);
     router.refresh();
   };
-
-  // Load folders & categories once
-  useEffect(() => {
-    async function loadMeta() {
-      try {
-        const [folderData, catData, tagsData] = await Promise.all([
-          getAllAdminFolders(),
-          getCategories(),
-          getTags()
-        ]);
-        setFolders(folderData);
-        setCategories(catData);
-        setTags(tagsData);
-      } catch (e) {
-        console.error("Failed to load metadata:", e.message);
-      }
-    }
-    loadMeta();
-  }, []);
 
   // Infinite Scroll Trigger
   const loaderRef = useInfiniteScroll(hasMore, loading || loadingMore || isValidating, () => {
@@ -270,7 +251,7 @@ export default function AdminResources() {
       await bulkUpdateResources(updates);
       
       // 2. Mutate SWR
-      await mutate();
+      await Promise.all([mutate(), mutateMeta()]);
       router.refresh();
       
       // 3. Clear selection
@@ -302,12 +283,16 @@ export default function AdminResources() {
         categorySlug,
         order: folders.length,
       };
-      const resp = await addFolder(newFolder);
-      setFolders(prev => [...prev, resp]);
+      await addFolder(newFolder);
+      
+      // Update sidebar
+      await mutateMeta();
       
       // Refresh frontend cache
-      await revalidateResourceData();
-      await revalidateFolderData();
+      await Promise.all([
+        revalidateResourceData(),
+        revalidateFolderData()
+      ]);
     } catch (e) {
       alert("Lỗi khi thêm thư mục: " + e.message);
     }
@@ -316,9 +301,11 @@ export default function AdminResources() {
   const handleRenameFolder = async (folderId, newName) => {
     try {
       await updateFolder(folderId, { name: newName });
-      setFolders(prev => prev.map(f => f.id === folderId ? { ...f, name: newName } : f));
-      await revalidateResourceData();
-      await revalidateFolderData();
+      await mutateMeta();
+      await Promise.all([
+        revalidateResourceData(),
+        revalidateFolderData()
+      ]);
     } catch (e) {
       console.error("Rename failed:", e);
       alert("Đổi tên thư mục thất bại.");
@@ -330,22 +317,21 @@ export default function AdminResources() {
       // Validate: cannot move into itself
       if (folderId === targetParentId) return;
 
-      // Update Firestore
+      // Update Database
       await updateFolder(folderId, { 
         parentId: targetParentId, 
         categorySlug: targetCategorySlug 
       });
 
-      // Update local state
-      setFolders(prev => prev.map(f => 
-        f.id === folderId ? { ...f, parentId: targetParentId, categorySlug: targetCategorySlug } : f
-      ));
+      // Update SWR
+      await mutateMeta();
+      router.refresh();
 
       // Revalidate frontend
-      await mutate();
-      router.refresh();
-      await revalidateResourceData();
-      await revalidateFolderData();
+      await Promise.all([
+        revalidateResourceData(),
+        revalidateFolderData()
+      ]);
     } catch (e) {
       console.error("Move folder failed:", e);
       alert("Không thể di chuyển thư mục.");
@@ -373,15 +359,9 @@ export default function AdminResources() {
       // 4. Delete the folder itself
       await deleteFolder(folder.id);
       
-      // 5. Update local state
-      setFolders(prev => {
-        const filtered = prev.filter(f => f.id !== folder.id);
-        return filtered.map(f => f.parentId === folder.id ? { ...f, parentId: null } : f);
-      });
-      
-      await mutate();
+      // 5. Update SWR
+      await Promise.all([mutate(), mutateMeta()]);
       router.refresh();
-
       
       // 6. If we were viewing this folder, switch to category root
       if (selectedFolderId === folder.id) {
@@ -389,8 +369,10 @@ export default function AdminResources() {
       }
       
       // 7. Refresh frontend
-      await revalidateResourceData();
-      await revalidateFolderData();
+      await Promise.all([
+        revalidateResourceData(),
+        revalidateFolderData()
+      ]);
     } catch (e) {
       alert("Xóa thư mục thất bại: " + e.message);
     }
@@ -442,11 +424,13 @@ export default function AdminResources() {
 
     try {
       await updateResource(id, { name: newName });
-      await mutate();
+      await Promise.all([mutate(), mutateMeta()]);
       router.refresh();
       setRenamingResourceId(null);
-      await revalidateResourceData();
-      await revalidateTagData();
+      await Promise.all([
+        revalidateResourceData(),
+        revalidateTagData()
+      ]);
 
     } catch (e) {
       console.error("Rename failed:", e);
@@ -459,11 +443,13 @@ export default function AdminResources() {
     if (!confirm(`Xóa "${displayName}"? Thao tác này không thể hoàn tác.`)) return;
     try {
       await deleteResource(id);
-      await mutate();
+      await Promise.all([mutate(), mutateMeta()]);
       router.refresh();
       setSelectedIds(prev => prev.filter(sid => sid !== id));
-      await revalidateResourceData();
-      await revalidateTagData();
+      await Promise.all([
+        revalidateResourceData(),
+        revalidateTagData()
+      ]);
 
     } catch (e) {
       console.error("Delete failed:", e);
@@ -493,11 +479,13 @@ export default function AdminResources() {
     try {
       await bulkDeleteResources(selectedIds);
 
-      await mutate();
+      await Promise.all([mutate(), mutateMeta()]);
       router.refresh();
       setSelectedIds([]);
-      await revalidateResourceData();
-      await revalidateTagData();
+      await Promise.all([
+        revalidateResourceData(),
+        revalidateTagData()
+      ]);
 
     } catch (e) {
       console.error("Bulk delete failed:", e);
@@ -536,13 +524,15 @@ export default function AdminResources() {
       }
 
       // Update SWR
-      await mutate();
+      await Promise.all([mutate(), mutateMeta()]);
       router.refresh();
       
       setIsBulkEditOpen(false);
       setSelectedIds([]);
-      await revalidateResourceData();
-      await revalidateTagData();
+      await Promise.all([
+        revalidateResourceData(),
+        revalidateTagData()
+      ]);
 
     } catch (e) {
       console.error("Bulk edit failed:", e);

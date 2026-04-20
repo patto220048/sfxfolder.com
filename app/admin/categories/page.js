@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import useSWR from "swr";
 import { 
   Plus, 
   Pencil, 
@@ -8,11 +9,8 @@ import {
   X, 
   Loader2, 
   AlertTriangle,
-  MoveUp,
-  MoveDown
 } from "lucide-react";
 import { 
-  getCategoriesWithCounts, 
   addCategory, 
   updateCategory, 
   deleteCategory 
@@ -21,13 +19,13 @@ import { revalidateCategoryData } from "@/app/lib/actions";
 import { ICON_LIST, getIcon } from "@/app/components/ui/IconLib";
 import styles from "./page.module.css";
 
+const fetcher = (url) => fetch(url).then((res) => res.json());
+
 export default function CategoriesPage() {
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { data: categories = [], isLoading: loading, mutate } = useSWR("/api/admin/categories", fetcher);
+  
   const [modalOpen, setModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState(null);
-  
-  // Form State
   const [formData, setFormData] = useState({
     name: "",
     slug: "",
@@ -40,22 +38,6 @@ export default function CategoriesPage() {
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const data = await getCategoriesWithCounts();
-      setCategories(data);
-    } catch (err) {
-      console.error("Failed to load categories:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   const openAddModal = () => {
     setEditingCategory(null);
@@ -105,16 +87,24 @@ export default function CategoriesPage() {
     setError("");
 
     try {
+      const dataToSubmit = {
+        ...formData,
+        order: parseInt(formData.order) || 0
+      };
+
       if (editingCategory) {
-        await updateCategory(editingCategory.id, formData);
+        await updateCategory(editingCategory.id, dataToSubmit);
       } else {
-        await addCategory(formData);
+        await addCategory(dataToSubmit);
       }
-      // Revalidate cache to ensure changes appear on frontend
+      
+      // 1. Invalidate server tags
       await revalidateCategoryData();
       
+      // 2. Trigger SWR re-fetch
+      await mutate();
+      
       setModalOpen(false);
-      loadData();
     } catch (err) {
       setError(err.message || "Failed to save category");
     } finally {
@@ -124,19 +114,20 @@ export default function CategoriesPage() {
 
   const handleDelete = async (cat) => {
     if (cat.resourceCount > 0) {
-      alert(`Cannot delete category "${cat.name}" because it contains ${cat.resourceCount} resources.`);
+      alert(`Không thể xóa Danh mục "${cat.name}" vì nó chứa ${cat.resourceCount} tài nguyên.`);
       return;
     }
 
-    if (confirm(`Are you sure you want to delete the category "${cat.name}"?`)) {
-      setLoading(true);
+    if (confirm(`Bạn có chắc chắn muốn xóa Danh mục "${cat.name}"?`)) {
+      setSaving(true); // Reuse saving state for global loading during delete
       try {
         await deleteCategory(cat.id);
         await revalidateCategoryData();
-        loadData();
+        await mutate();
       } catch (err) {
         alert(err.message);
-        setLoading(false);
+      } finally {
+        setSaving(false);
       }
     }
   };
@@ -321,7 +312,10 @@ export default function CategoriesPage() {
                   <input 
                     type="number" 
                     value={formData.order} 
-                    onChange={(e) => setFormData(p => ({ ...p, order: parseInt(e.target.value) }))} 
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFormData(p => ({ ...p, order: val === "" ? "" : parseInt(val) }));
+                    }} 
                     required 
                   />
                 </div>
