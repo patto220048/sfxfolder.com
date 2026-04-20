@@ -3,12 +3,13 @@
 import { useState, useTransition, useEffect, useCallback } from "react";
 import useSWRInfinite from 'swr/infinite';
 
-import { Search, Shield, User, Crown, ChevronDown, Loader2 } from "lucide-react";
+import { Search, Shield, User, Crown, ChevronDown, Loader2, Plus, Edit2, Trash2 } from "lucide-react";
 import toast from "react-hot-toast";
 import styles from "./page.module.css";
 import { useDebounce } from "@/app/hooks/useDebounce";
 import { useInfiniteScroll } from "@/app/hooks/useInfiniteScroll";
 import TableSkeleton from "@/app/components/ui/TableSkeleton";
+import UserModal from "./UserModal";
 
 function formatDate(d) {
   if (!d) return "—";
@@ -64,6 +65,9 @@ export default function UsersClient({ users: initialUsers }) {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("all");
   const [isPending, startTransition] = useTransition();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [userToDelete, setUserToDelete] = useState(null);
   const debouncedSearch = useDebounce(query, 500);
 
   // SWR Configuration
@@ -112,13 +116,48 @@ export default function UsersClient({ users: initialUsers }) {
     });
   };
 
+  const handleDelete = async () => {
+    if (!userToDelete) return;
+
+    startTransition(async () => {
+      const toastId = toast.loading("Deleting user...");
+      try {
+        const res = await fetch(`/api/admin/users/${userToDelete}`, { method: "DELETE" });
+        if (!res.ok) {
+          const data = await res.json();
+          throw new Error(data.error || "Failed to delete");
+        }
+        await mutate();
+        toast.success("User deleted permanently", { id: toastId });
+        setUserToDelete(null);
+      } catch (err) {
+        toast.error(err.message, { id: toastId });
+      }
+    });
+  };
+
+  const openAddModal = () => {
+    setSelectedUser(null);
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (u) => {
+    setSelectedUser(u);
+    setIsModalOpen(true);
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Users</h1>
-        <span className={styles.count}>
-          {loading ? "Loading..." : `${totalCount} total`}
-        </span>
+        <div style={{ flex: 1 }}>
+          <h1 className={styles.title}>Users</h1>
+          <span className={styles.count}>
+            {loading ? "Loading..." : `${totalCount} total`}
+          </span>
+        </div>
+        <button className={styles.btnAdd} onClick={openAddModal}>
+          <Plus size={18} /> Add User
+        </button>
       </div>
 
       {/* Filters */}
@@ -183,19 +222,36 @@ export default function UsersClient({ users: initialUsers }) {
                 <td><SubBadge status={u.subscription_status || "free"} /></td>
                 <td className={styles.dateCell}>{formatDate(u.subscription_expires_at)}</td>
                 <td className={styles.dateCell}>{formatDate(u.created_at)}</td>
-                <td>
-                  <div className={styles.roleSelect}>
-                    <select
-                      value={u.role || "user"}
-                      onChange={(e) => handleRoleChange(u.id, e.target.value)}
-                      className={styles.select}
+                 <td>
+                  <div className={styles.actions}>
+                    <button 
+                      className={styles.actionBtn} 
+                      onClick={() => openEditModal(u)}
+                      title="Edit user"
+                    >
+                      <Edit2 size={16} />
+                    </button>
+                    <button 
+                      className={`${styles.actionBtn} ${styles.delete}`} 
+                      onClick={() => setUserToDelete(u.id)}
+                      title="Delete user"
                       disabled={isPending}
                     >
-                      <option value="user">User</option>
-                      <option value="premium">Premium</option>
-                      <option value="admin">Admin</option>
-                    </select>
-                    <ChevronDown size={14} className={styles.selectIcon} />
+                      <Trash2 size={16} />
+                    </button>
+                    <div className={styles.roleSelect}>
+                      <select
+                        value={u.role || "user"}
+                        onChange={(e) => handleRoleChange(u.id, e.target.value)}
+                        className={styles.select}
+                        disabled={isPending}
+                      >
+                        <option value="user">User</option>
+                        <option value="premium">Premium</option>
+                        <option value="admin">Admin</option>
+                      </select>
+                      <ChevronDown size={14} className={styles.selectIcon} />
+                    </div>
                   </div>
                 </td>
               </tr>
@@ -213,9 +269,42 @@ export default function UsersClient({ users: initialUsers }) {
            </div>
         )}
         {!hasMore && userList.length > 0 && (
-          <p className={styles.endMessage}>All users loaded</p>
+           <p className={styles.endMessage}>All users loaded</p>
         )}
       </div>
+
+      {isModalOpen && (
+        <UserModal 
+          user={selectedUser} 
+          onClose={() => setIsModalOpen(false)} 
+          onSuccess={() => mutate()} 
+        />
+      )}
+
+      {userToDelete && (
+        <div className={styles.overlay} onClick={() => setUserToDelete(null)}>
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalTitle}>Confirm Deletion</div>
+            <p style={{ marginBottom: '1.5rem', color: 'var(--text-secondary)' }}>
+              Are you sure you want to delete this user vĩnh viễn? This action cannot be undone.
+            </p>
+            <div className={styles.modalActions}>
+              <button className={styles.btnSecondary} onClick={() => setUserToDelete(null)} disabled={isPending}>
+                Cancel
+              </button>
+              <button className={styles.btnDanger} onClick={handleDelete} disabled={isPending}>
+                {isPending ? (
+                  <div className={styles.moreSpinner}>
+                    <Loader2 size={18} className={styles.spin} />
+                  </div>
+                ) : (
+                  "Delete Permanently"
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -334,3 +334,145 @@
   text-align: center;
   margin-top: 1rem;
 }
+
+/* Modal Styles */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-overlay);
+  display: grid;
+  place-items: center;
+  z-index: var(--z-overlay);
+  padding: 1rem;
+}
+
+.modal {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  width: 100%;
+  max-width: 450px;
+  padding: 2rem;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.modalTitle {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+  text-transform: uppercase;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.field label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.field input, .field select {
+  padding: 0.75rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+
+.field input:focus {
+  outline: none;
+  border-color: var(--text-primary);
+}
+
+.modalActions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.btnPrimary, .btnSecondary, .btnDanger {
+  flex: 1;
+  padding: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  transition: all 0.2s;
+  display: grid;
+  place-items: center;
+}
+
+.btnPrimary {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+}
+
+.btnPrimary:hover {
+  opacity: 0.9;
+}
+
+.btnSecondary {
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+}
+
+.btnSecondary:hover {
+  background: var(--bg-hover);
+}
+
+.btnDanger {
+  border: 1px solid #f43f5e33;
+  color: #f43f5e;
+}
+
+.btnDanger:hover {
+  background: #f43f5e11;
+  border-color: #f43f5e;
+}
+
+.btnAdd {
+  padding: 0.6rem 1.2rem;
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.actionBtn {
+  padding: 0.4rem;
+  color: var(--text-muted);
+  border: 1px solid transparent;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.actionBtn:hover {
+  color: var(--text-primary);
+  background: var(--bg-hover);
+  border-color: var(--border-default);
+}
+
+.actionBtn.delete:hover {
+  color: #f43f5e;
+  border-color: #f43f5e33;
+}

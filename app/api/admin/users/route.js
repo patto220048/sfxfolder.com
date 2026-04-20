@@ -53,7 +53,57 @@ export async function GET(req) {
     });
 
   } catch (err) {
-    console.error("[Admin Users API] Error:", err);
+    console.error("[Admin Users API GET] Error:", err);
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+}
+
+export async function POST(req) {
+  try {
+    const { user: adminUser } = await getServerUser();
+    if (!adminUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    // Verify admin role
+    const { data: profile } = await supabaseAdmin
+      .from("profiles")
+      .select("role")
+      .eq("id", adminUser.id)
+      .single();
+
+    if (profile?.role !== "admin") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+    const { email, password, full_name, role } = await req.json();
+    if (!email || !password) {
+      return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
+    }
+
+    // 1. Create User in Auth
+    const { data, error } = await supabaseAdmin.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true,
+      user_metadata: { full_name }
+    });
+
+    if (error) throw error;
+
+    // 2. Update Profile (role and full_name)
+    // We use upsert in case the trigger didn't fire fast enough
+    const { error: profileError } = await supabaseAdmin
+      .from("profiles")
+      .upsert({
+        id: data.user.id,
+        email: email,
+        full_name: full_name,
+        role: role || "user",
+      });
+
+    if (profileError) throw profileError;
+
+    return NextResponse.json({ success: true, user: data.user });
+
+  } catch (err) {
+    console.error("[Admin Users API POST] Error:", err);
     return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
