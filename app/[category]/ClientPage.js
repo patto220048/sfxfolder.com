@@ -37,6 +37,8 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
   const searchParams = useSearchParams();
   const resSlug = searchParams.get("res");
   const loadMoreRef = useRef(null);
+  const abortControllerRef = useRef(null);
+  const debounceTimerRef = useRef(null);
 
   // --- Effects ---
 
@@ -157,10 +159,70 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
     return () => window.removeEventListener("local-search", handleLocalSearch);
   }, []);
 
-  // Reset EVERYTHING when primary filters (Folder/Format/Search/Sort) change
+  // Reset when primary filters change with DEBOUNCE and ABORT
   useEffect(() => {
-    setVisibleCount(PAGE_SIZE_DISPLAY);
-  }, [selectedFolderId, selectedFormats, selectedTags, sortBy, inPageSearch]);
+    if (!isInitialized) return;
+
+    // Clear any existing timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Cancel any ongoing fetch
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+
+    const refreshData = async () => {
+      // Create new abort controller
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
+      setIsFetchLoading(true);
+      try {
+        const fresh = await getResources({
+          categorySlug: slug,
+          selectedTags: selectedTags,
+          selectedFormats: selectedFormats,
+          folderId: selectedFolderId,
+          offset: 0,
+          limit: PAGE_SIZE_BATCH,
+          abortSignal: controller.signal
+        });
+
+        // Only update state if this request hasn't been aborted
+        if (!controller.signal.aborted) {
+          setAllLoadedResources(fresh);
+          setServerOffset(fresh.length);
+          setHasMoreDB(fresh.length === PAGE_SIZE_BATCH);
+          setVisibleCount(PAGE_SIZE_DISPLAY);
+        }
+      } catch (err) {
+        if (err.name === 'AbortError') {
+          console.log("Fetch aborted for filter change");
+        } else {
+          console.error("Failed to refresh resources:", err);
+        }
+      } finally {
+        if (!controller.signal.aborted) {
+          setIsFetchLoading(false);
+        }
+      }
+    };
+
+    // Set debounce timer
+    debounceTimerRef.current = setTimeout(() => {
+      refreshData();
+    }, 300); // 300ms debounce
+
+    // Cleanup on unmount or next effect run
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+      // We don't necessarily want to abort here if the component is still mounted 
+      // but the effect is re-running due to state change, 
+      // because we already handle that at the start of the next effect.
+    };
+  }, [selectedFolderId, selectedFormats, selectedTags, slug, isInitialized]);
 
   // Synchronize internal state with server-provided initialResources ONLY when category changes
   useEffect(() => {
@@ -168,7 +230,7 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
     setServerOffset(initialResources.length);
     setHasMoreDB(initialResources.length === PAGE_SIZE_BATCH);
     setVisibleCount(PAGE_SIZE_DISPLAY);
-  }, [slug]); // Prop 'initialResources' is often a new reference on each render, so we tie this to 'slug' to avoid loops.
+  }, [slug]);
 
   // --- Core Filtering ---
   const filteredResources = useMemo(() => {
@@ -179,21 +241,8 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
       if (target) return [target];
     }
 
-    if (selectedFolderId) {
-      results = results.filter((r) => r.folderId === selectedFolderId);
-    }
-
-    if (selectedFormats.length > 0) {
-      results = results.filter((r) =>
-        selectedFormats.some(f => f.toUpperCase() === r.fileFormat?.toUpperCase())
-      );
-    }
-
-    if (selectedTags.length > 0) {
-      results = results.filter((r) =>
-        selectedTags.every(t => r.tags?.some(rt => rt.toLowerCase() === t.toLowerCase()))
-      );
-    }
+    // folderId, selectedFormats, and selectedTags are now filtered at the server level
+    // so we don't need to filter them locally here, which avoids the infinite loop.
 
     if (inPageSearch) {
       const q = inPageSearch.toLowerCase();
@@ -211,10 +260,12 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
         results.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
         break;
       default:
+        // Default to newest if the server results are already ordered, 
+        // or add explicit sort if needed.
         break;
     }
     return results;
-  }, [allLoadedResources, selectedFolderId, selectedFormats, selectedTags, sortBy, inPageSearch, resSlug]);
+  }, [allLoadedResources, sortBy, inPageSearch, resSlug]);
 
   // Extract unique tags from loaded resources for FilterBar
   const availableTags = useMemo(() => {
@@ -245,6 +296,9 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
       try {
         const nextBatch = await getResources({ 
           categorySlug: slug, 
+          selectedTags: selectedTags,
+          selectedFormats: selectedFormats,
+          folderId: selectedFolderId,
           offset: serverOffset, 
           limit: PAGE_SIZE_BATCH 
         });

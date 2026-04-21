@@ -88,48 +88,77 @@ export async function getResources({
   categorySlug, 
   folderId, 
   searchTerm, 
+  selectedTags = [], 
+  selectedFormats = [],
   isAdmin = false,
   limit = 25, 
-  offset = 0 
+  offset = 0,
+  abortSignal = null
 } = {}) {
   // Key for cache should include all parameters
-  const cacheKey = `resources-${categorySlug || "all"}-${folderId || "all"}-${searchTerm || "none"}-${isAdmin ? "admin" : "public"}-${limit}-${offset}`;
+  const cacheKey = `resources-${categorySlug || "all"}-${folderId || "all"}-${searchTerm || "none"}-${selectedTags.join(",")}-${selectedFormats.join(",")}-${isAdmin ? "admin" : "public"}-${limit}-${offset}`;
   
-  return unstable_cache(
-    async () => {
-      let query = supabase
-        .from("resources")
-        .select(RESOURCE_SUMMARY_COLUMNS, { count: "exact" })
-        .order("created_at", { ascending: false })
-        .range(offset, offset + limit - 1);
+  // If called from client, unstable_cache might not be available or needed.
+  // We check if we are in a server context.
+  const isServer = typeof window === 'undefined';
 
-      if (!isAdmin) {
-        query = query.eq("is_published", true);
-      }
+  const fetchLogic = async () => {
+    let query = supabase
+      .from("resources")
+      .select(RESOURCE_SUMMARY_COLUMNS, { count: "exact" })
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
 
-      if (categorySlug) {
-        query = query.eq("category_id", categorySlug);
-      }
-      if (folderId) {
-        query = query.eq("folder_id", folderId);
-      }
+    if (abortSignal) {
+      query = query.abortSignal(abortSignal);
+    }
 
-      if (searchTerm) {
-        // Simple ilike search for performance, FTS is in searchResources
-        query = query.or(`name.ilike.%${searchTerm}%,tags.cs.{${searchTerm}}`);
-      }
+    if (!isAdmin) {
+      query = query.eq("is_published", true);
+    }
+    
+    if (categorySlug) {
+      query = query.eq("category_id", categorySlug);
+    }
+    if (folderId) {
+      query = query.eq("folder_id", folderId);
+    }
 
-      const { data, error } = await query;
+    if (searchTerm) {
+      query = query.or(`name.ilike.%${searchTerm}%,tags.cs.{${searchTerm}}`);
+    }
 
-      if (error) {
-        console.error("Error fetching resources:", error);
+    if (selectedTags && selectedTags.length > 0) {
+      query = query.contains("tags", selectedTags);
+    }
+
+    if (selectedFormats && selectedFormats.length > 0) {
+      query = query.in("file_format", selectedFormats);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      // Silently handle manual cancellations (AbortError)
+      if (error.code === 'ABORT' || error.name === 'AbortError' || error.message?.includes('AbortError')) {
         return [];
       }
-      return (data || []).map(mapResource);
-    },
-    [cacheKey],
-    { revalidate: REVALIDATE_TIME, tags: ["resources"] } // Environment-controlled TTL
-  )();
+      console.error("Error fetching resources:", error);
+      return [];
+    }
+    return (data || []).map(mapResource);
+  };
+
+  if (isServer) {
+    return unstable_cache(
+      fetchLogic,
+      [cacheKey],
+      { revalidate: REVALIDATE_TIME, tags: ["resources"] }
+    )();
+  }
+
+  // On client, skip unstable_cache and fetch directly
+  return fetchLogic();
 }
 
 /**

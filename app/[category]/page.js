@@ -31,15 +31,20 @@ function buildFolderTree(flatList) {
 }
 
 const getCachedCategoryData = unstable_cache(
-  async (slug) => {
+  async (slug, tags = [], formats = []) => {
     // 1. Fetch category info
     const info = await getCategoryBySlug(slug);
 
     // 2. Fetch folders for this category
     const fetchedFolders = await getFolders(slug);
     
-    // 3. Fetch resources for this category - Limit reduced for better performance
-    const fetchedResources = await getResources({ categorySlug: slug, limit: 200 });
+    // 3. Fetch resources for this category with filters
+    const fetchedResources = await getResources({ 
+      categorySlug: slug, 
+      selectedTags: tags, 
+      selectedFormats: formats,
+      limit: 200 
+    });
 
     return {
       categoryInfo: info,
@@ -47,24 +52,27 @@ const getCachedCategoryData = unstable_cache(
       allResources: fetchedResources
     };
   },
-  ['category-data'],
+  ['category-data'], 
   { 
     revalidate: REVALIDATE_TIME, 
     tags: ['resources', 'categories'] 
   }
 );
 
-export default async function CategoryPage({ params }) {
-  // Await params to be compatible with Next.js 15+ constraints
-  const resolvedParams = await params;
+export default async function CategoryPage({ params, searchParams }) {
+  // Await params and searchParams for Next.js 15+ constraints
+  const [resolvedParams, resolvedSearchParams] = await Promise.all([params, searchParams]);
   const slug = resolvedParams.category;
+
+  const urlTags = resolvedSearchParams.tags ? resolvedSearchParams.tags.split(",") : [];
+  const urlFormats = resolvedSearchParams.format ? resolvedSearchParams.format.split(",") : [];
 
   let info = null;
   let flatFolders = [];
   let allResources = [];
 
   try {
-    const data = await getCachedCategoryData(slug);
+    const data = await getCachedCategoryData(slug, urlTags, urlFormats);
     info = data.categoryInfo;
     flatFolders = data.flatFolders;
     allResources = data.allResources;
