@@ -5,7 +5,7 @@ import Link from "next/link";
 import { getIcon } from "./IconLib";
 import styles from "./CategoryCard.module.css";
 
-export default function CategoryCard({ name, slug, icon, color, resourceCount = 0, index = 0 }) {
+export default function CategoryCard({ name, slug, icon, color, description, resourceCount = 0, index = 0 }) {
   const [isNavigating, setIsNavigating] = useState(false);
   const IconComponent = getIcon(icon);
 
@@ -38,7 +38,14 @@ export default function CategoryCard({ name, slug, icon, color, resourceCount = 
         {name} {resourceCount > 0 && `(${resourceCount})`}
       </h3>
       <span className={styles.count}>
-        {isNavigating ? "Loading..." : resourceCount > 0 ? "Browse library" : "Coming soon"}
+        {isNavigating 
+          ? "Loading..." 
+          : description 
+            ? description 
+            : resourceCount > 0 
+              ? "Browse library" 
+              : "Coming soon"
+        }
       </span>
       <div className={styles.glow} />
     </Link>

@@ -3,24 +3,21 @@ import SearchBar from "@/app/components/ui/SearchBar";
 import { getCategoriesWithCounts } from "@/app/lib/api";
 import styles from "./page.module.css";
 
-export const revalidate = 3600; // Revalidate every hour
-
 export default async function Home() {
   let categories = [];
   try {
     categories = await getCategoriesWithCounts();
   } catch (e) {
-    console.error("Failed to load categories:", e.message);
     // Fallback static data with Neobrutalist palette
     categories = [
-      { slug: "sound-effects", name: "Sound Effects", icon: "volume-2", color: "#FFD93D" },
-      { slug: "music", name: "Music", icon: "music", color: "#FF6B6B" },
-      { slug: "video-meme", name: "Video Meme", icon: "film", color: "#6C5CE7" },
-      { slug: "green-screen", name: "Green Screen", icon: "monitor", color: "#1DD1A1" },
-      { slug: "animation", name: "Animation", icon: "sparkles", color: "#FF9F43" },
-      { slug: "image-overlay", name: "Image & Overlay", icon: "image", color: "#A55EE1" },
-      { slug: "font", name: "Font", icon: "type", color: "#00D2D3" },
-      { slug: "preset-lut", name: "Preset & LUT", icon: "sliders", color: "#54A0FF" },
+      { slug: "sound-effects", name: "Sound Effects", icon: "volume-2", color: "#FFD93D", description: "High-quality SFX" },
+      { slug: "music", name: "Music", icon: "music", color: "#FF6B6B", description: "Royalty-free tracks" },
+      { slug: "video-meme", name: "Video Meme", icon: "film", color: "#6C5CE7", description: "Trending meme clips" },
+      { slug: "green-screen", name: "Green Screen", icon: "monitor", color: "#1DD1A1", description: "Chroma key assets" },
+      { slug: "animation", name: "Animation", icon: "sparkles", color: "#FF9F43", description: "Motion graphics" },
+      { slug: "image-overlay", name: "Image & Overlay", icon: "image", color: "#A55EE1", description: "Visual overlays" },
+      { slug: "font", name: "Font", icon: "type", color: "#00D2D3", description: "Professional typefaces" },
+      { slug: "preset-lut", name: "Preset & LUT", icon: "sliders", color: "#54A0FF", description: "Color grading tools" },
     ];
   }
 
@@ -55,6 +52,7 @@ export default async function Home() {
               slug={cat.slug}
               icon={cat.icon}
               color={cat.color}
+              description={cat.description}
               resourceCount={cat.resourceCount}
               index={index}
             />
