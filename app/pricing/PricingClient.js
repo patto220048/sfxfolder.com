@@ -7,13 +7,16 @@ import { Check, Crown } from "lucide-react";
 import toast from "react-hot-toast";
 import styles from "./page.module.css";
 import { useAuth } from "@/app/lib/auth-context";
+import SuccessModal from "@/app/components/ui/SuccessModal";
 
 export default function PricingClient({ config }) {
   const router = useRouter();
   const { user } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   // Extract variables based on current env
+  // ... (keep lines 17-26)
   const isSandbox = config.env === "sandbox";
   const activeParams = isSandbox ? config.sandbox : config.live;
   
@@ -42,8 +45,7 @@ export default function PricingClient({ config }) {
       
       if (res.ok) {
         toast.success("Welcome to Premium!", { id: toastId });
-        // Instead of a success page, we can refresh the window to update auth state
-        window.location.href = "/";
+        setShowSuccessModal(true);
       } else {
         throw new Error(result.error || "Verification failed");
       }
@@ -69,6 +71,7 @@ export default function PricingClient({ config }) {
       </header>
 
       <PayPalScriptProvider options={initialOptions}>
+        {/* ... (keep original grid logic) */}
         <div className={styles.grid}>
           
           {/* Monthly Plan */}
@@ -140,6 +143,12 @@ export default function PricingClient({ config }) {
 
         </div>
       </PayPalScriptProvider>
+
+      <SuccessModal 
+        isOpen={showSuccessModal} 
+        onClose={() => setShowSuccessModal(false)} 
+      />
     </div>
   );
 }
+
