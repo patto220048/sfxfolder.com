@@ -28,7 +28,7 @@ function TreeItem({ folder, selectedFolderId, onSelect, primaryColor, level = 0 
     <li className={styles.item}>
       <button
         className={`${styles.row} ${isSelected ? styles.active : ""}`}
-        style={{ paddingLeft: `${12 + level * 16}px` }}
+        style={{ paddingLeft: `${16 + level * 16}px` }}
         onClick={() => {
           if (hasChildren) setExpanded(!expanded);
           onSelect(folder);

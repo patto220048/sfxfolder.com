@@ -1,12 +1,15 @@
 .sidebar {
   width: var(--sidebar-width);
-  min-height: calc(100vh - var(--navbar-height));
+  height: calc(100vh - var(--navbar-height));
   background: var(--bg-card);
   border-right: 1px solid var(--border-default);
   position: sticky;
   top: var(--navbar-height);
   overflow-y: auto;
+  overflow-x: hidden;
   flex-shrink: 0;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-default) transparent;
 }
 
 .header {
@@ -23,7 +26,7 @@
 }
 
 .content {
-  padding: var(--space-2) var(--space-2);
+  padding: var(--space-2) 0;
 }
 
 .allBtn {
@@ -31,13 +34,13 @@
   align-items: center;
   gap: var(--space-2);
   width: 100%;
-  padding: var(--space-2) var(--space-3);
+  padding: var(--space-2) var(--space-4);
   border: none;
   background: transparent;
   color: var(--text-secondary);
   font-size: 0.85rem;
   cursor: pointer;
-  border-radius: var(--radius-sm);
+  border-radius: 0;
   transition: all var(--transition-fast);
   text-align: left;
   margin-bottom: var(--space-1);
