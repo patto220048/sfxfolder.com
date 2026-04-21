@@ -143,38 +143,148 @@
   }
 }.statusBadge {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
-  background: rgba(250, 203, 17, 0.1);
+  gap: 1rem;
+  background: rgba(250, 203, 17, 0.05);
   border: 1px solid var(--accent-gold);
   color: var(--accent-gold);
-  padding: 1rem;
+  padding: 1.5rem;
   border-radius: 8px;
-  margin-bottom: 2rem;
+  margin-bottom: 2.5rem;
   font-weight: 600;
+  width: 100%;
+  max-width: 900px;
   animation: pulse 2s infinite;
 }
 
-@keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(250, 203, 17, 0.2); }
-  70% { box-shadow: 0 0 0 10px rgba(250, 203, 17, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(250, 203, 17, 0); }
+@media (min-width: 768px) {
+  .statusBadge {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+  }
 }
 
-.manageBtn {
+.statusInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.statusLink {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.2rem;
+  background: var(--accent-gold);
+  color: #000;
+  text-decoration: none;
+  font-size: 0.8rem;
+  font-weight: 800;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.statusLink:hover {
+  transform: translateY(-2px);
+  background: #fff;
+  color: #000;
+  box-shadow: 0 6px 20px rgba(250, 203, 17, 0.4);
+}
+
+.activeCard {
+  border-color: var(--accent-gold) !important;
+  box-shadow: 0 10px 40px rgba(250, 203, 17, 0.15);
+}
+
+.currentPlanBadge {
+  display: inline-block;
+  background: #000;
+  color: #fff;
+  padding: 4px 10px;
+  font-size: 0.65rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  border-radius: 2px;
+  margin-top: -0.5rem;
+  margin-bottom: 1rem;
+  width: fit-content;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='light'] .currentPlanBadge {
+  background: #000;
+  color: #fff;
+}
+
+.upgradeBtn {
+  width: 100%;
+  padding: 14px;
+  background: var(--accent-gold);
+  color: #000;
+  font-weight: 800;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+.upgradeBtn:hover {
+  opacity: 0.9;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(250, 203, 17, 0.3);
+}
+
+.activePlanContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  padding-top: 1rem;
+}
+
+.activeText {
+  color: var(--accent-gold);
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-align: center;
+  letter-spacing: 0.02em;
+}
+
+.manageLink {
   display: block;
   width: 100%;
   padding: 12px;
-  background: var(--accent-gold);
-  color: #000;
+  background: transparent;
+  border: 1px solid var(--accent-gold);
+  color: var(--accent-gold);
   text-align: center;
   text-decoration: none;
-  font-weight: bold;
+  font-weight: 800;
+  font-size: 0.85rem;
+  text-transform: uppercase;
   border-radius: 4px;
-  transition: opacity 0.2s;
+  transition: all 0.2s;
 }
 
-.manageBtn:hover {
-  opacity: 0.9;
+.manageLink:hover {
+  background: var(--accent-gold);
+  color: #000;
+  box-shadow: 0 4px 15px rgba(250, 203, 17, 0.2);
+}
+
+.alreadyClaimed {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+  font-style: italic;
 }

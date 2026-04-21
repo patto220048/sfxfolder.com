@@ -1,0 +1,156 @@
+.overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+  backdrop-filter: blur(8px);
+}
+
+.modal {
+  background: #0a0a0a;
+  border: 1px solid var(--accent-gold);
+  width: 100%;
+  max-width: 500px;
+  position: relative;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+}
+
+.closeBtn {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.2s;
+  z-index: 1;
+}
+
+.closeBtn:hover {
+  color: var(--text-primary);
+}
+
+.content {
+  padding: 3rem 2rem 2.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.header {
+  text-align: center;
+}
+
+.iconWrapper {
+  margin-bottom: 1rem;
+  color: var(--accent-gold);
+  display: flex;
+  justify-content: center;
+}
+
+.header h2 {
+  font-size: 1.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  color: var(--text-primary);
+}
+
+.header p {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.infoBox {
+  background: #111;
+  padding: 1.25rem;
+  border: 1px solid #222;
+  border-radius: 4px;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.infoRow:last-child {
+  margin-bottom: 0;
+}
+
+.label {
+  color: var(--text-secondary);
+}
+
+.value {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.warningBox {
+  display: flex;
+  gap: 0.75rem;
+  background: rgba(250, 203, 17, 0.05);
+  border-left: 3px solid var(--accent-gold);
+  padding: 1rem;
+}
+
+.warningIcon {
+  color: var(--accent-gold);
+  flex-shrink: 0;
+}
+
+.warningBox p {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.warningBox strong {
+  color: var(--text-primary);
+}
+
+.actionArea {
+  margin-top: 0.5rem;
+}
+
+.confirmText {
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.paypalContainer {
+  min-height: 45px;
+}
+
+.cancelBtn {
+  background: none;
+  border: 1px solid #333;
+  color: var(--text-secondary);
+  padding: 0.75rem;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-radius: 4px;
+}
+
+.cancelBtn:hover {
+  background: #111;
+  color: var(--text-primary);
+  border-color: #444;
+}
