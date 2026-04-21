@@ -11,7 +11,7 @@ import SuccessModal from "@/app/components/ui/SuccessModal";
 
 export default function PricingClient({ config }) {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, isPremium } = useAuth();
   const [isProcessing, setIsProcessing] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
@@ -69,6 +69,12 @@ export default function PricingClient({ config }) {
           Get unlimited access to all exclusive resources. Cancel anytime.
         </p>
       </header>
+      {isPremium && (
+        <div className={styles.statusBadge}>
+          <Crown size={20} />
+          <span>You are currently a Premium member. Thank you for your support!</span>
+        </div>
+      )}
 
       <PayPalScriptProvider options={initialOptions}>
         {/* ... (keep original grid logic) */}
@@ -92,6 +98,8 @@ export default function PricingClient({ config }) {
             <div className={styles.paypalWrapper}>
               {!user ? (
                 <button onClick={handleLoginRequest} style={{width: '100%', padding: '12px', background: 'var(--text-primary)', color: 'var(--bg-primary)', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontFamily: 'inherit'}}>Log in to Subscribe</button>
+              ) : isPremium ? (
+                <a href="/account/subscription" className={styles.manageBtn}>Manage Subscription</a>
               ) : (
                 <PayPalButtons
                   style={{ layout: "horizontal", color: "black", label: "subscribe" }}
@@ -126,6 +134,8 @@ export default function PricingClient({ config }) {
             <div className={styles.paypalWrapper}>
               {!user ? (
                 <button onClick={handleLoginRequest} style={{width: '100%', padding: '12px', background: 'var(--text-primary)', color: 'var(--bg-primary)', fontWeight: 'bold', border: 'none', cursor: 'pointer', fontFamily: 'inherit'}}>Log in to Subscribe</button>
+              ) : isPremium ? (
+                <a href="/account/subscription" className={styles.manageBtn}>Manage Subscription</a>
               ) : (
                 <PayPalButtons
                   style={{ layout: "horizontal", color: "black", label: "subscribe" }}
