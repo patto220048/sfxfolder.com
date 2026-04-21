@@ -29,6 +29,9 @@
 /* ---------- Logo ---------- */
 .logo {
   text-decoration: none;
+  flex: 1;
+  display: flex;
+  justify-content: flex-start;
 }
 
 .logoText {
@@ -44,8 +47,10 @@
 .links {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: var(--space-2);
   list-style: none;
+  flex: 0 0 auto;
 }
 
 .link {
@@ -56,6 +61,7 @@
   text-transform: uppercase;
   letter-spacing: 0.1em;
   transition: all var(--transition-fast);
+  white-space: nowrap;
 }
 
 .link:hover {
@@ -71,7 +77,8 @@
 .dropdown {
   position: absolute;
   top: 100%;
-  right: 0;
+  right: 50%;
+  transform: translateX(50%) translateY(4px);
   min-width: 200px;
   background: var(--bg-card);
   border: 1px solid var(--border-default);
@@ -79,14 +86,13 @@
   list-style: none;
   opacity: 0;
   visibility: hidden;
-  transform: translateY(4px);
   transition: all var(--transition-fast);
 }
 
 .moreDropdown:hover .dropdown {
   opacity: 1;
   visibility: visible;
-  transform: translateY(0);
+  transform: translateX(50%) translateY(0);
 }
 
 .dropdownLink {
@@ -108,7 +114,9 @@
 .actions {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   gap: var(--space-2);
+  flex: 1;
 }
 
 .searchBtn {

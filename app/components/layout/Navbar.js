@@ -92,7 +92,7 @@ export default function Navbar() {
 
           {/* Desktop nav */}
           <ul className={styles.links}>
-            {categories.slice(0, 5).map((cat) => (
+            {categories.slice(0, 4).map((cat) => (
               <li key={cat.slug}>
                 <Link 
                   href={`/${cat.slug}`} 
@@ -103,22 +103,25 @@ export default function Navbar() {
                 </Link>
               </li>
             ))}
-            <li className={styles.moreDropdown}>
-              <span className={styles.link}>More ▾</span>
-              <ul className={styles.dropdown}>
-                {categories.slice(5).map((cat) => (
-                  <li key={cat.slug}>
-                    <Link 
-                      href={`/${cat.slug}`} 
-                      className={styles.dropdownLink}
-                      onClick={(e) => handleLinkClick(e, `/${cat.slug}`)}
-                    >
-                      {cat.name}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </li>
+            
+            {categories.length > 4 && (
+              <li className={styles.moreDropdown}>
+                <span className={styles.link}>More ▾</span>
+                <ul className={styles.dropdown}>
+                  {categories.slice(4).map((cat) => (
+                    <li key={cat.slug}>
+                      <Link 
+                        href={`/${cat.slug}`} 
+                        className={styles.dropdownLink}
+                        onClick={(e) => handleLinkClick(e, `/${cat.slug}`)}
+                      >
+                        {cat.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            )}
           </ul>
 
           {/* Actions */}
