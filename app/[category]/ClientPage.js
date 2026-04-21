@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import Sidebar from "@/app/components/layout/Sidebar";
 import ResourceCard from "@/app/components/ui/ResourceCard";
@@ -213,8 +214,9 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
     }
 
     // --- Data Refresh Logic ---
-    // Clear old items immediately to avoid ghosting/lag when Switching Folders
-    setAllLoadedResources([]);
+    // Instead of clearing to [] and causing a jumpy flicker, 
+    // we use isFetchLoading to trigger a smooth Blur/Dim animation 
+    // while the new data is pending.
     setIsFetchLoading(true);
 
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
@@ -236,6 +238,7 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
         });
 
         if (!controller.signal.aborted) {
+          // Clear items right before setting new ones for a crisp replacement
           setAllLoadedResources(fresh);
           setServerOffset(fresh.length);
           setHasMoreDB(fresh.length === PAGE_SIZE_BATCH);
@@ -540,11 +543,61 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
     const gridClass = (info.layout === "audio" || info.layout === "sound") ? styles.soundGrid : styles.grid;
 
     return (
-      <>
-        <div className={gridClass}>
+      <div className={styles.gridWrapper}>
+        <motion.div 
+          className={gridClass}
+          initial={false}
+          animate={{
+            filter: isFetchLoading ? "blur(12px) grayscale(0.2)" : "blur(0px) grayscale(0)",
+            opacity: isFetchLoading ? 0.3 : 1,
+            scale: isFetchLoading ? 0.98 : 1
+          }}
+          transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
+        >
           {renderGridItems()}
-        </div>
+        </motion.div>
         
+        {/* Skeleton Overlay - perfectly aligned with the blur area */}
+        {isFetchLoading && (
+          <div 
+            className={gridClass} 
+            style={{ 
+              position: 'absolute', 
+              top: 0, 
+              left: 0, 
+              width: '100%', 
+              pointerEvents: 'none', 
+              zIndex: 10,
+              opacity: 0.8
+            }}
+          >
+            {Array.from({ length: 12 }).map((_, i) => {
+              const isSoundLayout = gridClass === styles.soundGrid;
+              if (isSoundLayout) {
+                return (
+                  <div key={`overlay-skeleton-${i}`} className={styles.skeletonCardSound}>
+                    <div className={styles.skeletonThumbSound} />
+                    <div className={styles.skeletonInfoSound}>
+                      <div className={styles.skeletonLine} style={{ width: '80%' }} />
+                      <div className={styles.skeletonLine} style={{ width: '40%' }} />
+                    </div>
+                  </div>
+                );
+              }
+              return (
+                <div key={`overlay-skeleton-${i}`} className={styles.skeletonCard}>
+                  <div className={styles.skeletonThumb} />
+                  <div className={styles.skeletonCardBody}>
+                    <div className={styles.skeletonLine} style={{ width: '90%' }} />
+                    <div className={styles.skeletonLine} style={{ width: '40%' }} />
+                    <div className={styles.skeletonLine} style={{ width: '60%', marginTop: 'auto' }} />
+                  </div>
+                  <div className={styles.skeletonAction} />
+                </div>
+              );
+            })}
+          </div>
+        )}
         {/* Sentinel element for Infinite Scroll */}
         <div ref={loadMoreRef} className={styles.observerSentinel}>
           {(isFetchLoading || (visibleCount < filteredResources.length) || hasMoreDB) && (
@@ -556,7 +609,7 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
             </div>
           )}
         </div>
-      </>
+      </div>
     );
   };
 

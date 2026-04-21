@@ -51,6 +51,11 @@
 }
 
 /* ---------- Grid ---------- */
+.gridWrapper {
+  position: relative;
+  width: 100%;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -187,26 +192,64 @@
   border: 1px solid var(--border-default);
   border-radius: 0px;
   overflow: hidden;
+  height: 100%;
 }
 
 .skeletonThumb {
   width: 100%;
   aspect-ratio: 16 / 10;
   background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-default);
   animation: shimmer 1.5s infinite ease-in-out;
 }
 
 .skeletonCardBody {
-  padding: var(--space-4);
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 8px;
+  flex: 1;
 }
 
 .skeletonLine {
   height: 12px;
   background: var(--bg-surface);
+  border-radius: 2px;
   animation: shimmer 1.5s infinite ease-in-out;
+}
+
+.skeletonAction {
+  margin: 0 16px 16px 16px;
+  height: 42px;
+  background: var(--bg-surface);
+  animation: shimmer 1.5s infinite ease-in-out;
+}
+
+/* Sound Layout Skeleton (Row-based) */
+.skeletonCardSound {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  padding: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  gap: 16px;
+  height: 90px; /* Matching the ~80-100px height for sounds */
+}
+
+.skeletonThumbSound {
+  width: 60px;
+  height: 60px;
+  background: var(--bg-surface);
+  animation: shimmer 1.5s infinite ease-in-out;
+  flex-shrink: 0;
+}
+
+.skeletonInfoSound {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 @keyframes shimmer {
