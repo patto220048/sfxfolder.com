@@ -217,6 +217,32 @@
   width: calc(100% - var(--space-6) * 2);
 }
 
+.authAction {
+  display: flex;
+  align-items: center;
+  min-width: 40px; /* Width of UserMenu trigger */
+}
+
+@media (min-width: 769px) {
+  .authAction {
+    min-width: 110px; /* Approximate width of 'Sign In' button */
+  }
+}
+
+.authPlaceholder {
+  width: 40px;
+  height: 40px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  animation: pulse 1.5s infinite ease-in-out;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.5; }
+  50% { opacity: 0.8; }
+  100% { opacity: 0.5; }
+}
+
 @media (max-width: 768px) {
   .signInText {
     display: none;

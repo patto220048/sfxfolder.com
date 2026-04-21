@@ -26,6 +26,7 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { showToast } = useToast();
   const pathname = usePathname();
   const router = useRouter();
@@ -232,13 +233,19 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
+    setIsLoggingOut(true);
+    setLoading(true);
+    
     try {
       await supabase.auth.signOut();
+      // Artificial delay for smooth transition
+      await new Promise(resolve => setTimeout(resolve, 800));
     } catch (error) {
       console.warn("SignOut error:", error);
     } finally {
       setUser(null);
       setProfile(null);
+      setIsLoggingOut(false);
       // Hard refresh to clear all client-side state and avoid UI hanging
       window.location.reload();
     }
@@ -319,6 +326,7 @@ export function AuthProvider({ children }) {
         loading,
         isAdmin,
         isPremium,
+        isLoggingOut,
         loginWithGoogle,
         loginWithEmail,
         signup,

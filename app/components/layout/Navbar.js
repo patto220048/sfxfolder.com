@@ -131,8 +131,10 @@ export default function Navbar() {
             </Link>
 
             {/* Auth: Sign In button or User Menu */}
-            {!authLoading && (
-              user ? (
+            <div className={styles.authAction}>
+              {authLoading ? (
+                <div className={styles.authPlaceholder} />
+              ) : user ? (
                 <UserMenu />
               ) : (
                 <button
@@ -143,8 +145,8 @@ export default function Navbar() {
                   <UserCircle size={22} />
                   <span className={styles.signInText}>Sign In</span>
                 </button>
-              )
-            )}
+              )}
+            </div>
 
             <button
               className={styles.hamburger}
