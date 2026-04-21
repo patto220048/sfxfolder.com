@@ -19,6 +19,7 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
   const [selectedFolderName, setSelectedFolderName] = useState(null);
   const [selectedFormat, setSelectedFormat] = useState(null);
   const [sortBy, setSortBy] = useState("newest");
+  const [isInitialized, setIsInitialized] = useState(false);
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE_DISPLAY);
   
   // Resources State
@@ -38,24 +39,93 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
 
   // --- Effects ---
 
-  // Handle deep-link to resource via ?res=slug
+  // Initialize state from URL or LocalStorage
   useEffect(() => {
-    if (resSlug) {
-      const existing = allLoadedResources.find(r => r.slug === resSlug);
-      if (existing) {
-        // User requested to DISABLE auto-preview for ALL types
-        // setPreviewResource(existing); 
-      } else {
-        // If not in current pool, fetch it specifically
-        getResourceBySlug(resSlug).then(resource => {
-          if (resource) {
-            setAllLoadedResources(prev => [resource, ...prev]);
-            // setPreviewResource(resource); // Disable auto-preview
-          }
-        });
+    if (typeof window === 'undefined') return;
+
+    // 1. Try URL first
+    const urlFolderId = searchParams.get("folder");
+    const urlFormat = searchParams.get("format");
+    const urlSort = searchParams.get("sort");
+
+    let initialFolderId = urlFolderId;
+    let initialFormat = urlFormat;
+    let initialSort = urlSort || "newest";
+
+    // 2. If URL is incomplete, try LocalStorage
+    if (!urlFolderId || !urlFormat || !urlSort) {
+      try {
+        const saved = localStorage.getItem(`last_state_${slug}`);
+        if (saved) {
+          const data = JSON.parse(saved);
+          if (!urlFolderId && data.folderId) initialFolderId = data.folderId;
+          if (!urlFormat && data.format) initialFormat = data.format;
+          if (!urlSort && data.sort) initialSort = data.sort;
+        }
+      } catch (e) {
+        console.warn("Failed to load state from localStorage:", e);
       }
     }
-  }, [resSlug, allLoadedResources]);
+
+    // Apply initial state
+    if (initialFolderId) {
+      setSelectedFolderId(initialFolderId);
+      const folder = folders.find(f => f.id === initialFolderId);
+      if (folder) setSelectedFolderName(folder.path || folder.name);
+    }
+    if (initialFormat) setSelectedFormat(initialFormat);
+    if (initialSort) setSortBy(initialSort);
+    
+    setIsInitialized(true);
+  }, [slug, folders]); // searchParams is omitted to run only once or on category change
+
+  // Sync state changes back to URL and LocalStorage
+  useEffect(() => {
+    if (!isInitialized || typeof window === 'undefined') return;
+
+    const params = new URLSearchParams(searchParams.toString());
+    
+    if (selectedFolderId) params.set("folder", selectedFolderId);
+    else params.delete("folder");
+    
+    if (selectedFormat) params.set("format", selectedFormat);
+    else params.delete("format");
+    
+    if (sortBy && sortBy !== "newest") params.set("sort", sortBy);
+    else params.delete("sort");
+
+    const queryString = params.toString();
+    const finalUrl = `${pathname}${queryString ? `?${queryString}` : ""}`;
+    
+    // Update URL without adding to history (to avoid back-button hell with filters)
+    router.replace(finalUrl, { scroll: false });
+
+    // Update LocalStorage for cross-category memory
+    try {
+      localStorage.setItem(`last_state_${slug}`, JSON.stringify({
+        folderId: selectedFolderId,
+        format: selectedFormat,
+        sort: sortBy
+      }));
+    } catch (e) {
+      console.warn("Failed to save state to localStorage:", e);
+    }
+  }, [selectedFolderId, selectedFormat, sortBy, isInitialized, pathname, router, slug]);
+
+  // Handle deep-link to resource via ?res=slug
+  useEffect(() => {
+    if (!isInitialized || !resSlug) return;
+    
+    const existing = allLoadedResources.find(r => r.slug === resSlug);
+    if (!existing) {
+      // If not in current pool, fetch it specifically
+      getResourceBySlug(resSlug).then(resource => {
+        if (resource) {
+          setAllLoadedResources(prev => [resource, ...prev]);
+        }
+      });
+    }
+  }, [resSlug, allLoadedResources, isInitialized]);
 
   // Listen for in-page search from ContextSearch
   useEffect(() => {

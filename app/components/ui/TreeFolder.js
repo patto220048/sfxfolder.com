@@ -1,11 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ChevronRight, Folder, FolderOpen } from "lucide-react";
 import styles from "./TreeFolder.module.css";
 
 function TreeItem({ folder, selectedFolderId, onSelect, primaryColor, level = 0 }) {
-  const [expanded, setExpanded] = useState(false);
+  const hasSelectedChild = useMemo(() => {
+    if (!selectedFolderId || !folder.children) return false;
+    const check = (f) => {
+      if (f.id === selectedFolderId) return true;
+      if (f.children) return f.children.some(check);
+      return false;
+    };
+    return folder.children.some(check);
+  }, [folder.children, selectedFolderId]);
+
+  const [expanded, setExpanded] = useState(hasSelectedChild);
+
+  useEffect(() => {
+    if (hasSelectedChild) setExpanded(true);
+  }, [hasSelectedChild]);
+
   const hasChildren = folder.children && folder.children.length > 0;
   const isSelected = selectedFolderId === folder.id;
 
