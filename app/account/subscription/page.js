@@ -1,6 +1,7 @@
 import { createServerSupabaseClient, getServerUser } from "@/app/lib/supabase-server";
 import SubscriptionClient from "./SubscriptionClient";
 import { redirect } from "next/navigation";
+import { getPaypalConfig } from "@/app/lib/api";
 
 export const metadata = {
   title: "My Subscription",
@@ -22,14 +23,8 @@ export default async function SubscriptionPage() {
     .limit(1)
     .single();
 
-  // Fetch the plan label from system_settings
-  const { data: settings } = await supabase
-    .from("system_settings")
-    .select("setting_value")
-    .eq("setting_key", "paypal_config")
-    .single();
-
-  const config = settings?.setting_value;
+  // Fetch the plan label from cached config
+  const config = await getPaypalConfig();
   const activeParams = config?.env === "live" ? config?.live : config?.sandbox;
 
   // Map plan_id to a human-readable label

@@ -978,3 +978,29 @@ export async function updateSiteSettings(updateData) {
   }
   return data;
 }
+
+/* ========================================
+   SYSTEM SETTINGS (PAYPAL, etc.)
+   ======================================== */
+
+/**
+ * Get PayPal configuration from system_settings.
+ * Cached for performance.
+ */
+export const getPaypalConfig = unstable_cache(
+  async () => {
+    const { data, error } = await supabase
+      .from('system_settings')
+      .select('setting_value')
+      .eq('setting_key', 'paypal_config')
+      .single();
+
+    if (error) {
+      console.error('Error fetching PayPal config:', error);
+      return null;
+    }
+    return data?.setting_value || null;
+  },
+  ['paypal-config'],
+  { revalidate: REVALIDATE_TIME, tags: ['settings'] }
+);

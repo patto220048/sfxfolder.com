@@ -1,5 +1,7 @@
-import { createServerSupabaseClient } from "@/app/lib/supabase-server";
+import { getPaypalConfig, REVALIDATE_TIME } from "@/app/lib/api";
 import PricingClient from "./PricingClient";
+
+export const revalidate = REVALIDATE_TIME;
 
 export const metadata = {
   title: "Premium Subscriptions - Stark Monochrome",
@@ -7,17 +9,10 @@ export const metadata = {
 };
 
 export default async function PricingPage() {
-  const supabase = await createServerSupabaseClient();
+  const config = await getPaypalConfig();
   
-  // Lấy config từ bảng system_settings
-  const { data: settings } = await supabase
-    .from("system_settings")
-    .select("setting_value")
-    .eq("setting_key", "paypal_config")
-    .single();
-
   // Dữ liệu mặc định nếu người dùng chưa chạy SQL hoặc chưa setup.
-  const config = settings?.setting_value || {
+  const defaultConfig = {
     env: "sandbox",
     sandbox: {
       client_id: "test",
@@ -35,5 +30,5 @@ export default async function PricingPage() {
     }
   };
 
-  return <PricingClient config={config} />;
+  return <PricingClient config={config || defaultConfig} />;
 }
