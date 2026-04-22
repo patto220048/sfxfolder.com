@@ -19,6 +19,7 @@ import TreeSelect from "../../../components/ui/TreeSelect";
 import { getResource, updateResource, getFolders, getCategories } from "../../../lib/api";
 import { uploadFile, deleteFile, generateStoragePath } from "../../../lib/storage";
 import { revalidateResourceData } from "../../../lib/actions";
+import { isAudioFormat, isVideoFormat, isImageFormat } from "../../../lib/mediaUtils";
 
 const CATEGORIES = [
   { slug: "sound-effects", name: "Sound Effects" },
@@ -434,6 +435,57 @@ export default function EditResource() {
                 <p className={styles.progressText}>Uploading new file... {uploadProgress}%</p>
               </div>
             )}
+
+            {/* File Preview Section */}
+            <div className={styles.filePreviewContainer}>
+              {(newFile || resource?.downloadUrl || resource?.fileUrl) && (
+                <div className={styles.filePreviewWrapper}>
+                  <label className={styles.previewLabel}>
+                    {newFile ? "Xem trước file mới" : "Xem trước file hiện tại"}
+                  </label>
+                  
+                  <div className={styles.previewContent}>
+                    {/* AUDIO PREVIEW */}
+                    {(newFile ? isAudioFormat({ fileName: newFile.name }) : isAudioFormat(resource)) && (
+                      <div className={styles.audioPreview}>
+                        <audio 
+                          controls 
+                          src={newFile ? URL.createObjectURL(newFile) : (resource.downloadUrl || resource.fileUrl)} 
+                        />
+                      </div>
+                    )}
+
+                    {/* VIDEO PREVIEW */}
+                    {(newFile ? isVideoFormat({ fileName: newFile.name }) : isVideoFormat(resource)) && (
+                      <div className={styles.videoPreview}>
+                        <video 
+                          controls 
+                          src={newFile ? URL.createObjectURL(newFile) : (resource.downloadUrl || resource.fileUrl)} 
+                        />
+                      </div>
+                    )}
+
+                    {/* IMAGE PREVIEW */}
+                    {(newFile ? isImageFormat({ fileName: newFile.name }) : isImageFormat(resource)) && (
+                      <div className={styles.imagePreview}>
+                        <img 
+                          src={newFile ? URL.createObjectURL(newFile) : (resource.downloadUrl || resource.fileUrl)} 
+                          alt="Preview" 
+                        />
+                      </div>
+                    )}
+
+                    {/* FALLBACK ICON */}
+                    {!(newFile ? (isAudioFormat({ fileName: newFile.name }) || isVideoFormat({ fileName: newFile.name }) || isImageFormat({ fileName: newFile.name })) : (isAudioFormat(resource) || isVideoFormat(resource) || isImageFormat(resource))) && (
+                      <div className={styles.fallbackPreview}>
+                        <FileIcon size={48} strokeWidth={1} />
+                        <span>Không có bản xem trước cho định dạng này</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className={styles.warningBox}>
               <AlertCircle size={16} />

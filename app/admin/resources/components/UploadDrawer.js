@@ -5,6 +5,7 @@ import { X, CheckCircle, AlertCircle, Loader2, Upload, FileIcon, Trash2, Chevron
 import styles from "./UploadDrawer.module.css";
 import TagInput from "../../../components/ui/TagInput";
 import TreeSelect from "../../../components/ui/TreeSelect";
+import { isAudioFormat, isVideoFormat, isImageFormat } from "../../../lib/mediaUtils";
 
 export default function UploadDrawer({ 
   files, 
@@ -21,6 +22,19 @@ export default function UploadDrawer({
 }) {
   const [bulkMeta, setBulkMeta] = useState({ displayName: "", category: "", folderId: "", tags: [] });
   const [showBulk, setShowBulk] = useState(false);
+
+  const handleMediaPlay = (e) => {
+    const drawerElement = e.target.closest(`.${styles.drawer}`);
+    if (!drawerElement) return;
+    
+    const allMedia = drawerElement.querySelectorAll("audio, video");
+    allMedia.forEach(media => {
+      if (media !== e.target) {
+        media.pause();
+        media.currentTime = 0;
+      }
+    });
+  };
 
   const getHierarchicalFolders = useMemo(() => {
     return (categorySlug) => {
@@ -48,9 +62,6 @@ export default function UploadDrawer({
   return (
     <div 
       className={`${styles.overlay} ${isOpen || files.length > 0 ? styles.visible : ""}`}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
     >
       <div className={styles.drawer} onClick={(e) => e.stopPropagation()}>
         <div className={styles.header}>
@@ -155,6 +166,39 @@ export default function UploadDrawer({
                     >
                       <Trash2 size={16} />
                     </button>
+                  </div>
+
+                  <div className={styles.filePreviewArea}>
+                    {isImageFormat({ fileName: file.name }) && (
+                      <div className={styles.previewImage}>
+                        <img src={URL.createObjectURL(file.rawFile)} alt="Preview" />
+                      </div>
+                    )}
+                    {isAudioFormat({ fileName: file.name }) && (
+                      <div className={styles.previewAudio}>
+                        <audio 
+                          controls 
+                          src={URL.createObjectURL(file.rawFile)} 
+                          onPlay={handleMediaPlay}
+                        />
+                      </div>
+                    )}
+                    {isVideoFormat({ fileName: file.name }) && (
+                      <div className={styles.previewVideo}>
+                        <video 
+                          muted 
+                          src={URL.createObjectURL(file.rawFile)} 
+                          onMouseEnter={(e) => e.target.play()} 
+                          onMouseLeave={(e) => e.target.pause()}
+                          onPlay={handleMediaPlay}
+                        />
+                      </div>
+                    )}
+                    {!isImageFormat({ fileName: file.name }) && !isAudioFormat({ fileName: file.name }) && !isVideoFormat({ fileName: file.name }) && (
+                      <div className={styles.previewPlaceholder}>
+                        <FileIcon size={32} strokeWidth={1} />
+                      </div>
+                    )}
                   </div>
 
                   <div className={styles.fileInputs}>
