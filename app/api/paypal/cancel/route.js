@@ -109,10 +109,20 @@ export async function POST(req) {
       .update({ status: "CANCELLED", updated_at: new Date().toISOString() })
       .eq("paypal_subscription_id", subscriptionID);
 
-    await adminSupabase
+    // CRITICAL: Only set profile status to 'cancelled' if the cancelled sub is the one currently in profile.
+    // This prevents an upgrade flow (verify new -> cancel old) from accidentally deactivating the new sub.
+    const { data: currentProfile } = await adminSupabase
       .from("profiles")
-      .update({ subscription_status: "cancelled" })
-      .eq("id", user.id);
+      .select("subscription_id")
+      .eq("id", user.id)
+      .single();
+
+    if (currentProfile?.subscription_id === subscriptionID) {
+      await adminSupabase
+        .from("profiles")
+        .update({ subscription_status: "cancelled" })
+        .eq("id", user.id);
+    }
 
     return NextResponse.json({ success: true });
 

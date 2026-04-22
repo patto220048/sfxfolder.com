@@ -78,6 +78,7 @@ export default function PricingClient({ config }) {
         }
 
         toast.success("Welcome to Premium!", { id: toastId });
+        router.refresh();
         setShowSuccessModal(true);
         setShowUpgradeModal(false);
         setIsUpgrading(false);
