@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient } from "@/app/lib/supabase-server";
+import { supabaseAdmin } from "@/app/lib/supabase-admin";
 import { incrementDownloadCount } from "@/app/lib/api";
 
 export async function POST(request) {
@@ -26,8 +27,8 @@ export async function POST(request) {
       );
     }
 
-    // 2. Check if the resource is premium
-    const { data: resource } = await supabase
+    // 2. Check if the resource exists
+    const { data: resource } = await supabaseAdmin
       .from("resources")
       .select("id, is_premium, download_url, name, storage_path, file_name, file_format")
       .eq("id", resourceId)
@@ -62,14 +63,18 @@ export async function POST(request) {
       );
     }
 
-    // 4. Increment download count
-    await incrementDownloadCount(resourceId);
+    // 4. Increment download count (don't let this block the download if it fails)
+    try {
+      await incrementDownloadCount(resourceId);
+    } catch (e) {
+      console.warn("Failed to increment download count:", e);
+    }
 
     // 5. Generate Signed URL for secure native download
     let finalDownloadUrl = resource.download_url;
 
     if (resource.storage_path) {
-      // Build a clean download filename using the web display name + correct extension
+      // Build a clean download filename
       const baseName = resource.name || "download";
       const extension = resource.file_format 
         ? `.${resource.file_format.toLowerCase().replace(/^\./, "")}` 
@@ -77,7 +82,8 @@ export async function POST(request) {
       
       const downloadName = baseName.endsWith(extension) ? baseName : `${baseName}${extension}`;
 
-      const { data: signedData, error: signedError } = await supabase.storage
+      // USE ADMIN CLIENT for storage to ensure permissions and stability
+      const { data: signedData, error: signedError } = await supabaseAdmin.storage
         .from("resources")
         .createSignedUrl(resource.storage_path, 60, {
           download: downloadName,
@@ -85,6 +91,8 @@ export async function POST(request) {
 
       if (!signedError && signedData?.signedUrl) {
         finalDownloadUrl = signedData.signedUrl;
+      } else {
+        console.error("Storage error:", signedError);
       }
     }
 

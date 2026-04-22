@@ -5,7 +5,7 @@ import { deleteFile } from './storage';
 // Cache configuration: 24h if enabled, else 0 (disabled)
 const ENABLE_CACHE = process.env.NEXT_PUBLIC_ENABLE_CACHE === 'true';
 const CACHE_24H = 86400; // 24 hours in seconds
-export const REVALIDATE_TIME = ENABLE_CACHE ? CACHE_24H : 0;
+export const REVALIDATE_TIME = false; // Disable cache for debugging loading issues
 
 /* ========================================
    RESOURCES
