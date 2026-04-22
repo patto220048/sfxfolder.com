@@ -337,10 +337,17 @@ export default function SoundButton({
       
       if (!signedUrl) throw new Error("No download URL returned");
 
-      // 2. Trigger Native Browser Download
-      // Using window.location.assign with a signed URL that has Content-Disposition: attachment
-      // is the most reliable way to trigger a native download without memory issues.
-      window.location.assign(signedUrl);
+      // 2. Trigger Native Browser Download via Hidden Anchor
+      const link = document.createElement('a');
+      link.href = signedUrl;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(link);
+      }, 100);
     } catch (err) {
       console.error("Download failed:", err);
     }

@@ -56,10 +56,19 @@ export default function DownloadButton({ downloadUrl, fileUrl, fileName, fileFor
       
       if (!signedUrl) throw new Error("No download URL returned");
 
-      // 2. Trigger Native Browser Download
-      // Using window.location.assign with a signed URL that has Content-Disposition: attachment
-      // is the most reliable way to trigger a native download without memory issues.
-      window.location.assign(signedUrl);
+      // 2. Trigger Native Browser Download via Hidden Anchor
+      // This method prevents the browser from entering a 'pending navigation' state
+      // which can block subsequent requests (like opening folders).
+      const link = document.createElement('a');
+      link.href = signedUrl;
+      link.style.display = 'none';
+      document.body.appendChild(link);
+      link.click();
+      
+      // Cleanup
+      setTimeout(() => {
+        document.body.removeChild(link);
+      }, 100);
 
       setState("done");
       setTimeout(() => setState("idle"), 2000);
