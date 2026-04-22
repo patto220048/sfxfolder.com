@@ -74,9 +74,7 @@ export default function AdminResources() {
     return `/api/admin/resources?${params.toString()}`;
   };
 
-  const { data, error, size, setSize, isValidating, mutate } = useSWRInfinite(getKey, fetcher, {
-    persistSize: true
-  });
+  const { data, error, size, setSize, isValidating, mutate } = useSWRInfinite(getKey, fetcher);
 
   // Metadata Fetching via SWR
   const { data: metadata, mutate: mutateMeta } = useSWR('/api/admin/metadata', fetcher);
@@ -85,9 +83,11 @@ export default function AdminResources() {
   const tags = metadata?.tags || [];
 
   const resources = data ? data.map(page => page.data).flat() : [];
-  const loading = !data && !error;
-  const loadingMore = size > 0 && data && typeof data[size - 1] === "undefined";
-  const hasMore = data ? data[data.length - 1]?.hasMore : true;
+  const isLoadingInitialData = !data && !error;
+  const isLoadingMore = data && typeof data[size - 1] === "undefined";
+  const isRevalidating = isValidating && data && data.length === size;
+  const hasMore = data ? (data[data.length - 1]?.hasMore ?? false) : false;
+  const loading = isLoadingInitialData; // Alias for backward compatibility if used elsewhere
   const totalCount = data ? data[0]?.count : 0;
   
   const [viewMode, setViewMode] = useState(() => {
@@ -157,6 +157,11 @@ export default function AdminResources() {
       localStorage.setItem('admin_view_mode', viewMode);
     }
   }, [viewMode]);
+
+  // Reset pagination when filters change
+  useEffect(() => {
+    setSize(1);
+  }, [selectedFolderId, debouncedSearch, setSize]);
   
   const { 
     stagingFiles, 
@@ -178,7 +183,7 @@ export default function AdminResources() {
   };
 
   // Infinite Scroll Trigger
-  const loaderRef = useInfiniteScroll(hasMore, loading || loadingMore || isValidating, () => {
+  const loaderRef = useInfiniteScroll(hasMore, isLoadingInitialData || isLoadingMore || isValidating, () => {
     if (hasMore && !isValidating) {
       setSize(size + 1);
     }
@@ -985,7 +990,7 @@ export default function AdminResources() {
 
           {/* Infinite Scroll Loader Target */}
           <div ref={loaderRef} className={styles.infiniteLoader}>
-            {loadingMore && (
+            {(isLoadingMore && size > 1) && (
                <div className={styles.moreSpinner}>
                  <Loader2 size={24} className={styles.spin} />
                  <span>Đang tải thêm...</span>
