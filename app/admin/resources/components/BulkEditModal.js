@@ -153,6 +153,42 @@ export default function BulkEditModal({
         </div>
 
         <div className={styles.content}>
+          <div className={styles.fixedSearchArea}>
+            <div className={styles.addSection}>
+              <div className={styles.searchBox}>
+                <SearchIcon size={16} className={styles.searchIcon} />
+                <input 
+                  type="text" 
+                  placeholder="Tìm và thêm tài nguyên khác vào danh sách..." 
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowSearchResults(true);
+                  }}
+                  onFocus={() => setShowSearchResults(true)}
+                />
+                {showSearchResults && availableToAdd.length > 0 && (
+                  <div className={styles.searchResults}>
+                    {availableToAdd.map(r => (
+                      <button 
+                        key={r.id} 
+                        onClick={() => addItem(r)}
+                        className={styles.searchResultItem}
+                      >
+                        <Plus size={14} />
+                        <span>{r.name}</span>
+                        <small>{r.categoryId}</small>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {showSearchResults && searchQuery && availableToAdd.length === 0 && (
+                  <div className={styles.noResults}>Không tìm thấy tài nguyên nào chưa có trong danh sách</div>
+                )}
+              </div>
+            </div>
+          </div>
+
           <div className={styles.tableWrapper}>
             <table className={styles.table}>
               <thead>
@@ -245,45 +281,6 @@ export default function BulkEditModal({
                     </td>
                   </tr>
                 ))}
-                
-                {/* Add Resource Row */}
-                <tr className={styles.addRow}>
-                  <td colSpan="5">
-                    <div className={styles.addSection}>
-                      <div className={styles.searchBox}>
-                        <SearchIcon size={16} className={styles.searchIcon} />
-                        <input 
-                          type="text" 
-                          placeholder="Tìm và thêm tài nguyên khác vào danh sách..." 
-                          value={searchQuery}
-                          onChange={(e) => {
-                            setSearchQuery(e.target.value);
-                            setShowSearchResults(true);
-                          }}
-                          onFocus={() => setShowSearchResults(true)}
-                        />
-                        {showSearchResults && availableToAdd.length > 0 && (
-                          <div className={styles.searchResults}>
-                            {availableToAdd.map(r => (
-                              <button 
-                                key={r.id} 
-                                onClick={() => addItem(r)}
-                                className={styles.searchResultItem}
-                              >
-                                <Plus size={14} />
-                                <span>{r.name}</span>
-                                <small>{r.categoryId}</small>
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                        {showSearchResults && searchQuery && availableToAdd.length === 0 && (
-                          <div className={styles.noResults}>Không tìm thấy tài nguyên nào chưa có trong danh sách</div>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                </tr>
               </tbody>
             </table>
           </div>

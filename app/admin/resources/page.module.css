@@ -89,6 +89,11 @@
   color: var(--bg-primary);
 }
 
+.selectBtn.active {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+}
+
 .selectBtn {
   padding: 8px 16px;
   background: var(--bg-surface);
@@ -99,6 +104,7 @@
   text-transform: uppercase;
   cursor: pointer;
   margin-right: 12px;
+  transition: all var(--transition-fast);
 }
 
 .selectBtn:hover {
@@ -107,9 +113,31 @@
   border-color: var(--text-primary);
 }
 
-.selectBtn.active {
+.bulkToggleBtn {
+  padding: 8px 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  font-weight: 800;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  cursor: pointer;
+  margin-right: 16px;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bulkToggleBtn:hover {
+  border-color: var(--text-primary);
+  background: var(--bg-primary);
+}
+
+.bulkToggleBtn.active {
   background: var(--text-primary);
   color: var(--bg-primary);
+  border-color: var(--text-primary);
 }
 
 .toolbar {
@@ -160,6 +188,11 @@
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: var(--space-8);
+}
+
+.selectionMode.listMode .listHeader,
+.selectionMode.listMode .listRow {
+  grid-template-columns: 50px 1fr 180px 140px 120px;
 }
 
 .card {
@@ -476,7 +509,7 @@
 
 .listHeader {
   display: grid;
-  grid-template-columns: 50px 1fr 180px 140px 120px;
+  grid-template-columns: 1fr 180px 140px 120px;
   padding: 16px 24px;
   background: var(--bg-card);
   border-bottom: 1px solid var(--border-default);
@@ -489,7 +522,7 @@
 
 .listRow {
   display: grid;
-  grid-template-columns: 50px 1fr 180px 140px 120px;
+  grid-template-columns: 1fr 180px 140px 120px;
   align-items: center;
   padding: 16px 24px;
   background: transparent;

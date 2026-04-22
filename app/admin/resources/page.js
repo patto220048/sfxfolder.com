@@ -114,6 +114,7 @@ export default function AdminResources() {
   const [selectedIds, setSelectedIds] = useState([]);
   const [isBulkEditOpen, setIsBulkEditOpen] = useState(false);
   const [isMoveModalOpen, setIsMoveModalOpen] = useState(false);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
 
   // Load persistence: viewMode
   useEffect(() => {
@@ -674,12 +675,26 @@ export default function AdminResources() {
             </div>
             <div className={styles.viewToggle}>
               <button 
-                className={`${styles.selectBtn} ${selectedIds.length === filtered.length && filtered.length > 0 ? styles.active : ""}`}
-                onClick={selectAll}
-                title="Chọn tất cả"
+                className={`${styles.bulkToggleBtn} ${isSelectionMode ? styles.active : ""}`}
+                onClick={() => {
+                  if (isSelectionMode) {
+                    setSelectedIds([]);
+                  }
+                  setIsSelectionMode(!isSelectionMode);
+                }}
               >
-                {selectedIds.length === filtered.length && filtered.length > 0 ? "Bỏ chọn hết" : "Chọn tất cả"}
+                {isSelectionMode ? "Exit Bulk Edit" : "Bulk Edit"}
               </button>
+
+              {isSelectionMode && (
+                <button 
+                  className={`${styles.selectBtn} ${selectedIds.length === filtered.length && filtered.length > 0 ? styles.active : ""}`}
+                  onClick={selectAll}
+                  title="Chọn tất cả"
+                >
+                  {selectedIds.length === filtered.length && filtered.length > 0 ? "Bỏ chọn hết" : "Chọn tất cả"}
+                </button>
+              )}
               <button 
                 className={`${styles.toggleBtn} ${viewMode === 'list' ? styles.active : ''}`}
                 onClick={() => setViewMode('list')}
@@ -711,16 +726,18 @@ export default function AdminResources() {
         </div>
 
         <div className={styles.scrollArea}>
-          <div className={`${styles.resourceGrid} ${viewMode === 'list' ? styles.listMode : ''}`}>
+          <div className={`${styles.resourceGrid} ${viewMode === 'list' ? styles.listMode : ''} ${isSelectionMode ? styles.selectionMode : ''}`}>
             {viewMode === 'list' && filtered.length > 0 && !loading && (
               <div className={styles.listHeader}>
-                <div className={styles.colCheckbox}>
-                  <input 
-                    type="checkbox" 
-                    checked={selectedIds.length === filtered.length && filtered.length > 0} 
-                    onChange={selectAll}
-                  />
-                </div>
+                {isSelectionMode && (
+                  <div className={styles.colCheckbox}>
+                    <input 
+                      type="checkbox" 
+                      checked={selectedIds.length === filtered.length && filtered.length > 0} 
+                      onChange={selectAll}
+                    />
+                  </div>
+                )}
                 <div className={styles.colName}>Tên tài nguyên</div>
                 <div className={styles.colDate}>Ngày tạo</div>
                 <div className={styles.colSize}>Dung lượng</div>
@@ -738,19 +755,22 @@ export default function AdminResources() {
                   className={`${styles.card} ${viewMode === 'list' ? styles.listRow : ''} ${selectedIds.includes(r.id) ? styles.selectedCard : ''}`}
                   draggable="true"
                   onDragStart={(e) => handleResourceDragStart(e, r)}
-                  onClick={() => viewMode === 'list' && toggleSelect(r.id)}
+                  onClick={() => isSelectionMode && viewMode === 'list' ? toggleSelect(r.id) : null}
                 >
+
                   {viewMode === 'grid' ? (
                     <>
-                      <div className={styles.cardCheckbox}>
-                        <input 
-                          type="checkbox" 
-                          checked={selectedIds.includes(r.id)} 
-                          onChange={() => toggleSelect(r.id)}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      </div>
-                      <div className={styles.cardPreview} onClick={() => toggleSelect(r.id)}>
+                      {isSelectionMode && (
+                        <div className={styles.cardCheckbox}>
+                          <input 
+                            type="checkbox" 
+                            checked={selectedIds.includes(r.id)} 
+                            onChange={() => toggleSelect(r.id)}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        </div>
+                      )}
+                      <div className={styles.cardPreview} onClick={() => isSelectionMode ? toggleSelect(r.id) : null}>
                         {(r.thumbnailUrl || r.previewUrl) ? (
                           <img 
                             src={r.thumbnailUrl || r.previewUrl} 
@@ -858,13 +878,15 @@ export default function AdminResources() {
                     </>
                   ) : (
                     <>
-                      <div className={styles.listColCheckbox} onClick={(e) => e.stopPropagation()}>
-                        <input 
-                          type="checkbox" 
-                          checked={selectedIds.includes(r.id)} 
-                          onChange={() => toggleSelect(r.id)}
-                        />
-                      </div>
+                      {isSelectionMode && (
+                        <div className={styles.listColCheckbox} onClick={(e) => e.stopPropagation()}>
+                          <input 
+                            type="checkbox" 
+                            checked={selectedIds.includes(r.id)} 
+                            onChange={() => toggleSelect(r.id)}
+                          />
+                        </div>
+                      )}
                       <div className={styles.listColName}>
                         <div className={styles.listIconSmall}>
                           {(r.thumbnailUrl || r.previewUrl) ? (
