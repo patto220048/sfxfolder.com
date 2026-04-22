@@ -149,7 +149,7 @@ export async function getResources({
     return (data || []).map(mapResource);
   };
 
-  if (isServer) {
+  if (isServer && REVALIDATE_TIME !== false) {
     return unstable_cache(
       fetchLogic,
       [cacheKey],
@@ -157,7 +157,33 @@ export async function getResources({
     )();
   }
 
-  // On client, skip unstable_cache and fetch directly
+  // On client, route through our API to avoid connection limits with storage domain
+  if (!isServer) {
+    const params = new URLSearchParams();
+    if (categorySlug) params.set("categorySlug", categorySlug);
+    if (folderId) params.set("folderId", folderId);
+    if (searchTerm) params.set("search", searchTerm);
+    if (selectedTags.length) params.set("tags", selectedTags.join(","));
+    if (selectedFormats.length) params.set("formats", selectedFormats.join(","));
+    if (limit) params.set("limit", limit);
+    if (offset) params.set("offset", offset);
+    if (sortOrder) params.set("sort", sortOrder);
+
+    try {
+      const res = await fetch(`/api/resources?${params.toString()}`, { 
+        signal: abortSignal,
+        cache: 'no-store'
+      });
+      if (!res.ok) throw new Error("API failed");
+      return await res.json();
+    } catch (e) {
+      if (e.name === 'AbortError') throw e;
+      console.error("Client fetch fallback to direct Supabase:", e);
+      // Fallback to direct supabase if API fails
+      return fetchLogic();
+    }
+  }
+
   return fetchLogic();
 }
 
@@ -542,33 +568,59 @@ export async function deleteCategory(id) {
  * Get folders for a category, optionally filtered by parent.
  */
 export async function getFolders(categorySlug, parentId) {
-  return unstable_cache(
-    async () => {
-      let query = supabase
-        .from('folders')
-        .select('*, category:categories!inner(slug)')
-        .eq('categories.slug', categorySlug)
-        .order('order', { ascending: true });
+  const isServer = typeof window === 'undefined';
 
-      if (parentId !== undefined) {
-        if (parentId === null) {
-          query = query.is('parent_id', null);
-        } else {
-          query = query.eq('parent_id', parentId);
-        }
+  if (!isServer) {
+    try {
+      const params = new URLSearchParams();
+      if (categorySlug) params.set("categorySlug", categorySlug);
+      if (parentId) params.set("parentFolderId", parentId);
+      
+      const res = await fetch(`/api/folders?${params.toString()}`, { cache: 'no-store' });
+      if (!res.ok) throw new Error("API failed");
+      return await res.json();
+    } catch (e) {
+      console.error("Client fetch folders fallback:", e);
+      // Fallback logic below (direct supabase)
+    }
+  }
+
+  // Define the fetch logic for folders
+  const fetchFoldersLogic = async () => {
+    let query = supabase
+      .from('folders')
+      .select('*, category:categories!inner(slug)')
+      .eq('categories.slug', categorySlug)
+      .order('order', { ascending: true });
+
+    if (parentId !== undefined) {
+      if (parentId === null) {
+        query = query.is('parent_id', null);
+      } else {
+        query = query.eq('parent_id', parentId);
       }
+    }
 
-      const { data, error } = await query;
+    const { data, error } = await query;
 
-      if (error) {
-        console.error('Error fetching folders:', error);
-        return [];
-      }
-      return (data || []).map(mapFolder);
-    },
-    [`folders-${categorySlug}-${parentId || 'root'}`],
-    { revalidate: REVALIDATE_TIME, tags: ['folders', 'resources'] } // Environment-controlled TTL
-  )();
+    if (error) {
+      console.error('Error fetching folders:', error);
+      return [];
+    }
+    return (data || []).map(mapFolder);
+  };
+
+  // If server and cache enabled, use unstable_cache
+  if (isServer && REVALIDATE_TIME !== false) {
+    return unstable_cache(
+      fetchFoldersLogic,
+      [`folders-${categorySlug}-${parentId || 'root'}`],
+      { revalidate: REVALIDATE_TIME, tags: ['folders', 'resources'] }
+    )();
+  }
+
+  // Default to direct fetch logic
+  return fetchFoldersLogic();
 }
 
 /* ========================================
