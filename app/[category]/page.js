@@ -30,34 +30,36 @@ function buildFolderTree(flatList) {
   return roots;
 }
 
-const getCachedCategoryData = unstable_cache(
-  async (slug, tags = [], formats = []) => {
-    // 1. Fetch category info
-    const info = await getCategoryBySlug(slug);
+async function getCachedCategoryData(slug, tags = [], formats = []) {
+  return unstable_cache(
+    async () => {
+      // 1. Fetch category info
+      const info = await getCategoryBySlug(slug);
 
-    // 2. Fetch folders for this category
-    const fetchedFolders = await getFolders(slug);
-    
-    // 3. Fetch resources for this category with filters
-    const fetchedResources = await getResources({ 
-      categorySlug: slug, 
-      selectedTags: tags, 
-      selectedFormats: formats,
-      limit: 200 
-    });
+      // 2. Fetch folders for this category
+      const fetchedFolders = await getFolders(slug);
+      
+      // 3. Fetch resources for this category with filters
+      const fetchedResources = await getResources({ 
+        categorySlug: slug, 
+        selectedTags: tags, 
+        selectedFormats: formats,
+        limit: 200 
+      });
 
-    return {
-      categoryInfo: info,
-      flatFolders: fetchedFolders,
-      allResources: fetchedResources
-    };
-  },
-  ['category-data'], 
-  { 
-    revalidate: REVALIDATE_TIME, 
-    tags: ['resources', 'categories'] 
-  }
-);
+      return {
+        categoryInfo: info,
+        flatFolders: fetchedFolders,
+        allResources: fetchedResources
+      };
+    },
+    ['category-data', slug, tags.join(','), formats.join(',')], 
+    { 
+      revalidate: REVALIDATE_TIME, 
+      tags: ['resources', 'categories'] 
+    }
+  )();
+}
 
 export default async function CategoryPage({ params, searchParams }) {
   // Await params and searchParams for Next.js 15+ constraints

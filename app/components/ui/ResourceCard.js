@@ -47,12 +47,18 @@ export default function ResourceCard({
   const [isHovering, setIsHovering] = useState(false);
   const [videoProgress, setVideoProgress] = useState(0);
   const [isScrubbing, setIsScrubbing] = useState(false);
-  const [isMuted, setIsMuted] = useState(mediaManager.getMuted('video'));
-  const [volume, setVolume] = useState(mediaManager.getVolume('video'));
+  const [isMuted, setIsMuted] = useState(true); // Default to muted for stable hydration
+  const [volume, setVolume] = useState(1);
   const videoRef = useRef(null);
   const rafRef = useRef(null);
   const wasPlayingRef = useRef(false);
   const displayName = (name || fileName || "Untitled").replace(/\.[^/.]+$/, "");
+
+  // Sync with mediaManager after hydration
+  useEffect(() => {
+    setIsMuted(mediaManager.getMuted('video'));
+    setVolume(mediaManager.getVolume('video'));
+  }, []);
 
   // Video progress updater via rAF
   const updateVideoProgress = useCallback(() => {

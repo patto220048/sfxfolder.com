@@ -5,7 +5,7 @@ import { deleteFile } from './storage';
 // Cache configuration: 24h if enabled, else 0 (disabled)
 const ENABLE_CACHE = process.env.NEXT_PUBLIC_ENABLE_CACHE === 'true';
 const CACHE_24H = 86400; // 24 hours in seconds
-export const REVALIDATE_TIME = false; // Disable cache for debugging loading issues
+export const REVALIDATE_TIME = ENABLE_CACHE ? CACHE_24H : false; // Use env variable to control cache
 
 /* ========================================
    RESOURCES
@@ -45,6 +45,55 @@ export function mapResource(res) {
     category: res.category || res.categories || null,
     folder: res.folder || res.folders || null,
   };
+}
+
+/**
+ * Map profile data
+ */
+function mapProfile(data) {
+  if (!data) return null;
+  return {
+    ...data,
+    avatar_url: data.avatar_url || null,
+  };
+}
+
+/**
+ * Fetch a user profile, with proxy support on the client.
+ */
+export async function getProfile(userId) {
+  if (!userId) return null;
+
+  const isServer = typeof window === 'undefined';
+
+  async function fetchLogic() {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', userId)
+      .single();
+
+    if (error) {
+      console.warn("Error fetching profile:", error.message);
+      return null;
+    }
+    return mapProfile(data);
+  }
+
+  // Use proxy on client to avoid connection limits during downloads
+  if (!isServer) {
+    try {
+      const response = await fetch(`/api/profile?userId=${userId}&t=${Date.now()}`);
+      if (!response.ok) throw new Error("Proxy profile fetch failed");
+      const data = await response.json();
+      return mapProfile(data);
+    } catch (e) {
+      console.error("Client profile fetch fallback:", e);
+      return fetchLogic();
+    }
+  }
+
+  return fetchLogic();
 }
 
 /**
@@ -93,6 +142,7 @@ export async function getResources({
   isAdmin = false,
   limit = 25, 
   offset = 0,
+  sortOrder = "newest",
   abortSignal = null
 } = {}) {
   // Key for cache should include all parameters
@@ -105,9 +155,21 @@ export async function getResources({
   const fetchLogic = async () => {
     let query = supabase
       .from("resources")
-      .select(RESOURCE_SUMMARY_COLUMNS, { count: "exact" })
-      .order("created_at", { ascending: false })
-      .range(offset, offset + limit - 1);
+      .select(RESOURCE_SUMMARY_COLUMNS, { count: "exact" });
+
+    // Handle sorting
+    if (sortOrder === "oldest") {
+      query = query.order("created_at", { ascending: true });
+    } else if (sortOrder === "az") {
+      query = query.order("name", { ascending: true });
+    } else if (sortOrder === "za") {
+      query = query.order("name", { ascending: false });
+    } else {
+      // Default: newest
+      query = query.order("created_at", { ascending: false });
+    }
+
+    query = query.range(offset, offset + limit - 1);
 
     if (abortSignal) {
       query = query.abortSignal(abortSignal);

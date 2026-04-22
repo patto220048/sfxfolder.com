@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef } f
 import { usePathname, useRouter } from "next/navigation";
 import { useToast } from "@/app/context/ToastContext";
 import { supabase } from "@/app/lib/supabase";
+import { getProfile } from "@/app/lib/api";
 
 const AuthContext = createContext({
   user: null,
@@ -43,17 +44,8 @@ export function AuthProvider({ children }) {
       return null;
     }
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("*")
-        .eq("id", userId)
-        .single();
-
-      if (error) {
-        console.warn("Failed to fetch profile:", error.message);
-        setProfile(null);
-        return null;
-      }
+      // Use the proxied getProfile from api.js to bypass connection limits
+      const data = await getProfile(userId);
       setProfile(data);
       return data;
     } catch (e) {
@@ -61,7 +53,7 @@ export function AuthProvider({ children }) {
       setProfile(null);
       return null;
     }
-  }, [supabase]);
+  }, []);
 
   // Handle URL hash/params for auth errors and successful email verification redirects
   useEffect(() => {
@@ -237,9 +229,14 @@ export function AuthProvider({ children }) {
     setLoading(true);
     
     try {
-      await supabase.auth.signOut();
+      // Use a timeout race to prevent hanging if signOut request is blocked by connection limits
+      await Promise.race([
+        supabase.auth.signOut(),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("SignOut timeout")), 3000))
+      ]).catch(err => console.warn("SignOut timed out or failed:", err));
+      
       // Artificial delay for smooth transition
-      await new Promise(resolve => setTimeout(resolve, 800));
+      await new Promise(resolve => setTimeout(resolve, 500));
     } catch (error) {
       console.warn("SignOut error:", error);
     } finally {
