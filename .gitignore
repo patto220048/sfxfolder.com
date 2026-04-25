@@ -45,3 +45,6 @@ next-env.d.ts
 .scratch/
 
 .vercel
+.claude
+.agents
+.skills-lock.json
