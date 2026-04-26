@@ -8,19 +8,20 @@ let clientInstance = null;
  * Server: Returns a fresh instance (standard SSR behavior).
  */
 export function createClient() {
+  // Use fallbacks for CI build environments where secrets might not be injected
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder_key';
+
   // If we are on the server, return a fresh client (standard for SSR)
   if (typeof window === 'undefined') {
-    return createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    );
+    return createBrowserClient(supabaseUrl, supabaseKey);
   }
 
   // On the browser, ensure we only create the client once
   if (!clientInstance) {
     clientInstance = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      supabaseUrl,
+      supabaseKey,
       {
         auth: {
           autoRefreshToken: true,
