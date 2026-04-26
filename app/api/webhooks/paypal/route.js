@@ -3,9 +3,12 @@ import { createServerClient } from "@supabase/ssr";
 
 // Initialize admin supabase client for webhook (needs service role to bypass RLS)
 function getAdminSupabase() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder_key';
+
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY, // Needs service role key to update users without being logged in
+    supabaseUrl,
+    supabaseKey, // Needs service role key to update users without being logged in
     {
       cookies: {
         getAll() { return []; },

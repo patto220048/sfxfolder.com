@@ -4,9 +4,12 @@ import { createServerSupabaseClient, getServerUser } from "@/app/lib/supabase-se
 
 // Helper: Admin Supabase client that bypasses RLS
 function getAdminSupabase() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co';
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder_key';
+
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.SUPABASE_SERVICE_ROLE_KEY,
+    supabaseUrl,
+    supabaseKey,
     { cookies: { getAll: () => [], setAll: () => {} } }
   );
 }
