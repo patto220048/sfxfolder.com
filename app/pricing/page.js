@@ -1,7 +1,8 @@
-import { getPaypalConfig, REVALIDATE_TIME } from "@/app/lib/api";
+import { getPaypalConfig } from "@/app/lib/api";
 import PricingClient from "./PricingClient";
+import { Suspense } from "react";
 
-export const revalidate = REVALIDATE_TIME;
+export const revalidate = 86400; // Hardcoded to 24 hours to satisfy Next.js static analysis
 
 export const metadata = {
   title: "Premium Subscriptions - Stark Monochrome",
@@ -30,5 +31,9 @@ export default async function PricingPage() {
     }
   };
 
-  return <PricingClient config={config || defaultConfig} />;
+  return (
+    <Suspense fallback={null}>
+      <PricingClient config={config || defaultConfig} />
+    </Suspense>
+  );
 }
