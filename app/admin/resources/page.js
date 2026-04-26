@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef, Suspense } from "react";
 import useSWR from 'swr';
 import useSWRInfinite from 'swr/infinite';
 
@@ -38,7 +38,7 @@ import MoveSelectionModal from "./components/MoveSelectionModal";
 
 const fetcher = url => fetch(url).then(r => r.json());
 
-export default function AdminResources() {
+function AdminResourcesContent() {
 
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -1041,3 +1041,10 @@ export default function AdminResources() {
   );
 }
 
+export default function AdminResources() {
+  return (
+    <Suspense>
+      <AdminResourcesContent />
+    </Suspense>
+  );
+}

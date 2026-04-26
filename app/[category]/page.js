@@ -1,6 +1,7 @@
 import { getFolders, getResources, getCategoryBySlug, getCategories, REVALIDATE_TIME } from "@/app/lib/api";
 import ClientPage from "./ClientPage";
 import { unstable_cache } from "next/cache";
+import { Suspense } from "react";
 
 function buildFolderTree(flatList) {
   const map = {};
@@ -90,12 +91,14 @@ export default async function CategoryPage({ params, searchParams }) {
   const folderTree = buildFolderTree(flatFolders);
 
   return (
-    <ClientPage 
-      slug={slug} 
-      info={info} 
-      folders={folderTree} 
-      resources={allResources} 
-    />
+    <Suspense>
+      <ClientPage 
+        slug={slug} 
+        info={info} 
+        folders={folderTree} 
+        resources={allResources} 
+      />
+    </Suspense>
   );
 }
 
