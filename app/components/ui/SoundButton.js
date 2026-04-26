@@ -433,13 +433,13 @@ export default function SoundButton({
         </div>
       </div>
 
-      {/* Preview Overlay Trigger */}
-      {hasPreview && (
+      {/* Detail Page Link */}
+      {onPreview && (
         <button
           className={styles.previewBtn}
-          onClick={handlePreview}
-          title="Xem trước"
-          aria-label={`Xem trước ${displayName}`}
+          onClick={onPreview}
+          title="View details"
+          aria-label={`View details for ${displayName}`}
         >
           <Eye size={16} />
         </button>
