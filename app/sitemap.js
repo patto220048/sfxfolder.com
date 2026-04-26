@@ -1,4 +1,4 @@
-import { getCategories } from '@/app/lib/api';
+import { getCategories, getResources } from '@/app/lib/api';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://sfxfolder.com';
 
@@ -37,8 +37,10 @@ export default async function sitemap() {
     },
   ];
 
-  // 2. Dynamic category pages
+  // 2. Dynamic category pages + resource pages
   let categoryPages = [];
+  let resourcePages = [];
+
   try {
     const categories = await getCategories();
     categoryPages = categories.map((cat) => ({
@@ -47,9 +49,37 @@ export default async function sitemap() {
       changeFrequency: 'daily',
       priority: 0.9,
     }));
+
+    // 3. Fetch resources for each category (limited to 200 per category for sitemap)
+    const resourcePromises = categories.map(async (cat) => {
+      try {
+        const resources = await getResources({
+          categorySlug: cat.slug,
+          limit: 200,
+        });
+        return resources
+          .filter((res) => res.slug)
+          .map((res) => ({
+            url: `${SITE_URL}/${cat.slug}/${res.slug}`,
+            lastModified: res.updatedAt
+              ? new Date(res.updatedAt)
+              : res.createdAt
+              ? new Date(res.createdAt)
+              : new Date(),
+            changeFrequency: 'weekly',
+            priority: 0.7,
+          }));
+      } catch (e) {
+        console.error(`Sitemap: Error fetching resources for ${cat.slug}:`, e.message);
+        return [];
+      }
+    });
+
+    const allResourceArrays = await Promise.all(resourcePromises);
+    resourcePages = allResourceArrays.flat();
   } catch (e) {
     console.error('Sitemap: Error fetching categories:', e.message);
   }
 
-  return [...staticPages, ...categoryPages];
+  return [...staticPages, ...categoryPages, ...resourcePages];
 }

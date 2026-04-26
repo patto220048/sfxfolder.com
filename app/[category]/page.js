@@ -221,7 +221,7 @@ export default async function CategoryPage({ params, searchParams }) {
         "@type": "ListItem",
         position: index + 1,
         name: res.name,
-        url: `${SITE_URL}/${slug}`,
+        url: res.slug ? `${SITE_URL}/${slug}/${res.slug}` : `${SITE_URL}/${slug}`,
       })),
     },
   };
