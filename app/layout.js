@@ -9,7 +9,7 @@ import { SiteProvider } from "@/app/context/SiteContext";
 import { AuthProvider } from "@/app/lib/auth-context";
 
 import { SpeedInsights } from "@vercel/speed-insights/next";
-import { Analytics } from "@vercel/analytics/react";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata = {
   title: "SFXFolder.com — Free Resources for Video Editors",
