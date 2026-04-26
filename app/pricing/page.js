@@ -5,8 +5,8 @@ import { Suspense } from "react";
 export const revalidate = 86400; // Hardcoded to 24 hours to satisfy Next.js static analysis
 
 export const metadata = {
-  title: "Premium Subscriptions - Stark Monochrome",
-  description: "Get unlimited access to all resources",
+  title: "Premium Plans — Unlimited Downloads & Exclusive Assets",
+  description: "Unlock unlimited access to all premium sound effects, music, presets, and video editing assets. Affordable monthly and yearly plans for content creators.",
 };
 
 export default async function PricingPage() {

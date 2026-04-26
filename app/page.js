@@ -3,6 +3,8 @@ import SearchBar from "@/app/components/ui/SearchBar";
 import { getCategoriesWithCounts } from "@/app/lib/api";
 import styles from "./page.module.css";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://sfxfolder.com';
+
 export default async function Home() {
   let categories = [];
   try {
@@ -21,29 +23,73 @@ export default async function Home() {
     ];
   }
 
+  // JSON-LD: WebPage schema for homepage
+  const webPageSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "SFXFolder — Free Sound Effects, Music & Assets for Video Editors",
+    description: "Download free sound effects, royalty-free music, video memes, green screens, animations, overlays, fonts, and presets for video editing.",
+    url: SITE_URL,
+    isPartOf: {
+      "@type": "WebSite",
+      name: "SFXFolder",
+      url: SITE_URL,
+    },
+  };
+
+  // JSON-LD: ItemList schema for category listing
+  const itemListSchema = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Resource Categories",
+    description: "Browse free video editing resources by category",
+    numberOfItems: categories.length,
+    itemListElement: categories.map((cat, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      name: cat.name,
+      url: `${SITE_URL}/${cat.slug}`,
+      description: cat.description || `Free ${cat.name} for video editing`,
+    })),
+  };
+
   return (
     <div className={styles.page}>
+      {/* Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(webPageSchema),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(itemListSchema),
+        }}
+      />
+
       {/* Hero Section */}
       <section className={styles.hero} id="hero-section">
         <div className={styles.heroGlow} />
         <h1 className={styles.title}>
-          SFXFolder.com
+          Free Sound Effects & Assets for Video Editors
         </h1>
         <p className={styles.subtitle}>
-          Digital Assets for Video Editors
+          SFXFolder.com — Digital Assets for Video Editors
         </p>
         <p className={styles.description}>
-          A curated library of pro-grade sound effects, music, memes, and assets. 
-          Stark design. High performance.
+          A curated library of pro-grade sound effects, royalty-free music, memes, green screens, and assets. 
+          Download free SFX instantly — no copyright issues.
         </p>
         <div className={styles.searchWrap}>
-          <SearchBar size="large" placeholder="Search resources..." />
+          <SearchBar size="large" placeholder="Search free sound effects, music, presets..." />
         </div>
       </section>
 
       {/* Categories Grid */}
       <section className={styles.categories} id="categories-section">
-        <h2 className={styles.sectionTitle}>Categories</h2>
+        <h2 className={styles.sectionTitle}>Browse Free Resources by Category</h2>
         <div className={styles.grid}>
           {categories.map((cat, index) => (
             <CategoryCard

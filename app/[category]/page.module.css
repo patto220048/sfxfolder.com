@@ -234,7 +234,8 @@
   background: var(--bg-card);
   border: 1px solid var(--border-default);
   gap: 16px;
-  height: 90px; /* Matching the ~80-100px height for sounds */
+  height: 90px;
+  /* Matching the ~80-100px height for sounds */
 }
 
 .skeletonThumbSound {
@@ -253,8 +254,15 @@
 }
 
 @keyframes shimmer {
-  0%, 100% { opacity: 0.3; }
-  50%      { opacity: 0.1; }
+
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+
+  50% {
+    opacity: 0.1;
+  }
 }
 
 /* ---------- Pagination (Load More) ---------- */
@@ -340,8 +348,13 @@
 }
 
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* ---------- Navigation Actions (Reset/History) ---------- */

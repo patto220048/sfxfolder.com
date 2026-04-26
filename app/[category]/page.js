@@ -3,6 +3,115 @@ import ClientPage from "./ClientPage";
 import { unstable_cache } from "next/cache";
 import { Suspense } from "react";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://sfxfolder.com';
+
+/**
+ * SEO keyword map per category slug for targeted, keyword-rich metadata.
+ */
+const CATEGORY_SEO = {
+  "sound-effects": {
+    titlePrefix: "Free Sound Effects",
+    keywords: ["free sound effects", "sfx free download", "royalty free sfx", "sound effects for video editing", "no copyright sound effects"],
+    descriptionTemplate: (name, count) =>
+      `Download ${count ? count + '+ ' : ''}free ${name.toLowerCase()} for video editing, YouTube, and TikTok. High-quality royalty-free SFX — no copyright issues. Instant download.`,
+  },
+  "music": {
+    titlePrefix: "Free Music",
+    keywords: ["free music for videos", "royalty free music", "no copyright music", "free background music", "music for youtube videos"],
+    descriptionTemplate: (name, count) =>
+      `Download ${count ? count + '+ ' : ''}free royalty-free music tracks for your videos. Perfect for YouTube, TikTok, and professional projects. No copyright issues.`,
+  },
+  "video-meme": {
+    titlePrefix: "Free Video Memes",
+    keywords: ["free meme videos", "meme clips download", "free meme sound effects", "viral meme assets", "video meme templates"],
+    descriptionTemplate: (name, count) =>
+      `Download ${count ? count + '+ ' : ''}free meme video clips and sound effects. Trending meme assets for content creation and social media.`,
+  },
+  "green-screen": {
+    titlePrefix: "Free Green Screen Effects",
+    keywords: ["free green screen effects", "chroma key assets", "green screen download", "free vfx green screen", "green screen overlays"],
+    descriptionTemplate: (name, count) =>
+      `Download ${count ? count + '+ ' : ''}free green screen effects and chroma key assets. Professional VFX overlays for video editing.`,
+  },
+  "animation": {
+    titlePrefix: "Free Animations",
+    keywords: ["free animations download", "motion graphics free", "free video animations", "animated overlays", "free motion templates"],
+    descriptionTemplate: (name, count) =>
+      `Download ${count ? count + '+ ' : ''}free animations and motion graphics. Professional animated overlays and templates for video editing.`,
+  },
+  "image-overlay": {
+    titlePrefix: "Free Image Overlays",
+    keywords: ["free image overlays", "video overlay effects", "free overlay download", "transparent overlays", "photo overlays free"],
+    descriptionTemplate: (name, count) =>
+      `Download ${count ? count + '+ ' : ''}free image overlays and visual effects. Transparent PNG overlays and effects for video editing.`,
+  },
+  "font": {
+    titlePrefix: "Free Fonts",
+    keywords: ["free fonts download", "free fonts for video editing", "professional typefaces free", "creative fonts", "free commercial fonts"],
+    descriptionTemplate: (name, count) =>
+      `Download ${count ? count + '+ ' : ''}free professional fonts and typefaces for your creative projects and video editing.`,
+  },
+  "preset-lut": {
+    titlePrefix: "Free Presets & LUTs",
+    keywords: ["free luts download", "free color grading presets", "video editing presets", "free lut pack", "color correction luts"],
+    descriptionTemplate: (name, count) =>
+      `Download ${count ? count + '+ ' : ''}free LUTs and color grading presets. Professional color correction tools for video editing.`,
+  },
+};
+
+/**
+ * Dynamic metadata generation for SEO-optimized category pages.
+ */
+export async function generateMetadata({ params }) {
+  const resolvedParams = await params;
+  const slug = resolvedParams.category;
+
+  let info = null;
+  try {
+    info = await getCategoryBySlug(slug);
+  } catch (e) {
+    // Fallback handled below
+  }
+
+  const categoryName = info?.name || slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+  const seo = CATEGORY_SEO[slug];
+  
+  const title = seo 
+    ? `${seo.titlePrefix} — Download Free ${categoryName} | SFXFolder`
+    : `Free ${categoryName} — Download Free Assets | SFXFolder`;
+
+  const description = seo
+    ? seo.descriptionTemplate(categoryName, info?.resourceCount)
+    : `Download free ${categoryName.toLowerCase()} for video editing. High-quality assets, instant download, no copyright issues.`;
+
+  const keywords = seo?.keywords || [
+    `free ${categoryName.toLowerCase()}`,
+    `${categoryName.toLowerCase()} download`,
+    `free ${categoryName.toLowerCase()} for video editing`,
+  ];
+
+  return {
+    title,
+    description,
+    keywords,
+    openGraph: {
+      title,
+      description,
+      type: "website",
+      url: `${SITE_URL}/${slug}`,
+      siteName: "SFXFolder",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+    alternates: {
+      canonical: `${SITE_URL}/${slug}`,
+    },
+  };
+}
+
 function buildFolderTree(flatList) {
   const map = {};
   const roots = [];
@@ -90,8 +199,41 @@ export default async function CategoryPage({ params, searchParams }) {
 
   const folderTree = buildFolderTree(flatFolders);
 
+  // JSON-LD: CollectionPage schema for category
+  const categoryName = info.name || slug;
+  const collectionSchema = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: `Free ${categoryName} — SFXFolder`,
+    description: `Browse and download free ${categoryName.toLowerCase()} for video editing.`,
+    url: `${SITE_URL}/${slug}`,
+    isPartOf: {
+      "@type": "WebSite",
+      name: "SFXFolder",
+      url: SITE_URL,
+    },
+    numberOfItems: allResources.length,
+    mainEntity: {
+      "@type": "ItemList",
+      name: `${categoryName} Resources`,
+      numberOfItems: allResources.length,
+      itemListElement: allResources.slice(0, 50).map((res, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: res.name,
+        url: `${SITE_URL}/${slug}`,
+      })),
+    },
+  };
+
   return (
     <Suspense fallback={<div>Loading category...</div>}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(collectionSchema),
+        }}
+      />
       <ClientPage 
         slug={slug} 
         info={info} 
