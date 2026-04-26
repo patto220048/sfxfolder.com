@@ -9,6 +9,7 @@ import { SiteProvider } from "@/app/context/SiteContext";
 import { AuthProvider } from "@/app/lib/auth-context";
 
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/react";
 
 export const metadata = {
   title: "SFXFolder.com — Free Resources for Video Editors",
@@ -44,6 +45,7 @@ export default async function RootLayout({ children }) {
                 <LayoutShell initialCategories={categories}>{children}</LayoutShell>
                 <ToastContainer />
                 <SpeedInsights />
+                <Analytics />
               </SiteProvider>
             </AuthProvider>
           </ToastProvider>
