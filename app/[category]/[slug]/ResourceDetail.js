@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -11,10 +11,10 @@ import {
   Clock,
   Tag,
   Play,
+  Pause,
   Music,
 } from "lucide-react";
 import DownloadButton from "@/app/components/ui/DownloadButton";
-import PreviewOverlay from "@/app/components/ui/PreviewOverlay";
 import ResourceCard from "@/app/components/ui/ResourceCard";
 import SoundButton from "@/app/components/ui/SoundButton";
 import {
@@ -42,6 +42,13 @@ function formatDate(dateStr) {
   });
 }
 
+function formatTime(seconds) {
+  if (!seconds || !isFinite(seconds)) return "0:00";
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
 export default function ResourceDetail({
   resource,
   related,
@@ -49,15 +56,73 @@ export default function ResourceDetail({
   categoryName,
   categoryColor,
 }) {
-  const [showPreview, setShowPreview] = useState(false);
-
   const displayName = (resource.name || "Untitled").replace(/\.[^/.]+$/, "");
   const isVideo = isVideoFormat(resource);
   const isImage = isImageFormat(resource);
   const isAudio = isAudioFormat(resource);
   const isFont = isFontFormat(resource);
-
   const resolvedUrl = resource.downloadUrl || resource.fileUrl;
+
+  // Inline player state
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [videoStarted, setVideoStarted] = useState(false);
+
+  const audioRef = useRef(null);
+  const videoRef = useRef(null);
+  const rafRef = useRef(null);
+
+  // --- Audio inline player ---
+  const toggleAudio = useCallback(() => {
+    if (!resolvedUrl) return;
+    if (!audioRef.current) {
+      const audio = new Audio(resolvedUrl);
+      audioRef.current = audio;
+      audio.addEventListener("loadedmetadata", () => setDuration(audio.duration));
+      audio.addEventListener("ended", () => {
+        setIsPlaying(false);
+        setCurrentTime(0);
+      });
+    }
+    const audio = audioRef.current;
+    if (isPlaying) {
+      audio.pause();
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      setIsPlaying(false);
+    } else {
+      audio.play().catch(() => {});
+      const tick = () => {
+        setCurrentTime(audio.currentTime);
+        rafRef.current = requestAnimationFrame(tick);
+      };
+      rafRef.current = requestAnimationFrame(tick);
+      setIsPlaying(true);
+    }
+  }, [resolvedUrl, isPlaying]);
+
+  const seekAudio = useCallback((e) => {
+    const audio = audioRef.current;
+    if (!audio || !duration) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    audio.currentTime = ratio * duration;
+    setCurrentTime(audio.currentTime);
+  }, [duration]);
+
+  // --- Video inline player ---
+  const toggleVideo = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    if (!videoStarted) setVideoStarted(true);
+    if (video.paused) {
+      video.play().catch(() => {});
+      setIsPlaying(true);
+    } else {
+      video.pause();
+      setIsPlaying(false);
+    }
+  }, [videoStarted]);
 
   // Determine layout type for related cards
   const categoryLayout = isAudio
@@ -69,6 +134,8 @@ export default function ResourceDetail({
     : isFont
     ? "font"
     : "video";
+
+  const audioProgress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
     <div className={styles.page} style={{ "--cat-color": categoryColor }}>
@@ -102,46 +169,45 @@ export default function ResourceDetail({
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
       >
-        {/* Preview Area */}
+        {/* Preview Area — Inline Player */}
         <div className={styles.previewSection}>
-          <div
-            className={styles.previewBox}
-            onClick={() => setShowPreview(true)}
-          >
-            {isVideo && (
-              <>
-                {resource.thumbnailUrl ? (
-                  <Image
-                    src={getOptimizedUrl(resource.thumbnailUrl, { width: 800 })}
-                    alt={displayName}
-                    fill
-                    className={styles.previewImage}
-                    priority
-                    onError={(e) => {
-                      e.target.src = resource.thumbnailUrl;
-                    }}
-                  />
-                ) : resolvedUrl ? (
-                  <video
-                    src={`${resolvedUrl}#t=0.1`}
-                    className={styles.previewVideo}
-                    muted
-                    playsInline
-                    preload="metadata"
-                  />
-                ) : null}
-                <div className={styles.playOverlay}>
-                  <Play size={48} />
-                </div>
-              </>
-            )}
+          {/* === VIDEO: inline player === */}
+          {isVideo && (
+            <div className={styles.previewBox} onClick={toggleVideo}>
+              {!videoStarted && resource.thumbnailUrl ? (
+                <Image
+                  src={getOptimizedUrl(resource.thumbnailUrl, { width: 800 })}
+                  alt={displayName}
+                  fill
+                  className={styles.previewImage}
+                  priority
+                  onError={(e) => { e.target.src = resource.thumbnailUrl; }}
+                />
+              ) : null}
+              <video
+                ref={videoRef}
+                src={resolvedUrl}
+                className={styles.previewVideo}
+                playsInline
+                preload="metadata"
+                style={{ display: videoStarted || !resource.thumbnailUrl ? "block" : "none" }}
+                onEnded={() => setIsPlaying(false)}
+              />
+              <div className={`${styles.playOverlay} ${isPlaying ? styles.playOverlayHidden : ""}`}>
+                {isPlaying ? <Pause size={48} /> : <Play size={48} />}
+              </div>
+              <div className={styles.formatBadge}>
+                {resource.fileFormat?.toUpperCase()}
+              </div>
+            </div>
+          )}
 
-            {isImage && (
+          {/* === IMAGE: full view === */}
+          {isImage && (
+            <div className={styles.previewBox}>
               <Image
                 src={getOptimizedUrl(
-                  resource.previewUrl ||
-                    resource.thumbnailUrl ||
-                    resolvedUrl,
+                  resource.previewUrl || resource.thumbnailUrl || resolvedUrl,
                   { width: 800 }
                 )}
                 alt={displayName}
@@ -149,41 +215,69 @@ export default function ResourceDetail({
                 className={styles.previewImage}
                 priority
                 onError={(e) => {
-                  e.target.src =
-                    resource.previewUrl ||
-                    resource.thumbnailUrl ||
-                    resolvedUrl;
+                  e.target.src = resource.previewUrl || resource.thumbnailUrl || resolvedUrl;
                 }}
               />
-            )}
-
-            {isAudio && (
-              <div className={styles.audioPreview}>
-                <Music size={64} strokeWidth={1} />
-                <span className={styles.audioLabel}>Click to preview</span>
+              <div className={styles.formatBadge}>
+                {resource.fileFormat?.toUpperCase()}
               </div>
-            )}
+            </div>
+          )}
 
-            {isFont && (
+          {/* === AUDIO: inline player with waveform UI === */}
+          {isAudio && (
+            <div className={styles.audioPlayerBox}>
+              <button className={styles.audioPlayBtn} onClick={toggleAudio} style={{ "--cat-color": categoryColor }}>
+                {isPlaying ? <Pause size={32} /> : <Play size={32} />}
+              </button>
+
+              <div className={styles.audioPlayerInfo}>
+                <span className={styles.audioPlayerName}>{displayName}</span>
+                <div className={styles.audioPlayerMeta}>
+                  <span>{resource.fileFormat?.toUpperCase()}</span>
+                  <span>{formatSize(resource.fileSize)}</span>
+                  {duration > 0 && (
+                    <span>{formatTime(currentTime)} / {formatTime(duration)}</span>
+                  )}
+                </div>
+                {/* Progress bar */}
+                <div className={styles.audioProgressBar} onClick={seekAudio}>
+                  <div
+                    className={styles.audioProgressFill}
+                    style={{ width: `${audioProgress}%`, backgroundColor: categoryColor }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* === FONT: sample preview === */}
+          {isFont && (
+            <div className={styles.previewBox}>
               <div className={styles.fontPreview}>
                 <p className={styles.fontSampleLg}>Aa Bb Cc Dd</p>
                 <p className={styles.fontSampleSm}>
                   The quick brown fox jumps over the lazy dog
                 </p>
               </div>
-            )}
+              <div className={styles.formatBadge}>
+                {resource.fileFormat?.toUpperCase()}
+              </div>
+            </div>
+          )}
 
-            {!isVideo && !isImage && !isAudio && !isFont && (
+          {/* === GENERIC file === */}
+          {!isVideo && !isImage && !isAudio && !isFont && (
+            <div className={styles.previewBox}>
               <div className={styles.genericPreview}>
                 <FileText size={48} strokeWidth={1} />
                 <span>{resource.fileFormat?.toUpperCase()}</span>
               </div>
-            )}
-
-            <div className={styles.formatBadge}>
-              {resource.fileFormat?.toUpperCase()}
+              <div className={styles.formatBadge}>
+                {resource.fileFormat?.toUpperCase()}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Info Section */}
@@ -307,15 +401,6 @@ export default function ResourceDetail({
             })}
           </div>
         </section>
-      )}
-
-      {/* Preview Overlay */}
-      {showPreview && (
-        <PreviewOverlay
-          resource={resource}
-          onClose={() => setShowPreview(false)}
-          showDownload={true}
-        />
       )}
     </div>
   );

@@ -110,24 +110,101 @@
   color: white;
   opacity: 0.8;
   transition: opacity 0.3s;
+  pointer-events: none;
 }
 
-.previewBox:hover .playOverlay {
+.playOverlayHidden {
+  opacity: 0;
+}
+
+.previewBox:hover .playOverlay:not(.playOverlayHidden) {
   opacity: 1;
 }
 
-.audioPreview {
+/* ---------- Inline Audio Player ---------- */
+.audioPlayerBox {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 12px;
-  color: var(--text-muted);
+  gap: 20px;
+  padding: 24px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  transition: border-color 0.3s;
 }
 
-.audioLabel {
-  font-size: 0.8rem;
+.audioPlayerBox:hover {
+  border-color: var(--cat-color, var(--border-default));
+}
+
+.audioPlayBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid var(--cat-color, var(--text-primary));
+  background: transparent;
+  color: var(--cat-color, var(--text-primary));
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+
+.audioPlayBtn:hover {
+  background: var(--cat-color, var(--text-primary));
+  color: #000;
+}
+
+.audioPlayerInfo {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+
+.audioPlayerName {
+  font-family: var(--font-heading);
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.audioPlayerMeta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 1px;
+}
+
+.audioProgressBar {
+  width: 100%;
+  height: 4px;
+  background: var(--border-default);
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+  transition: height 0.15s;
+}
+
+.audioProgressBar:hover {
+  height: 6px;
+}
+
+.audioProgressFill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.1s linear;
 }
 
 .fontPreview {
