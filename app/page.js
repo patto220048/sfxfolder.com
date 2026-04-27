@@ -73,14 +73,14 @@ export default async function Home() {
       <section className={styles.hero} id="hero-section">
         <div className={styles.heroGlow} />
         <h1 className={styles.title}>
-          Free Sound Effects & Assets for Video Editors
+          My Personal Resource Folder for Video Editors
         </h1>
         <p className={styles.subtitle}>
-          SFXFolder.com — Digital Assets for Video Editors
+          SFXFolder.com — A Curation of Assets Based on Professional Experience
         </p>
         <p className={styles.description}>
-          A curated library of pro-grade sound effects, royalty-free music, memes, green screens, and assets. 
-          Download free SFX instantly — no copyright issues.
+          This isn&apos;t just another asset library. It&apos;s my personal collection of pro-grade sound effects, music, and tools that I&apos;ve hand-picked and used throughout my editing career. 
+          Download my curated SFX instantly — no copyright issues.
         </p>
         <div className={styles.searchWrap}>
           <SearchBar size="large" placeholder="Search free sound effects, music, presets..." />

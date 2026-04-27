@@ -17,14 +17,14 @@ export default function TermsOfService() {
           <section className={styles.section}>
             <h2>1. Agreement to Terms</h2>
             <p>
-              By accessing or using SFXFolder.com (the &quot;Service&quot;), you agree to be bound by these Terms of Service. If you disagree with any part of the terms, you may not access the service. These terms apply to all visitors, users, and others who access or use the Service.
+              By accessing or using SFXFolder.com (the &quot;Service&quot;), you acknowledge that this is a personal resource collection curated by the owner based on professional experience. By using the Service, you agree to be bound by these Terms of Service. If you disagree with any part of the terms, you may not access the service. These terms apply to all visitors, users, and others who access or use the Service.
             </p>
           </section>
 
           <section className={styles.section}>
             <h2>2. License and Use of Resources</h2>
             <p>
-              All resources provided on SFXFolder.com (overlays, sound effects, transitions, templates, etc.) are provided under specific licenses. Unless otherwise stated:
+              All resources provided on SFXFolder.com (overlays, sound effects, transitions, templates, etc.) are curated from my personal library and professional tools. Unless otherwise stated:
             </p>
             <ul>
               <li>You may use these resources in both personal and commercial video projects.</li>
@@ -37,15 +37,15 @@ export default function TermsOfService() {
           <section className={styles.section}>
             <h2>3. Copyright & Commercial Liability</h2>
             <p>
-              While we strive to provide high-quality assets, <strong>SFXFolder.com does not warrant or guarantee that all resources are free from third-party copyright claims</strong>. 
+              While I strive to provide high-quality assets that I personally use, <strong>SFXFolder.com does not warrant or guarantee that all resources are free from third-party copyright claims</strong>. 
             </p>
             <p>
-              By using our resources in commercial projects, you acknowledge and agree that:
+              By using these resources in commercial projects, you acknowledge and agree that:
             </p>
             <ul>
               <li>You are solely responsible for verifying the suitability and legal status of any asset for your specific use case.</li>
-              <li>SFXFolder.com, its owners, and contributors shall NOT be held liable for any legal disputes, copyright strikes, takedown notices, or financial damages arising from the use of our resources.</li>
-              <li>We provide all assets &quot;as is&quot; without any warranty of any kind, express or implied.</li>
+              <li>SFXFolder.com, its owners, and contributors shall NOT be held liable for any legal disputes, copyright strikes, takedown notices, or financial damages arising from the use of these resources.</li>
+              <li>I provide all assets &quot;as is&quot; without any warranty of any kind, express or implied.</li>
             </ul>
           </section>
 
