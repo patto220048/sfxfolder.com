@@ -21,6 +21,11 @@ async function getPayPalAccessToken(clientId: string, secret: string, mode: stri
     body: 'grant_type=client_credentials',
   })
 
+  if (!response.ok) {
+    const error = await response.text()
+    throw new Error(`Failed to get PayPal access token: ${error}`)
+  }
+
   const data = await response.json()
   return data.access_token
 }
@@ -29,10 +34,7 @@ async function verifyPayPalSignature(req: Request, body: any, accessToken: strin
   const mode = Deno.env.get('PAYPAL_MODE') || 'sandbox'
   const webhookId = Deno.env.get('PAYPAL_WEBHOOK_ID')
   
-  if (!webhookId) {
-    console.error("PAYPAL_WEBHOOK_ID is not set. Skipping validation (NOT RECOMMENDED FOR PROD)")
-    return true // Fallback for dev if not set
-  }
+  if (!webhookId) return false
 
   const url = mode === 'live'
     ? 'https://api-m.paypal.com/v1/notifications/verify-webhook-signature'
@@ -79,15 +81,17 @@ serve(async (req) => {
     const eventType = body.event_type
     const resource = body.resource
 
-    console.log(`[PayPal Webhook] Processing ${eventType} (${mode})`)
+    console.log(`[PayPal Webhook] Incoming Event: ${eventType} Mode: ${mode}`)
 
-    // VERIFICATION
     const accessToken = await getPayPalAccessToken(clientId, secret, mode)
     const isValid = await verifyPayPalSignature(req, body, accessToken)
 
     if (!isValid) {
       console.error("[PayPal Webhook] Signature verification FAILED")
-      return new Response(JSON.stringify({ error: "Invalid signature" }), { status: 401, headers: corsHeaders })
+      return new Response(JSON.stringify({ error: "Invalid signature" }), { 
+        status: 401, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      })
     }
 
     if (!eventType || !resource || !resource.id) {
@@ -96,7 +100,6 @@ serve(async (req) => {
 
     const subscriptionID = resource.id
 
-    // Fetch current state
     const { data: currentSub } = await supabase
       .from("subscriptions")
       .select("auto_renew, status")
@@ -120,13 +123,14 @@ serve(async (req) => {
         subscription_expires_at: nextBillingTime 
       }).eq("subscription_id", subscriptionID)
 
+      console.log(`[PayPal Webhook] Success: Updated ${subscriptionID} to ${status}`)
       return new Response(JSON.stringify({ success: true, status }), { headers: corsHeaders })
     }
 
     return new Response(JSON.stringify({ success: true, ignored: true }), { headers: corsHeaders })
 
   } catch (err) {
-    console.error("[PayPal Webhook] Error:", err)
+    console.error("[PayPal Webhook] Fatal Error:", err)
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: corsHeaders })
   }
 })

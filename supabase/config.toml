@@ -1,5 +1,8 @@
 project_id = "oqdqcfllhpbnbyeampjc"
 
+[functions.paypal-webhook]
+verify_jwt = false
+
 [api]
 port = 54321
 external_url = "http://127.0.0.1:54321"
