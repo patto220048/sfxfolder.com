@@ -117,7 +117,7 @@ export async function DELETE(req) {
     if (dbError) throw dbError;
 
     // 4. Invalidate frontend cache
-    revalidateTag('resources');
+    revalidateTag('resources', 'max');
 
     return NextResponse.json({ success: true, count: ids.length });
 

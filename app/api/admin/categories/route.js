@@ -104,8 +104,8 @@ export async function DELETE(req) {
     if (catDeleteError) throw catDeleteError;
 
     // 6. Invalidate frontend cache
-    revalidateTag('resources');
-    revalidateTag('categories');
+    revalidateTag('resources', 'max');
+    revalidateTag('categories', 'max');
 
     return NextResponse.json({ success: true, deletedResources: resources?.length || 0 });
 

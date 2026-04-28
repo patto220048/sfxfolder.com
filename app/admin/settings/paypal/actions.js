@@ -38,7 +38,7 @@ export async function updatePaypalConfig(config) {
 
 
     // Clear cache to reflect changes immediately
-    revalidateTag('settings');
+    revalidateTag('settings', 'max');
     revalidatePath('/pricing');
 
     return { success: true };
