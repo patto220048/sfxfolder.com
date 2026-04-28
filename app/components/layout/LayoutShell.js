@@ -15,8 +15,8 @@ export default function LayoutShell({ children, initialCategories = [] }) {
       <main style={!isAdmin ? { paddingTop: "var(--navbar-height)" } : undefined}>
         {children}
       </main>
-      {!isAdmin && <Footer />}
-      {!isAdmin && <ContextSearch />}
+      {!isAdmin && pathname !== "/about-us" && <Footer />}
+      {!isAdmin && pathname !== "/about-us" && <ContextSearch />}
     </>
   );
 }

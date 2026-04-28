@@ -4,8 +4,9 @@
   padding: 0 var(--space-6);
   display: flex;
   flex-direction: column;
-  gap: 15vh;
+  gap: 20vh;
   /* Larger gap for scrolling feel */
+  scroll-behavior: smooth;
 }
 
 /* Scroll Progress Bar */
@@ -121,7 +122,9 @@
 
 .imageWrapper img {
   width: 100%;
-  height: 100%;
+  height: 120%;
+  position: absolute;
+  top: -10%;
   object-fit: cover;
   filter: grayscale(100%);
   transition: filter 0.5s ease;
@@ -191,14 +194,16 @@
   font-size: 0.95rem;
 }
 
-/* Visual Section */
 .visualSection {
-  width: 100%;
+  width: 100vw;
+  margin-left: calc(-50vw + 50%);
   height: 60vh;
-  border: 1px solid var(--border-default);
+  border-top: 1px solid var(--border-default);
+  border-bottom: 1px solid var(--border-default);
   position: relative;
   overflow: hidden;
-  margin: var(--space-12) 0;
+  margin-top: var(--space-12);
+  margin-bottom: var(--space-12);
 }
 
 .imageReveal {
@@ -208,10 +213,8 @@
 }
 
 .visualSection img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
   opacity: 0.6;
+  filter: grayscale(1);
 }
 
 .visualOverlay {

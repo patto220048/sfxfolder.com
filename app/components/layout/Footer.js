@@ -93,7 +93,7 @@ function Footer() {
             <div className={styles.linkCol}>
               <h4 className={styles.colTitle}>Company</h4>
               <ul className={styles.linkList}>
-                <li><Link href="/about" className={styles.footerLink}>About Us</Link></li>
+                <li><Link href="/about-us" className={styles.footerLink}>About Us</Link></li>
                 <li><Link href="/contact" className={styles.footerLink}>Contact</Link></li>
                 <li>
                   <Link href="/terms" className={styles.footerLink} target="_blank" rel="noopener noreferrer">

@@ -147,6 +147,7 @@ export default function ContextSearch() {
         window.location.pathname.startsWith("/admin") ||
         window.location.pathname === "/terms" ||
         window.location.pathname === "/privacy" ||
+        window.location.pathname === "/about-us" ||
         e.target.tagName === "INPUT" ||
         e.target.tagName === "TEXTAREA"
       ) {
