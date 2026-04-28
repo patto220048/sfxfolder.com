@@ -46,8 +46,34 @@ export default async function PricingPage() {
     };
   }
 
+  const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://sfxfolder.com';
+
+  // BreadcrumbList schema
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: SITE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Premium Plans",
+        item: `${SITE_URL}/pricing`,
+      },
+    ],
+  };
+
   return (
     <Suspense fallback={<div>Loading...</div>}>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
       <PricingClient config={finalConfig} />
     </Suspense>
   );

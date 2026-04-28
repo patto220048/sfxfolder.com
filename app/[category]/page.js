@@ -226,12 +226,38 @@ export default async function CategoryPage({ params, searchParams }) {
     },
   };
 
+  // BreadcrumbList schema for better Google Search results (Sitelinks)
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: SITE_URL,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: categoryName,
+        item: `${SITE_URL}/${slug}`,
+      },
+    ],
+  };
+
   return (
     <Suspense fallback={<div>Loading category...</div>}>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
           __html: JSON.stringify(collectionSchema),
+        }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(breadcrumbSchema),
         }}
       />
       <ClientPage 
