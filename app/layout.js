@@ -16,11 +16,11 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://sfxfolder.com';
 export const metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "SFXFolder — My Personal Folder of Free Resources for Video Editors",
+    default: "SFXFolder — Free Resource Folder for Video Editors",
     template: "%s | SFXFolder",
   },
   description:
-    "Expert-curated collection of free sound effects, royalty-free music, video memes, green screens, animations, overlays, fonts, and presets based on professional experience.",
+    "Curated collection of free sound effects, music, and assets for video editors based on professional experience.",
   keywords: [
     "free sound effects",
     "sfx free",
@@ -43,9 +43,9 @@ export const metadata = {
   },
   manifest: "/site.webmanifest",
   openGraph: {
-    title: "SFXFolder — My Personal Folder of Free Resources",
+    title: "SFXFolder — Free Resource Folder",
     description:
-      "Expert-curated collection of free sound effects, music, and assets for video editing based on professional experience.",
+      "Curated collection of free sound effects and assets based on professional experience.",
     type: "website",
     url: SITE_URL,
     siteName: "SFXFolder",
@@ -53,9 +53,9 @@ export const metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "SFXFolder — My Personal Folder of Free Resources",
+    title: "SFXFolder — Free Resource Folder",
     description:
-      "Expert-curated free sound effects, music, and video editing assets. Hand-picked based on professional experience.",
+      "Curated free sound effects and video editing assets hand-picked from professional experience.",
   },
   alternates: {
     canonical: SITE_URL,
