@@ -38,6 +38,17 @@ export default function AboutUsClient({ aboutPageSchema, socialLinks = [], conta
     whileInView: { transition: { staggerChildren: 0.15, delayChildren: 0.2 } }
   };
 
+  // Ref for Sticky Bio section
+  const profileRef = useRef(null);
+  const { scrollYProgress: profileProgress } = useScroll({
+    target: profileRef,
+    offset: ["start end", "end start"],
+  });
+
+  // Opacity transforms for Bio paragraphs
+  const p1Opacity = useTransform(profileProgress, [0.2, 0.35, 0.5], [0.3, 1, 0.3]);
+  const p2Opacity = useTransform(profileProgress, [0.4, 0.55, 0.7], [0.3, 1, 0.3]);
+
   return (
     <div 
       className={styles.container} 
@@ -94,12 +105,12 @@ export default function AboutUsClient({ aboutPageSchema, socialLinks = [], conta
         </motion.div>
       </motion.section>
 
-      {/* Bio Section with Scroll Trigger */}
+      {/* Bio Section with Sticky Image & Paragraph Focus */}
       <motion.section 
+        ref={profileRef}
         className={styles.profileSection}
-        {...fadeInUp}
       >
-        <motion.div className={styles.imageWrapper} style={{ y: creatorY }}>
+        <motion.div className={styles.imageWrapper}>
           <Image 
             src="/assets/creator.png" 
             alt="Creator of SFXFolder" 
@@ -111,20 +122,22 @@ export default function AboutUsClient({ aboutPageSchema, socialLinks = [], conta
         <div className={styles.bioContent}>
           <motion.h2 
             className={styles.bioTitle}
-            variants={fadeInUp}
+            initial={{ opacity: 0, x: -20 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
           >
             Meet the Creator
           </motion.h2>
           <motion.p 
             className={styles.bioText}
-            variants={fadeInUp}
+            style={{ opacity: p1Opacity }}
           >
             Hi, I&apos;m a professional video editor with over a decade of experience in the industry. 
             Throughout my career, I&apos;ve spent countless hours scouring the web for the perfect sound effect or the right LUT to make a scene pop.
           </motion.p>
           <motion.p 
             className={styles.bioText}
-            variants={fadeInUp}
+            style={{ opacity: p2Opacity }}
           >
             I realized that while there are thousands of &quot;free&quot; resources out there, very few meet the standards of a professional workflow. 
             SFXFolder is my personal collection — hand-picked, edited, and organized for editors who value their time and quality.
