@@ -13,7 +13,7 @@ function SnapHandler() {
     const handleScroll = (e) => {
       clearTimeout(timeoutRef.current);
       
-      // Wait 150ms after scroll stops to trigger snap
+      // Wait 120ms after scroll stops to trigger snap
       timeoutRef.current = setTimeout(() => {
         const sections = document.querySelectorAll('[data-snap-section]');
         let closestSection = null;
@@ -33,7 +33,7 @@ function SnapHandler() {
         if (closestSection && minDistance > 5 && minDistance < 400) {
           lenis.scrollTo(closestSection, { duration: 1.2, offset: -80 });
         }
-      }, 150);
+      }, 60);
     };
 
     lenis.on('scroll', handleScroll);
