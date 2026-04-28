@@ -75,6 +75,7 @@ export default function AboutUsClient({ aboutPageSchema, socialLinks = [], conta
       <motion.section 
         className={styles.hero}
         style={{ opacity: heroOpacity, scale: heroScale, y: heroY }}
+        data-snap-section
       >
         <div className={styles.heroGlow} />
         <motion.span 
@@ -118,6 +119,7 @@ export default function AboutUsClient({ aboutPageSchema, socialLinks = [], conta
         ref={profileRef}
         className={styles.profileSection}
         style={{ position: 'relative' }}
+        data-snap-section
       >
         <div className={styles.stickySide}>
           <div className={styles.imageContainer}>
@@ -160,6 +162,7 @@ export default function AboutUsClient({ aboutPageSchema, socialLinks = [], conta
       {/* Mission Grid with Stagger */}
       <motion.section 
         className={styles.missionGrid}
+        data-snap-section
         variants={staggerContainer}
         initial="initial"
         whileInView="whileInView"
@@ -191,6 +194,7 @@ export default function AboutUsClient({ aboutPageSchema, socialLinks = [], conta
       {/* Combined Philosophy Section */}
       <motion.section 
         className={styles.philosophySection}
+        data-snap-section
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: "-100px" }}
@@ -218,6 +222,7 @@ export default function AboutUsClient({ aboutPageSchema, socialLinks = [], conta
       {/* Connect Section */}
       <motion.section 
         className={styles.connect}
+        data-snap-section
         {...fadeInUp}
       >
         <h2 className={styles.connectTitle}>Stay Connected</h2>
