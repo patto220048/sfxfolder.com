@@ -741,6 +741,58 @@ export const getTags = unstable_cache(
 export const getAdminTags = fetchTagsInternal;
 
 /**
+ * Fetch all unique tags used within a specific category or a set of folders.
+ * Highly optimized to only fetch the tags column.
+ */
+export async function getCategoryTags(categorySlug, folderIds = []) {
+  if (!categorySlug) return [];
+
+  const isServer = typeof window === 'undefined';
+
+  const fetchLogic = async () => {
+    let query = supabase
+      .from('resources')
+      .select('tags')
+      .eq('category_id', categorySlug)
+      .eq('is_published', true);
+
+    if (folderIds && folderIds.length > 0) {
+      query = query.in('folder_id', folderIds);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Error fetching tags:', error);
+      return [];
+    }
+
+    const tagSet = new Set();
+    data.forEach(item => {
+      if (item.tags && Array.isArray(item.tags)) {
+        item.tags.forEach(t => {
+          if (t) tagSet.add(t.toLowerCase());
+        });
+      }
+    });
+
+    return Array.from(tagSet).sort();
+  };
+
+  const cacheKey = `category-tags-${categorySlug}-${folderIds.join(',') || 'all'}`;
+
+  if (isServer && REVALIDATE_TIME !== false) {
+    return unstable_cache(
+      fetchLogic,
+      [cacheKey],
+      { revalidate: REVALIDATE_TIME, tags: ['resources', 'tags'] }
+    )();
+  }
+
+  return fetchLogic();
+}
+
+/**
  * Helper to sync tags.
  * Increments or decrements usage_count for given tags.
  */

@@ -1,4 +1,4 @@
-import { getFolders, getResources, getCategoryBySlug, getCategories, REVALIDATE_TIME } from "@/app/lib/api";
+import { getFolders, getResources, getCategoryBySlug, getCategories, getCategoryTags, REVALIDATE_TIME } from "@/app/lib/api";
 import ClientPage from "./ClientPage";
 import { unstable_cache } from "next/cache";
 import { Suspense } from "react";
@@ -169,10 +169,14 @@ async function getCachedCategoryData(slug, tags = [], formats = []) {
         limit: 200 
       });
 
+      // 4. Fetch all tags for this category
+      const categoryTags = await getCategoryTags(slug);
+
       return {
         categoryInfo: info,
         flatFolders: fetchedFolders,
-        allResources: fetchedResources
+        allResources: fetchedResources,
+        categoryTags
       };
     },
     ['category-data', slug, tags.join(','), formats.join(',')], 
@@ -194,12 +198,14 @@ export default async function CategoryPage({ params, searchParams }) {
   let info = null;
   let flatFolders = [];
   let allResources = [];
+  let categoryTags = [];
 
   try {
     const data = await getCachedCategoryData(slug, urlTags, urlFormats);
     info = data.categoryInfo;
     flatFolders = data.flatFolders;
     allResources = data.allResources;
+    categoryTags = data.categoryTags;
   } catch (e) {
     console.error("Fetch error in category page:", e.message);
   }
@@ -277,6 +283,7 @@ export default async function CategoryPage({ params, searchParams }) {
         info={info} 
         folders={folderTree} 
         resources={allResources} 
+        categoryTags={categoryTags}
       />
     </Suspense>
   );

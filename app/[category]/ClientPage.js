@@ -27,7 +27,17 @@ const findInTree = (nodes, targetId, parent = null) => {
   return null;
 };
 
-export default function ClientPage({ slug, info, folders, resources: initialResources }) {
+const getDescendantIds = (node) => {
+  let ids = [node.id];
+  if (node.children) {
+    node.children.forEach(child => {
+      ids = [...ids, ...getDescendantIds(child)];
+    });
+  }
+  return ids;
+};
+
+export default function ClientPage({ slug, info, folders, resources: initialResources, categoryTags = [] }) {
   // --- States ---
   const [selectedFolderId, setSelectedFolderId] = useState(null);
   const [selectedFolderName, setSelectedFolderName] = useState(null);
@@ -53,6 +63,7 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
   
   const [previewResource, setPreviewResource] = useState(null);
   const [inPageSearch, setInPageSearch] = useState("");
+  const [folderTags, setFolderTags] = useState([]);
   
   const router = useRouter();
   const pathname = usePathname();
@@ -253,6 +264,22 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
 
     debounceTimerRef.current = setTimeout(refreshData, 300);
 
+    // --- Folder Tags Fetching ---
+    // If we are in a folder, fetch tags for this folder and its descendants
+    if (selectedFolderId) {
+      const node = findInTree(folders, selectedFolderId)?.current;
+      if (node) {
+        const allSubFolderIds = getDescendantIds(node);
+        import("@/app/lib/api").then(api => {
+          api.getCategoryTags(slug, allSubFolderIds).then(tags => {
+            setFolderTags(tags);
+          });
+        });
+      }
+    } else {
+      setFolderTags([]);
+    }
+
     return () => {
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     };
@@ -306,12 +333,30 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
 
   // Extract unique tags from loaded resources for FilterBar
   const availableTags = useMemo(() => {
-    const tags = new Set();
-    allLoadedResources.forEach(r => {
-      if (r.tags) r.tags.forEach(t => tags.add(t.toLowerCase()));
-    });
-    return Array.from(tags).sort();
-  }, [allLoadedResources]);
+    // 1. If searching, calculate tags dynamically from results
+    if (inPageSearch) {
+      const tags = new Set();
+      filteredResources.forEach(r => {
+        if (r.tags) r.tags.forEach(t => tags.add(t.toLowerCase()));
+      });
+      return Array.from(tags).sort();
+    }
+
+    // 2. If in a folder, use the pre-fetched recursive folder tags
+    if (selectedFolderId) {
+      // If folderTags haven't loaded yet, fallback to what we have in allLoadedResources
+      if (folderTags.length > 0) return folderTags;
+      
+      const tags = new Set();
+      allLoadedResources.forEach(r => {
+        if (r.tags) r.tags.forEach(t => tags.add(t.toLowerCase()));
+      });
+      return Array.from(tags).sort();
+    }
+
+    // 3. If at root, show all category tags
+    return categoryTags;
+  }, [allLoadedResources, filteredResources, selectedFolderId, categoryTags, folderTags, inPageSearch]);
 
   // --- Folder Navigation Grid Logic ---
   const { currentSubfolders, parentFolder } = useMemo(() => {
