@@ -76,6 +76,14 @@ export default function SearchBar({ size = "default", placeholder = "Search reso
   };
 
   const navigateToResource = (item) => {
+    if (item.type === 'folder') {
+      const categorySlug = item.categorySlug || 'all';
+      router.push(`/${categorySlug}?folder=${item.id}`);
+      setShowDropdown(false);
+      setQuery("");
+      return;
+    }
+
     const isHome = pathname === "/";
     let url = `/${item.categorySlug}`;
     
@@ -143,8 +151,12 @@ export default function SearchBar({ size = "default", placeholder = "Search reso
                 <div className={styles.itemContent}>
                   <div className={styles.itemName}>{item.name}</div>
                   <div className={styles.itemMeta}>
-                    {item.format && <span className={styles.format}>{item.format.toUpperCase()}</span>}
-                    {item.folderName && (
+                    {item.type === 'folder' ? (
+                      <span className={styles.folderBadge}>FOLDER</span>
+                    ) : (
+                      item.format && <span className={styles.format}>{item.format.toUpperCase()}</span>
+                    )}
+                    {item.folderName && item.type !== 'folder' && (
                       <>
                         <span className={styles.dot}>•</span>
                         <span className={styles.folder}>{item.folderName.toUpperCase()}</span>

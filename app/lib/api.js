@@ -216,6 +216,12 @@ export async function getResources({
       if (error.code === 'ABORT' || error.name === 'AbortError' || error.message?.includes('AbortError')) {
         return [];
       }
+      
+      // Handle "Requested range not satisfiable" (offset >= count)
+      if (error.code === 'PGRST103') {
+        return [];
+      }
+
       console.error("Error fetching resources:", error);
       return [];
     }
@@ -287,20 +293,27 @@ export async function searchResources(searchQuery) {
 export async function getSearchSuggestions(query) {
   if (!query || query.length < 2) return [];
 
-  const { data, error } = await supabase
+  // Fetch Resources
+  const { data: resources, error: resError } = await supabase
     .from('resources')
     .select('id, name, slug, category_id, file_format, folder_id, categories(slug, icon), folders(name)')
     .eq('is_published', true)
     .or(`name.ilike.%${query}%,tags.cs.{${query}}`)
-    .limit(8);
+    .limit(5);
 
-  if (error) {
-    console.error('Error fetching suggestions:', error);
-    return [];
-  }
+  // Fetch Folders
+  const { data: folders, error: folderError } = await supabase
+    .from('folders')
+    .select('id, name, category_id, categories(slug, icon)')
+    .ilike('name', `%${query}%`)
+    .limit(3);
 
-  return data.map(item => ({
+  if (resError) console.error('Error fetching resource suggestions:', resError);
+  if (folderError) console.error('Error fetching folder suggestions:', folderError);
+
+  const resourceSuggestions = (resources || []).map(item => ({
     id: item.id,
+    type: 'resource',
     name: item.name,
     slug: item.slug,
     categorySlug: item.categories?.slug,
@@ -309,6 +322,17 @@ export async function getSearchSuggestions(query) {
     folderId: item.folder_id,
     folderName: item.folders?.name
   }));
+
+  const folderSuggestions = (folders || []).map(item => ({
+    id: item.id,
+    type: 'folder',
+    name: item.name,
+    categorySlug: item.categories?.slug,
+    categoryIcon: 'folder',
+    folderName: 'Folder'
+  }));
+
+  return [...folderSuggestions, ...resourceSuggestions];
 }
 
 /**

@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Search, Loader2, X, History, Volume2, Filter, ChevronDown, Check, Eye } from "lucide-react";
+import { Search, Loader2, X, History, Volume2, Filter, ChevronDown, Check, Eye, Folder } from "lucide-react";
 import { getIcon } from "@/app/components/ui/IconLib";
 import { searchResourcesClient, getOrBuildSearchIndex } from "@/app/lib/searchUtils";
 import styles from "./ContextSearch.module.css";
@@ -242,6 +242,13 @@ export default function ContextSearch() {
     e.stopPropagation(); // Prevent trigger row click
     saveRecent(item);
     
+    if (item.type === 'folder') {
+      const categorySlug = item.categorySlug || 'all';
+      window.location.href = `/${categorySlug}?folder=${item.id}`;
+      close();
+      return;
+    }
+
     const categorySlug = item.categorySlug || 
                          (typeof item.category === 'string' ? item.category.toLowerCase().replace(/\s+/g, '-') : 'all');
     const itemSlug = item.slug;
@@ -256,6 +263,13 @@ export default function ContextSearch() {
   const handleItemClick = (item) => {
     saveRecent(item);
     
+    if (item.type === 'folder') {
+      const categorySlug = item.categorySlug || 'all';
+      window.location.href = `/${categorySlug}?folder=${item.id}`;
+      close();
+      return;
+    }
+
     const categorySlug = item.categorySlug || 
                          (typeof item.category === 'string' ? item.category.toLowerCase().replace(/\s+/g, '-') : 'all');
     const itemSlug = item.slug;
@@ -303,6 +317,7 @@ export default function ContextSearch() {
       ref={containerRef}
       className={styles.container}
       style={{ left: position.x, top: position.y }}
+      data-lenis-prevent
     >
       <div className={styles.searchBox}>
         <Search size={16} className={styles.searchIcon} />
@@ -391,7 +406,7 @@ export default function ContextSearch() {
       )}
 
       {!loading && displayList.length > 0 && (
-        <ul className={styles.results}>
+        <ul className={styles.results} data-lenis-prevent>
           {displayList.map((item, idx) => (
             <li
               key={item.id}
@@ -400,22 +415,27 @@ export default function ContextSearch() {
               onClick={() => handleItemClick(item)}
             >
               <span className={styles.resultIcon}>
-                {getCategoryIcon(item.categoryIcon)}
+                {getCategoryIcon(item.type === 'folder' ? 'folder' : (item.categoryIcon || 'box'))}
               </span>
               <div className={styles.resultItemContent}>
                 <div className={styles.resultName}>
                   {highlightText(item.name, query.trim() ? item.matches : [], 'name')}
                 </div>
                 <div className={styles.resultMeta}>
-                  {item.format && <span className={styles.resultFormat}>{item.format.toUpperCase()}</span>}
-                  {item.fileFormat && item.fileFormat !== item.format && <span className={styles.resultFormat}>{item.fileFormat.toUpperCase()}</span>}
+                  {item.type === 'folder' ? (
+                    <span className={styles.folderBadge}>FOLDER</span>
+                  ) : (
+                    <>
+                      {item.format && <span className={styles.resultFormat}>{item.format.toUpperCase()}</span>}
+                      {item.fileFormat && item.fileFormat !== item.format && <span className={styles.resultFormat}>{item.fileFormat.toUpperCase()}</span>}
+                    </>
+                  )}
                   {item.category && (
                     <>
                       <span className={styles.dot}>•</span>
-                      <span className={styles.folder}>{item.category.toUpperCase()}</span>
+                      <span className={styles.categoryName}>{item.category.toUpperCase()}</span>
                     </>
                   )}
-                  <span className={styles.dot}>•</span>
                 </div>
               </div>
               <div className={styles.resultActions}>

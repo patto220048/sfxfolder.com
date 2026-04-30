@@ -168,6 +168,16 @@
   opacity: 0.8;
 }
 
+.folderBadge {
+  background: rgba(250, 203, 17, 0.1);
+  color: var(--premium-gold);
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-weight: 700;
+  font-size: 0.6rem;
+  letter-spacing: 0.5px;
+}
+
 .action {
   opacity: 0.6;
 }

@@ -1,7 +1,7 @@
 import { supabase } from "./supabase";
 import Fuse from "fuse.js";
 
-const CACHE_KEY = "dam_search_index_v2";
+const CACHE_KEY = "dam_search_index_v5";
 const CACHE_TIME_KEY = "dam_search_index_time";
 const CACHE_TTL_MS = 1000 * 60 * 60; // 1 hour
 
@@ -45,16 +45,22 @@ export async function getOrBuildSearchIndex(forceRebuild = false) {
       }, {});
 
       // 2. Fetch resources
-      const { data: allResources, error } = await supabase
+      const { data: allResources, error: resError } = await supabase
         .from('resources')
         .select('id, name, description, category_id, folder_id, file_format, tags, slug, download_url, preview_url, thumbnail_url, file_size, download_count')
         .eq('is_published', true);
       
-      if (error) throw error;
+      // 3. Fetch folders
+      const { data: allFolders, error: folderError } = await supabase
+        .from('folders')
+        .select('id, name, parent_id, category_id, categories(slug)');
+      
+      if (folderError) throw folderError;
 
-      // Transform snake_case to camelCase for Fuse.js
-      const transformed = allResources.map(res => ({
+      // Transform resources
+      const transformedResources = allResources.map(res => ({
         id: res.id,
+        type: 'resource',
         name: res.name || "",
         description: res.description || "",
         category: catMap[res.category_id] || res.category_id || "",
@@ -70,16 +76,34 @@ export async function getOrBuildSearchIndex(forceRebuild = false) {
         downloadCount: res.download_count || 0
       }));
 
+      // Transform folders
+      const transformedFolders = (allFolders || []).map(f => {
+        const catSlug = f.categories?.slug || f.category_id || "";
+        return {
+          id: f.id,
+          type: 'folder',
+          name: f.name || "",
+          category: catMap[catSlug] || catSlug || "",
+          categorySlug: catSlug,
+          parentId: f.parent_id || null,
+          slug: f.id, // Use ID as slug for folders if they don't have one
+          tags: ['folder'],
+          fileFormat: "", // Folders have no format, match empty format filter
+          description: `Folder in ${catMap[catSlug] || catSlug}`
+        };
+      });
+
+      const combined = [...transformedResources, ...transformedFolders];
+
       // Save to sessionStorage
       try {
-        sessionStorage.setItem(CACHE_KEY, JSON.stringify(transformed));
+        sessionStorage.setItem(CACHE_KEY, JSON.stringify(combined));
         sessionStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
       } catch (e) {
-        // QuotaExceededError is possible but unlikely with < 5000 items
         console.warn("Could not save search index to sessionStorage", e);
       }
 
-      fuseInstance = createFuseInstance(transformed);
+      fuseInstance = createFuseInstance(combined);
       return fuseInstance;
     } catch (e) {
       console.error("Error building search index:", e);
@@ -101,8 +125,8 @@ function createFuseInstance(dataList) {
       { name: "description", weight: 0.4 },
     ],
     includeScore: true,
-    includeMatches: true, // For highlighting
-    threshold: 0.6, // 0.0 is perfect match, 1.0 is match anything
+    includeMatches: true,
+    threshold: 0.4, // Tightened slightly for better accuracy
     ignoreLocation: true,
     useExtendedSearch: true
   });
@@ -137,7 +161,8 @@ export async function searchResourcesClient(term, options = {}) {
   // Apply filters if present
   if (options.category || options.format) {
     results = results.filter(item => {
-      const catMatch = !options.category || item.category === options.category;
+      // Use categorySlug for reliable matching with the slug passed from UI
+      const catMatch = !options.category || item.categorySlug === options.category;
       const fmtMatch = !options.format || item.fileFormat === options.format;
       return catMatch && fmtMatch;
     });
