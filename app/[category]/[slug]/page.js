@@ -1,4 +1,4 @@
-import { getResources, getResourceBySlug, REVALIDATE_TIME, mapResource } from "@/app/lib/api";
+import { getResources, getResourceBySlug, getRelatedResources, REVALIDATE_TIME, mapResource } from "@/app/lib/api";
 import { supabase } from "@/app/lib/supabase";
 import { unstable_cache } from "next/cache";
 import ResourceDetail from "./ResourceDetail";
@@ -33,14 +33,10 @@ const getCachedResource = unstable_cache(
 );
 
 /**
- * Fetch related resources from the same category (excluding current).
+ * Fetch related resources using Vector Similarity.
  */
-async function getRelatedResources(categorySlug, currentId) {
-  const all = await getResources({
-    categorySlug,
-    limit: 9,
-  });
-  return all.filter((r) => r.id !== currentId).slice(0, 6);
+async function getRecommendedResources(resourceId) {
+  return await getRelatedResources(resourceId, 6);
 }
 
 /**
@@ -138,7 +134,7 @@ export default async function ResourcePage({ params }) {
     );
   }
 
-  const related = await getRelatedResources(category, resource.id);
+  const related = await getRecommendedResources(resource.id);
   const categoryName = resource.category?.name || category.replace(/-/g, " ");
   const categoryColor = resource.category?.color || "#FFFFFF";
 

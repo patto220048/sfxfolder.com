@@ -131,6 +131,48 @@ export async function getResourceBySlug(slug) {
 }
 
 /**
+ * Get related resources based on vector similarity.
+ */
+export async function getRelatedResources(resourceId, limit = 5) {
+  if (!resourceId) return [];
+
+  try {
+    // 1. Get the embedding of the current resource
+    const { data: current, error: fetchError } = await supabase
+      .from('resources')
+      .select('embedding')
+      .eq('id', resourceId)
+      .single();
+
+    if (fetchError || !current?.embedding) {
+      console.warn("Could not fetch embedding for related resources:", fetchError);
+      return [];
+    }
+
+    // 2. Call the RPC to match similar resources
+    const { data, error } = await supabase.rpc('match_resources', {
+      query_embedding: current.embedding,
+      match_threshold: 0.5, // Adjust threshold as needed
+      match_count: limit,
+      p_exclude_id: resourceId
+    });
+
+    if (error) {
+      console.error('Error fetching related resources:', error);
+      return [];
+    }
+
+    return (data || []).map(item => mapResource({
+      ...item,
+      categories: { name: item.category_name, slug: item.category_slug }
+    }));
+  } catch (err) {
+    console.error('getRelatedResources failed:', err);
+    return [];
+  }
+}
+
+/**
  * Get resources with pagination, search and filtering.
  */
 export async function getResources({ 
@@ -232,7 +274,21 @@ export async function getResources({
       console.error("Error fetching resources:", error);
       return [];
     }
-    return (data || []).map(mapResource);
+
+    // Map data to match the expected format
+    const mappedData = (data || []).map(item => {
+      if (isRPC) {
+        // Remap flat RPC fields to the structure expected by mapResource/UI
+        return mapResource({
+          ...item,
+          categories: { name: item.category_name, slug: item.category_slug },
+          folders: item.folder_name ? { name: item.folder_name } : null
+        });
+      }
+      return mapResource(item);
+    });
+
+    return mappedData;
   };
 
   if (isServer && REVALIDATE_TIME !== false) {

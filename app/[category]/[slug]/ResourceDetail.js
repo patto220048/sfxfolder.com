@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -14,6 +14,7 @@ import {
   Pause,
   Music,
 } from "lucide-react";
+import { mediaManager } from "@/app/lib/mediaManager";
 import DownloadButton from "@/app/components/ui/DownloadButton";
 import ResourceCard from "@/app/components/ui/ResourceCard";
 import SoundButton from "@/app/components/ui/SoundButton";
@@ -83,6 +84,7 @@ export default function ResourceDetail({
       audio.addEventListener("ended", () => {
         setIsPlaying(false);
         setCurrentTime(0);
+        mediaManager.stop(audio);
       });
     }
     const audio = audioRef.current;
@@ -90,7 +92,14 @@ export default function ResourceDetail({
       audio.pause();
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       setIsPlaying(false);
+      mediaManager.stop(audio);
     } else {
+      // Register with global media manager
+      mediaManager.play(audio, 'audio', () => {
+        setIsPlaying(false);
+        if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      }, resource.id);
+
       audio.play().catch(() => {});
       const tick = () => {
         setCurrentTime(audio.currentTime);
@@ -99,7 +108,27 @@ export default function ResourceDetail({
       rafRef.current = requestAnimationFrame(tick);
       setIsPlaying(true);
     }
-  }, [resolvedUrl, isPlaying]);
+  }, [resolvedUrl, isPlaying, resource.id]);
+
+  // Sync with global volume settings
+  useEffect(() => {
+    const unsubscribe = mediaManager.subscribe((settings) => {
+      if (audioRef.current) {
+        audioRef.current.volume = settings.audio.volume;
+        audioRef.current.muted = settings.audio.muted;
+      }
+      if (videoRef.current) {
+        videoRef.current.volume = settings.video.volume;
+        videoRef.current.muted = settings.video.muted;
+      }
+    });
+    
+    // Initial apply
+    if (audioRef.current) mediaManager.applySettings(audioRef.current, 'audio');
+    if (videoRef.current) mediaManager.applySettings(videoRef.current, 'video');
+
+    return unsubscribe;
+  }, []);
 
   const seekAudio = useCallback((e) => {
     const audio = audioRef.current;
@@ -114,15 +143,25 @@ export default function ResourceDetail({
   const toggleVideo = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
-    if (!videoStarted) setVideoStarted(true);
+    if (!videoStarted) {
+      setVideoStarted(true);
+      // Ensure settings are applied on first start
+      mediaManager.applySettings(video, 'video');
+    }
     if (video.paused) {
+      // Register with global media manager
+      mediaManager.play(video, 'video', () => {
+        setIsPlaying(false);
+      }, resource.id);
+
       video.play().catch(() => {});
       setIsPlaying(true);
     } else {
       video.pause();
       setIsPlaying(false);
+      mediaManager.stop(video);
     }
-  }, [videoStarted]);
+  }, [videoStarted, resource.id]);
 
   // Determine layout type for related cards
   const categoryLayout = isAudio
@@ -374,13 +413,18 @@ export default function ResourceDetail({
             {related.map((res, idx) => {
               if (categoryLayout === "sound") {
                 return (
-                  <SoundButton
+                  <Link
                     key={res.id}
-                    {...res}
-                    downloadUrl={res.downloadUrl || res.fileUrl}
-                    index={idx}
-                    primaryColor={categoryColor}
-                  />
+                    href={`/${categorySlug}/${res.slug}`}
+                    className={styles.relatedCardLink}
+                  >
+                    <SoundButton
+                      {...res}
+                      downloadUrl={res.downloadUrl || res.fileUrl}
+                      index={idx}
+                      primaryColor={categoryColor}
+                    />
+                  </Link>
                 );
               }
               return (
