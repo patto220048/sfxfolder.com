@@ -132,15 +132,16 @@ export async function getResourceBySlug(slug) {
 
 /**
  * Get related resources based on vector similarity.
+ * Returns resources with a 'similarity' score for UI display.
  */
-export async function getRelatedResources(resourceId, limit = 5) {
+export async function getRelatedResources(resourceId, limit = 6) {
   if (!resourceId) return [];
 
   try {
-    // 1. Get the embedding of the current resource
+    // 1. Get the embedding and category of the current resource
     const { data: current, error: fetchError } = await supabase
       .from('resources')
-      .select('embedding')
+      .select('embedding, category_id')
       .eq('id', resourceId)
       .single();
 
@@ -152,8 +153,8 @@ export async function getRelatedResources(resourceId, limit = 5) {
     // 2. Call the RPC to match similar resources
     const { data, error } = await supabase.rpc('match_resources', {
       query_embedding: current.embedding,
-      match_threshold: 0.5, // Adjust threshold as needed
-      match_count: limit,
+      match_threshold: 0.3, // Lowered threshold to ensure we get results
+      match_count: limit * 2, // Fetch more to allow for re-sorting
       p_exclude_id: resourceId
     });
 
@@ -162,10 +163,27 @@ export async function getRelatedResources(resourceId, limit = 5) {
       return [];
     }
 
-    return (data || []).map(item => mapResource({
-      ...item,
-      categories: { name: item.category_name, slug: item.category_slug }
-    }));
+    // 3. Post-process: Boost same-category results and map
+    const results = (data || []).map(item => {
+      let finalSimilarity = item.similarity;
+      // Small boost for same category to improve relevance
+      if (item.category_id === current.category_id) {
+        finalSimilarity += 0.05;
+      }
+
+      return {
+        ...mapResource({
+          ...item,
+          categories: { name: item.category_name, slug: item.category_slug }
+        }),
+        similarity: Math.min(0.99, finalSimilarity) // Cap at 99% for realism
+      };
+    });
+
+    // Sort by adjusted similarity and limit
+    return results
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, limit);
   } catch (err) {
     console.error('getRelatedResources failed:', err);
     return [];

@@ -42,6 +42,7 @@ export default function SoundButton({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [isScrubbing, setIsScrubbing] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
   
   const { user, isPremium: userIsPremium, isAdmin } = useAuth();
   const router = useRouter();
@@ -182,12 +183,17 @@ export default function SoundButton({
   }, []);
 
   const handleMouseEnter = useCallback(() => {
+    setIsHovered(true);
     const audio = initAudio();
     if (audio && audio.readyState < 2 && audio.paused) {
       audio.preload = "auto";
       audio.load();
     }
   }, [initAudio]);
+
+  const handleMouseLeave = useCallback(() => {
+    setIsHovered(false);
+  }, []);
 
   const togglePlay = useCallback(() => {
     const canPlay = isAudioFormat(resourceObj);
@@ -364,6 +370,7 @@ export default function SoundButton({
       style={{ "--stagger-index": index }}
       id={`sound-${id}`}
       onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
     >
       {/* Play button */}
       <button
@@ -396,7 +403,16 @@ export default function SoundButton({
       </div>
 
       {/* Info */}
-      <div className={styles.info}>
+      <div 
+        className={styles.info} 
+        onClick={(e) => {
+          if (onPreview) {
+            e.stopPropagation();
+            onPreview(resourceObj);
+          }
+        }}
+        style={{ cursor: onPreview ? 'pointer' : 'default' }}
+      >
         <span className={styles.name} title={name} style={{ color: isPlaying ? primaryColor : 'inherit' }}>{displayName}</span>
         <div className={styles.meta}>
           {fileFormat && <span className={styles.format}>{fileFormat}</span>}
@@ -416,11 +432,11 @@ export default function SoundButton({
 
         {/* Stable Progress bar structure */}
         <div 
-          className={`${styles.progressWrapper} ${(isPlaying || currentTime > 0 || isScrubbing) ? styles.timeVisible : ""}`} 
+          className={`${styles.progressWrapper} ${(isPlaying || currentTime > 0 || isScrubbing || isHovered) ? styles.timeVisible : ""}`} 
           onMouseDown={handleMouseDown}
           style={{ 
-            opacity: (isPlaying || currentTime > 0 || isScrubbing) ? 1 : 0, 
-            visibility: (isPlaying || currentTime > 0 || isScrubbing) ? 'visible' : 'hidden',
+            opacity: (isPlaying || currentTime > 0 || isScrubbing || isHovered) ? 1 : 0, 
+            visibility: (isPlaying || currentTime > 0 || isScrubbing || isHovered) ? 'visible' : 'hidden',
             height: isScrubbing ? '6px' : undefined
           }}
         >

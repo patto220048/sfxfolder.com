@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -13,6 +14,7 @@ import {
   Play,
   Pause,
   Music,
+  Sparkles,
 } from "lucide-react";
 import { mediaManager } from "@/app/lib/mediaManager";
 import DownloadButton from "@/app/components/ui/DownloadButton";
@@ -57,6 +59,7 @@ export default function ResourceDetail({
   categoryName,
   categoryColor,
 }) {
+  const router = useRouter();
   const displayName = (resource.name || "Untitled").replace(/\.[^/.]+$/, "");
   const isVideo = isVideoFormat(resource);
   const isImage = isImageFormat(resource);
@@ -69,14 +72,16 @@ export default function ResourceDetail({
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [videoStarted, setVideoStarted] = useState(false);
+  const [isScrubbing, setIsScrubbing] = useState(false);
 
   const audioRef = useRef(null);
   const videoRef = useRef(null);
   const rafRef = useRef(null);
+  const wasPlayingRef = useRef(false);
 
-  // --- Audio inline player ---
-  const toggleAudio = useCallback(() => {
-    if (!resolvedUrl) return;
+  // Helper to initialize audio on demand
+  const initAudio = useCallback(() => {
+    if (!resolvedUrl) return null;
     if (!audioRef.current) {
       const audio = new Audio(resolvedUrl);
       audioRef.current = audio;
@@ -86,8 +91,17 @@ export default function ResourceDetail({
         setCurrentTime(0);
         mediaManager.stop(audio);
       });
+      // Initial apply volume settings
+      mediaManager.applySettings(audio, 'audio');
     }
-    const audio = audioRef.current;
+    return audioRef.current;
+  }, [resolvedUrl]);
+
+  // --- Audio inline player ---
+  const toggleAudio = useCallback(() => {
+    const audio = initAudio();
+    if (!audio) return;
+
     if (isPlaying) {
       audio.pause();
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -108,7 +122,87 @@ export default function ResourceDetail({
       rafRef.current = requestAnimationFrame(tick);
       setIsPlaying(true);
     }
-  }, [resolvedUrl, isPlaying, resource.id]);
+  }, [initAudio, isPlaying, resource.id]);
+
+  // --- Unified Seeking Logic ---
+  const seek = useCallback((clientX, container) => {
+    const media = isAudio ? audioRef.current : videoRef.current;
+    if (!media) return;
+
+    const rect = container.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    
+    const targetDuration = media.duration || duration;
+    if (targetDuration && !isNaN(targetDuration)) {
+      const newTime = ratio * targetDuration;
+      media.currentTime = newTime;
+      setCurrentTime(newTime);
+    } else if (isAudio) {
+      // If audio duration not loaded yet, wait for metadata
+      media.addEventListener('loadedmetadata', () => {
+        const newTime = ratio * media.duration;
+        media.currentTime = newTime;
+        setCurrentTime(newTime);
+        setDuration(media.duration);
+      }, { once: true });
+      media.load();
+    }
+  }, [isAudio, duration]);
+
+  const handleMouseDown = useCallback((e) => {
+    e.stopPropagation();
+    const media = isAudio ? initAudio() : videoRef.current;
+    if (!media) return;
+
+    // YouTube style: Pause while scrubbing, remember if it was playing
+    wasPlayingRef.current = !media.paused;
+    
+    if (!media.paused) {
+      media.pause();
+      setIsPlaying(false);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    }
+
+    setIsScrubbing(true);
+    seek(e.clientX, e.currentTarget);
+  }, [isAudio, initAudio, seek]);
+
+  useEffect(() => {
+    if (!isScrubbing) return;
+
+    const handleMouseMove = (e) => {
+      // Find the progress bar container
+      const container = isAudio 
+        ? document.querySelector(`.${styles.audioProgressBar}`)
+        : document.querySelector(`.${styles.videoProgressWrapper}`);
+      if (container) seek(e.clientX, container);
+    };
+
+    const handleMouseUp = (e) => {
+      setIsScrubbing(false);
+      const media = isAudio ? audioRef.current : videoRef.current;
+      if (!media) return;
+
+      // Resume if it was playing before
+      if (wasPlayingRef.current) {
+        media.play().catch(() => {});
+        setIsPlaying(true);
+        
+        const tick = () => {
+          setCurrentTime(media.currentTime);
+          rafRef.current = requestAnimationFrame(tick);
+        };
+        rafRef.current = requestAnimationFrame(tick);
+      }
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [isScrubbing, isAudio, seek]);
 
   // Sync with global volume settings
   useEffect(() => {
@@ -130,15 +224,6 @@ export default function ResourceDetail({
     return unsubscribe;
   }, []);
 
-  const seekAudio = useCallback((e) => {
-    const audio = audioRef.current;
-    if (!audio || !duration) return;
-    const rect = e.currentTarget.getBoundingClientRect();
-    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-    audio.currentTime = ratio * duration;
-    setCurrentTime(audio.currentTime);
-  }, [duration]);
-
   // --- Video inline player ---
   const toggleVideo = useCallback(() => {
     const video = videoRef.current;
@@ -152,13 +237,21 @@ export default function ResourceDetail({
       // Register with global media manager
       mediaManager.play(video, 'video', () => {
         setIsPlaying(false);
+        if (rafRef.current) cancelAnimationFrame(rafRef.current);
       }, resource.id);
 
       video.play().catch(() => {});
       setIsPlaying(true);
+
+      const tick = () => {
+        setCurrentTime(video.currentTime);
+        rafRef.current = requestAnimationFrame(tick);
+      };
+      rafRef.current = requestAnimationFrame(tick);
     } else {
       video.pause();
       setIsPlaying(false);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
       mediaManager.stop(video);
     }
   }, [videoStarted, resource.id]);
@@ -174,7 +267,7 @@ export default function ResourceDetail({
     ? "font"
     : "video";
 
-  const audioProgress = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   return (
     <div className={styles.page} style={{ "--cat-color": categoryColor }}>
@@ -230,7 +323,11 @@ export default function ResourceDetail({
                 playsInline
                 preload="metadata"
                 style={{ display: videoStarted || !resource.thumbnailUrl ? "block" : "none" }}
-                onEnded={() => setIsPlaying(false)}
+                onLoadedMetadata={(e) => setDuration(e.target.duration)}
+                onEnded={() => {
+                  setIsPlaying(false);
+                  if (rafRef.current) cancelAnimationFrame(rafRef.current);
+                }}
               />
               <div className={`${styles.playOverlay} ${isPlaying ? styles.playOverlayHidden : ""}`}>
                 {isPlaying ? <Pause size={48} /> : <Play size={48} />}
@@ -238,6 +335,22 @@ export default function ResourceDetail({
               <div className={styles.formatBadge}>
                 {resource.fileFormat?.toUpperCase()}
               </div>
+
+              {/* Video Progress Bar */}
+              {(videoStarted || !resource.thumbnailUrl) && (
+                <div 
+                  className={styles.videoProgressWrapper}
+                  onMouseDown={handleMouseDown}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <div className={styles.videoProgressTrack}>
+                    <div 
+                      className={styles.videoProgressFill} 
+                      style={{ width: `${progress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -280,10 +393,10 @@ export default function ResourceDetail({
                   )}
                 </div>
                 {/* Progress bar */}
-                <div className={styles.audioProgressBar} onClick={seekAudio}>
+                <div className={styles.audioProgressBar} onMouseDown={handleMouseDown}>
                   <div
                     className={styles.audioProgressFill}
-                    style={{ width: `${audioProgress}%`, backgroundColor: categoryColor }}
+                    style={{ width: `${progress}%`, backgroundColor: categoryColor }}
                   />
                 </div>
               </div>
@@ -413,34 +526,38 @@ export default function ResourceDetail({
             {related.map((res, idx) => {
               if (categoryLayout === "sound") {
                 return (
-                  <Link
-                    key={res.id}
-                    href={`/${categorySlug}/${res.slug}`}
-                    className={styles.relatedCardLink}
-                  >
+                  <div key={res.id} className={styles.relatedItemSound}>
                     <SoundButton
                       {...res}
                       downloadUrl={res.downloadUrl || res.fileUrl}
                       index={idx}
                       primaryColor={categoryColor}
+                      onPreview={() => router.push(`/${categorySlug}/${res.slug}`)}
                     />
-                  </Link>
+                    {res.similarity && (
+                      <div className={styles.soundMatchLabel}>
+                        {Math.round(res.similarity * 100)}% MATCH
+                      </div>
+                    )}
+                  </div>
                 );
               }
               return (
-                <Link
-                  key={res.id}
-                  href={`/${categorySlug}/${res.slug}`}
-                  className={styles.relatedCardLink}
-                >
+                <div key={res.id} className={styles.relatedCardWrapper}>
+                  {res.similarity && (
+                    <div className={styles.matchScore}>
+                      <Sparkles size={10} />
+                      {Math.round(res.similarity * 100)}% MATCH
+                    </div>
+                  )}
                   <ResourceCard
                     {...res}
-                    downloadUrl={res.downloadUrl || res.fileUrl}
-                    cardType={categoryLayout}
-                    index={idx}
+                    categorySlug={categorySlug}
                     primaryColor={categoryColor}
+                    detailUrl={`/${categorySlug}/${res.slug}`}
+                    onPreview={() => router.push(`/${categorySlug}/${res.slug}`)}
                   />
-                </Link>
+                </div>
               );
             })}
           </div>
