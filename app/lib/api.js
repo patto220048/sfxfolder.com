@@ -153,64 +153,71 @@ export async function getResources({
   const isServer = typeof window === 'undefined';
 
   const fetchLogic = async () => {
-    let query = supabase
-      .from("resources")
-      .select(RESOURCE_SUMMARY_COLUMNS, { count: "exact" });
+    let query;
+    let isRPC = false;
 
-    // Handle sorting
-    if (sortOrder === "oldest") {
-      query = query.order("created_at", { ascending: true });
-    } else if (sortOrder === "az") {
-      query = query.order("name", { ascending: true });
-    } else if (sortOrder === "za") {
-      query = query.order("name", { ascending: false });
+    if (searchTerm) {
+      isRPC = true;
+      query = supabase.rpc('search_resources_fuzzy', {
+        p_search_term: searchTerm,
+        p_category_id: categorySlug,
+        p_folder_id: folderId,
+        p_limit: limit,
+        p_offset: offset
+      });
     } else {
-      // Default: newest
-      query = query.order("created_at", { ascending: false });
-    }
+      query = supabase
+        .from("resources")
+        .select(RESOURCE_SUMMARY_COLUMNS, { count: "exact" });
 
-    query = query.range(offset, offset + limit - 1);
+      // Handle sorting only for non-RPC (RPC has its own order)
+      if (sortOrder === "oldest") {
+        query = query.order("created_at", { ascending: true });
+      } else if (sortOrder === "az") {
+        query = query.order("name", { ascending: true });
+      } else if (sortOrder === "za") {
+        query = query.order("name", { ascending: false });
+      } else {
+        query = query.order("created_at", { ascending: false });
+      }
+
+      query = query.range(offset, offset + limit - 1);
+
+      if (!isAdmin) {
+        query = query.eq("is_published", true);
+      }
+      
+      if (categorySlug) {
+        query = query.eq("category_id", categorySlug);
+      }
+      
+      if (folderId !== undefined) {
+        const isGlobalAction = (selectedTags && selectedTags.length > 0) || (selectedFormats && selectedFormats.length > 0);
+        if (folderId !== null || !isGlobalAction) {
+          if (folderId === null) {
+            query = query.is("folder_id", null);
+          } else {
+            query = query.eq("folder_id", folderId);
+          }
+        }
+      }
+    }
 
     if (abortSignal) {
       query = query.abortSignal(abortSignal);
     }
 
-    if (!isAdmin) {
-      query = query.eq("is_published", true);
-    }
-    
-    if (categorySlug) {
-      query = query.eq("category_id", categorySlug);
-    }
-    if (folderId !== undefined) {
-      // If we are at the root (folderId === null), we only filter by null folder
-      // if there's no active global action (search, tags, or format filters).
-      // This allows search to remain global within the category.
-      const isGlobalAction = searchTerm || (selectedTags && selectedTags.length > 0) || (selectedFormats && selectedFormats.length > 0);
-      
-      if (folderId !== null || !isGlobalAction) {
-        if (folderId === null) {
-          query = query.is("folder_id", null);
-        } else {
-          query = query.eq("folder_id", folderId);
-        }
+    // Apply tags/formats filters only if not using RPC (RPC handles basic search)
+    if (!isRPC) {
+      if (selectedTags && selectedTags.length > 0) {
+        query = query.contains("tags", selectedTags);
+      }
+      if (selectedFormats && selectedFormats.length > 0) {
+        query = query.in("file_format", selectedFormats);
       }
     }
 
-    if (searchTerm) {
-      query = query.or(`name.ilike.%${searchTerm}%,tags.cs.{${searchTerm}}`);
-    }
-
-    if (selectedTags && selectedTags.length > 0) {
-      query = query.contains("tags", selectedTags);
-    }
-
-    if (selectedFormats && selectedFormats.length > 0) {
-      query = query.in("file_format", selectedFormats);
-    }
-
     const { data, error } = await query;
-
     if (error) {
       // Silently handle manual cancellations (AbortError)
       if (error.code === 'ABORT' || error.name === 'AbortError' || error.message?.includes('AbortError')) {
