@@ -249,12 +249,23 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
       const controller = new AbortController();
       abortControllerRef.current = controller;
 
+      // When filtering (tags/search), we search the whole subtree of the current folder
+      const isFiltering = inPageSearch || selectedFormats.length > 0 || selectedTags.length > 0 || resSlug;
+      let folderIdToPass = selectedFolderId;
+      
+      if (isFiltering && selectedFolderId) {
+        const node = findInTree(folders, selectedFolderId)?.current;
+        if (node) {
+          folderIdToPass = getDescendantIds(node);
+        }
+      }
+
       try {
         const fresh = await getResources({
           categorySlug: slug,
           selectedTags: selectedTags,
           selectedFormats: selectedFormats,
-          folderId: selectedFolderId,
+          folderId: folderIdToPass,
           searchTerm: inPageSearch,
           offset: 0,
           limit: PAGE_SIZE_BATCH,
@@ -410,12 +421,22 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
     // 2. If we are near the end of the local pool AND the server might have more
     if (hasMoreDB) {
       setIsFetchLoading(true);
+
+      const isFiltering = inPageSearch || selectedFormats.length > 0 || selectedTags.length > 0 || resSlug;
+      let folderIdToPass = selectedFolderId;
+      if (isFiltering && selectedFolderId) {
+        const node = findInTree(folders, selectedFolderId)?.current;
+        if (node) {
+          folderIdToPass = getDescendantIds(node);
+        }
+      }
+
       try {
         const nextBatch = await getResources({ 
           categorySlug: slug, 
           selectedTags: selectedTags,
           selectedFormats: selectedFormats,
-          folderId: selectedFolderId,
+          folderId: folderIdToPass,
           searchTerm: inPageSearch, // Important for infinite scroll in search results
           offset: serverOffset, 
           limit: PAGE_SIZE_BATCH 

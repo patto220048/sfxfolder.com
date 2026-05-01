@@ -256,6 +256,8 @@ export async function getResources({
         if (folderId !== null || !isGlobalAction) {
           if (folderId === null) {
             query = query.is("folder_id", null);
+          } else if (Array.isArray(folderId)) {
+            query = query.in("folder_id", folderId);
           } else {
             query = query.eq("folder_id", folderId);
           }

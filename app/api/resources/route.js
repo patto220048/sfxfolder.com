@@ -7,7 +7,13 @@ export async function GET(request) {
     
     // Extract parameters from URL
     const categorySlug = searchParams.get("categorySlug");
-    const folderId = searchParams.get("folderId") === "null" ? null : searchParams.get("folderId");
+    const rawFolderId = searchParams.get("folderId");
+    let folderId = rawFolderId;
+    if (rawFolderId === "null") {
+      folderId = null;
+    } else if (rawFolderId && rawFolderId.includes(",")) {
+      folderId = rawFolderId.split(",");
+    }
     const offset = parseInt(searchParams.get("offset") || "0");
     const limit = parseInt(searchParams.get("limit") || "20");
     const selectedTags = searchParams.get("tags") ? searchParams.get("tags").split(",") : [];
