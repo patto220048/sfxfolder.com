@@ -235,15 +235,18 @@
   gap: var(--space-2);
 }
 
-.format {
+.similarityBadge {
   font-family: var(--font-mono);
   font-size: 0.65rem;
-  text-transform: uppercase;
-  color: var(--text-muted);
-  padding: 1px 6px;
-  border-radius: var(--radius-sm);
-  background: var(--bg-surface);
-  border: 1px solid var(--border-default);
+  font-weight: 800;
+  color: var(--cat-color);
+  background: rgba(var(--text-primary-rgb), 0.05);
+  padding: 4px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+  letter-spacing: 0.5px;
+  margin-left: auto;
+  border: 1px solid rgba(var(--cat-color-rgb, 255, 255, 255), 0.2);
 }
 
 .size {

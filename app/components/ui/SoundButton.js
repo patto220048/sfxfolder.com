@@ -35,6 +35,7 @@ export default function SoundButton({
   onPreview,
   primaryColor = "#FFFFFF",
   isPremium,
+  similarity,
   ...otherProps
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -367,7 +368,7 @@ export default function SoundButton({
   return (
     <div
       className={`${styles.item} ${isPlaying ? styles.playing : ""}`}
-      style={{ "--stagger-index": index }}
+      style={{ "--stagger-index": index, "--cat-color": primaryColor }}
       id={`sound-${id}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -448,6 +449,12 @@ export default function SoundButton({
           </div>
         </div>
       </div>
+
+      {similarity && (
+        <div className={styles.similarityBadge}>
+          {Math.round(similarity * 100)}% MATCH
+        </div>
+      )}
 
       {/* Detail Page Link */}
       {onPreview && (

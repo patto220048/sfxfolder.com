@@ -526,26 +526,22 @@ export default function ResourceDetail({
             {related.map((res, idx) => {
               if (categoryLayout === "sound") {
                 return (
-                  <div key={res.id} className={styles.relatedItemSound}>
+                  <div key={res.id} className={styles.soundItemWrapper}>
                     <SoundButton
                       {...res}
                       downloadUrl={res.downloadUrl || res.fileUrl}
                       index={idx}
                       primaryColor={categoryColor}
+                      similarity={res.similarity}
                       onPreview={() => router.push(`/${categorySlug}/${res.slug}`)}
                     />
-                    {res.similarity && (
-                      <div className={styles.soundMatchLabel}>
-                        {Math.round(res.similarity * 100)}% MATCH
-                      </div>
-                    )}
                   </div>
                 );
               }
               return (
                 <div key={res.id} className={styles.relatedCardWrapper}>
                   {res.similarity && (
-                    <div className={styles.matchScore}>
+                    <div className={styles.matchScore} style={{ color: categoryColor, borderColor: `${categoryColor}33` }}>
                       <Sparkles size={10} />
                       {Math.round(res.similarity * 100)}% MATCH
                     </div>
