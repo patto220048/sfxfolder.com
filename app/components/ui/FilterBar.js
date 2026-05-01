@@ -97,24 +97,6 @@ export default function FilterBar({
           </div>
 
           <div className={styles.chipGroup}>
-            <button
-              className={`${styles.chip} ${
-                selectedFormats.length === 0 && selectedTags.length === 0 && !resSlug
-                  ? styles.activeChip
-                  : ""
-              }`}
-              onClick={() => {
-                onFormatsChange([]);
-                onTagsChange([]);
-                onClearRes?.();
-              }}
-              style={{
-                "--active-color": primaryColor,
-              }}
-            >
-              All
-            </button>
-
             {resSlug && (
               <button
                 className={`${styles.chip} ${styles.activeChip}`}
