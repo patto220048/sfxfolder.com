@@ -187,6 +187,9 @@ export default function ContextSearch() {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     
     debounceRef.current = setTimeout(async () => {
+      // Sync with background grid
+      window.dispatchEvent(new CustomEvent("local-search", { detail: query }));
+      
       try {
         let found = await searchResourcesClient(query, {
           category: filters.category,

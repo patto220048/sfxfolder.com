@@ -225,9 +225,6 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
     }
 
     // --- Data Refresh Logic ---
-    // Instead of clearing to [] and causing a jumpy flicker, 
-    // we use isFetchLoading to trigger a smooth Blur/Dim animation 
-    // while the new data is pending.
     setIsFetchLoading(true);
 
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
@@ -243,13 +240,13 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
           selectedTags: selectedTags,
           selectedFormats: selectedFormats,
           folderId: selectedFolderId,
+          searchTerm: inPageSearch, // Pass search to server
           offset: 0,
           limit: PAGE_SIZE_BATCH,
           abortSignal: controller.signal
         });
 
         if (!controller.signal.aborted) {
-          // Clear items right before setting new ones for a crisp replacement
           setAllLoadedResources(fresh);
           setServerOffset(fresh.length);
           setHasMoreDB(fresh.length === PAGE_SIZE_BATCH);
@@ -262,10 +259,11 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
       }
     };
 
-    debounceTimerRef.current = setTimeout(refreshData, 300);
+    // Debounce search more aggressively than other filters
+    const delay = inPageSearch ? 500 : 300;
+    debounceTimerRef.current = setTimeout(refreshData, delay);
 
     // --- Folder Tags Fetching ---
-    // If we are in a folder, fetch tags for this folder and its descendants
     if (selectedFolderId) {
       const node = findInTree(folders, selectedFolderId)?.current;
       if (node) {
@@ -283,7 +281,7 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
     return () => {
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     };
-  }, [selectedFolderId, selectedFormats, selectedTags, slug, isInitialized, sortBy]);
+  }, [selectedFolderId, selectedFormats, selectedTags, inPageSearch, slug, isInitialized, sortBy]);
 
   // Synchronize internal state with server-provided initialResources ONLY when category changes
   useEffect(() => {
@@ -293,7 +291,7 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
     setVisibleCount(PAGE_SIZE_DISPLAY);
   }, [slug]);
 
-  // --- Core Filtering ---
+  // --- Core Filtering (Now mostly sorting since search/tags are server-side) ---
   const filteredResources = useMemo(() => {
     let results = [...allLoadedResources];
 
@@ -302,19 +300,8 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
       if (target) return [target];
     }
 
-    // Filter by folderId locally if not searching or filtering tags/formats
-    const isGlobalAction = resSlug || inPageSearch || selectedFormats.length > 0 || selectedTags.length > 0;
-    if (!isGlobalAction) {
-      results = results.filter(r => r.folderId === selectedFolderId);
-    }
-
-    if (inPageSearch) {
-      const q = inPageSearch.toLowerCase();
-      results = results.filter(r => 
-        r.name?.toLowerCase().includes(q) || 
-        r.tags?.some(t => t.toLowerCase().includes(q))
-      );
-    }
+    // Note: Search, Tags, and Formats are now filtered at the Server level via getResources.
+    // allLoadedResources already contains the matching set.
 
     switch (sortBy) {
       case "popular":
@@ -324,12 +311,11 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
         results.sort((a, b) => (a.name || "").localeCompare(b.name || ""));
         break;
       default:
-        // Default to newest if the server results are already ordered, 
-        // or add explicit sort if needed.
+        // Newest is handled by server sort order
         break;
     }
     return results;
-  }, [allLoadedResources, sortBy, inPageSearch, resSlug]);
+  }, [allLoadedResources, sortBy, resSlug]);
 
   // Extract unique tags from loaded resources for FilterBar
   const availableTags = useMemo(() => {
@@ -406,6 +392,7 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
           selectedTags: selectedTags,
           selectedFormats: selectedFormats,
           folderId: selectedFolderId,
+          searchTerm: inPageSearch, // Important for infinite scroll in search results
           offset: serverOffset, 
           limit: PAGE_SIZE_BATCH 
         });
