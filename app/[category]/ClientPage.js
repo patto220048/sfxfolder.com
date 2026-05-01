@@ -354,20 +354,34 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
 
   // Extract unique tags from loaded resources for FilterBar
   const availableTags = useMemo(() => {
-    // 1. If searching, calculate tags dynamically from results
-    if (inPageSearch) {
+    // 1. Determine if any filter is active
+    const isFiltered = selectedTags.length > 0 || inPageSearch || selectedFormats.length > 0;
+
+    if (isFiltered) {
       const tags = new Set();
-      filteredResources.forEach(r => {
+      // Always include currently selected tags so they don't disappear
+      selectedTags.forEach(t => tags.add(t.toLowerCase()));
+      
+      // Add all tags found in the current matching resources
+      allLoadedResources.forEach(r => {
         if (r.tags) r.tags.forEach(t => tags.add(t.toLowerCase()));
       });
-      return Array.from(tags).sort();
+
+      return Array.from(tags).sort((a, b) => {
+        // Pin selected tags to the front of the list
+        const aSelected = selectedTags.includes(a);
+        const bSelected = selectedTags.includes(b);
+        if (aSelected && !bSelected) return -1;
+        if (!aSelected && bSelected) return 1;
+        return a.localeCompare(b);
+      });
     }
 
-    // 2. If in a folder, use the pre-fetched recursive folder tags
+    // 2. If no filters, show default folder or category tags
     if (selectedFolderId) {
-      // If folderTags haven't loaded yet, fallback to what we have in allLoadedResources
       if (folderTags.length > 0) return folderTags;
       
+      // Fallback: calculate from resources if folderTags haven't loaded
       const tags = new Set();
       allLoadedResources.forEach(r => {
         if (r.tags) r.tags.forEach(t => tags.add(t.toLowerCase()));
@@ -375,9 +389,8 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
       return Array.from(tags).sort();
     }
 
-    // 3. If at root, show all category tags
     return categoryTags;
-  }, [allLoadedResources, filteredResources, selectedFolderId, categoryTags, folderTags, inPageSearch]);
+  }, [allLoadedResources, selectedFolderId, categoryTags, folderTags, inPageSearch, selectedTags, selectedFormats]);
 
   // --- Folder Navigation Grid Logic ---
   const { currentSubfolders, parentFolder } = useMemo(() => {
@@ -399,7 +412,9 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
 
   const countToDisplay = useMemo(() => {
     if (!inPageSearch && selectedFormats.length === 0 && selectedTags.length === 0) {
-      return currentFolder ? (currentFolder.resourceCount || 0) : (info.resourceCount || 0);
+      return currentFolder 
+        ? (currentFolder.totalResourceCount ?? currentFolder.resourceCount ?? 0) 
+        : (info.resourceCount || 0);
     }
     return filteredResources.length;
   }, [currentFolder, info.resourceCount, inPageSearch, selectedFormats, selectedTags, filteredResources.length]);
@@ -782,7 +797,7 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
 
           <h1 className={styles.title} style={{ color: info.color }}>
             {currentFolder ? currentFolder.name : info.name}
-            {countToDisplay > 0 && ` (${countToDisplay})`}
+            {countToDisplay !== undefined && ` (${countToDisplay})`}
           </h1>
         </div>
 
