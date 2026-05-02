@@ -68,7 +68,7 @@ const FilterBar = memo(function FilterBar({
   const currentSortLabel = sortOptions.find((o) => o.value === sortBy)?.label || "Sort";
 
   return (
-    <div className={styles.container} id="filter-bar">
+    <motion.div layout className={styles.container} id="filter-bar">
       <div className={styles.topRow}>
         <div className={styles.leftGroup}>
           <div className={styles.breadcrumbWrapper}>
@@ -209,48 +209,73 @@ const FilterBar = memo(function FilterBar({
         </div>
       </div>
 
-      { (tags.length > 0 || isLoading) && (
-        <div className={styles.tagsRow}>
-          {tags.length > 0 ? (
-            <>
-              <div className={styles.labelSection}>
-                <Tag size={12} className={styles.labelIcon} />
-                <span className={styles.labelText}>TAGS</span>
-                {selectedTags.length > 0 && (
-                  <button 
-                    className={styles.clearTagsBtn} 
-                    onClick={() => onTagsChange([])}
-                    title="Clear all tags"
-                  >
-                    <X size={10} />
-                  </button>
-                )}
-              </div>
-              <div className={styles.tagsScroll}>
-                {tags.map((tag) => (
-                  <button
-                    key={tag.name}
-                    className={`${styles.tagChip} ${selectedTagsSet.has(tag.name) ? styles.activeTag : ""}`}
-                    onClick={() => toggleTag(tag.name)}
-                    style={{ "--active-color": primaryColor }}
-                  >
-                    <span className={styles.tagName}>{tag.name}</span>
-                    {selectedTagsSet.has(tag.name) && (
-                      <X size={10} className={styles.tagClearIcon} />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </>
-          ) : (
-            <div className={styles.tagsPlaceholder}>
-              <div className={styles.skeletonTag} />
-              <div className={styles.skeletonTag} />
-              <div className={styles.skeletonTag} />
-            </div>
-          )}
-        </div>
-      )}
+      <AnimatePresence mode="popLayout">
+        {(tags.length > 0 || isLoading) && (
+          <motion.div 
+            layout 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className={styles.tagsRow}
+          >
+            {tags.length > 0 ? (
+              <>
+                <motion.div layout className={styles.labelSection}>
+                  <Tag size={12} className={styles.labelIcon} />
+                  <span className={styles.labelText}>TAGS</span>
+                  {selectedTags.length > 0 && (
+                    <motion.button 
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      exit={{ scale: 0 }}
+                      className={styles.clearTagsBtn} 
+                      onClick={() => onTagsChange([])}
+                      title="Clear all tags"
+                    >
+                      <X size={10} />
+                    </motion.button>
+                  )}
+                </motion.div>
+                <div className={styles.tagsScroll}>
+                  <AnimatePresence mode="popLayout">
+                    {tags.map((tag) => (
+                      <motion.button
+                        layout
+                        key={tag.name}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.2 }}
+                        className={`${styles.tagChip} ${selectedTagsSet.has(tag.name) ? styles.activeTag : ""}`}
+                        onClick={() => toggleTag(tag.name)}
+                        style={{ "--active-color": primaryColor }}
+                      >
+                        <span className={styles.tagName}>{tag.name}</span>
+                        {selectedTagsSet.has(tag.name) && (
+                          <motion.span 
+                            initial={{ width: 0, opacity: 0 }}
+                            animate={{ width: "auto", opacity: 1 }}
+                            exit={{ width: 0, opacity: 0 }}
+                          >
+                            <X size={10} className={styles.tagClearIcon} />
+                          </motion.span>
+                        )}
+                      </motion.button>
+                    ))}
+                  </AnimatePresence>
+                </div>
+              </>
+            ) : (
+              <motion.div layout className={styles.tagsPlaceholder}>
+                <div className={styles.skeletonTag} />
+                <div className={styles.skeletonTag} />
+                <div className={styles.skeletonTag} />
+              </motion.div>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 });

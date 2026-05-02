@@ -61,7 +61,7 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
   const [previewResource, setPreviewResource] = useState(null);
   const [inPageSearch, setInPageSearch] = useState("");
   const deferredSearch = useDeferredValue(inPageSearch);
-  const [folderTags, setFolderTags] = useState([]);
+  // Remove folderTags state, will use SWR data directly
 
   const [historyStack, setHistoryStack] = useState([null]);
   const [historyPointer, setHistoryPointer] = useState(0);
@@ -304,20 +304,21 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
   }, [isInitialized, debouncedFolderId, debouncedFormats, debouncedTags, debouncedSortBy, debouncedSearch, slug]);
 
   const tagKey = (debouncedFolderId && isInitialized) ? [`tags`, slug, debouncedFolderId] : null;
-  useSWR(tagKey, async ([, category, folder]) => {
+  const { data: swrFolderTags } = useSWR(tagKey, async ([, category, folder]) => {
     const node = findInTree(folders, folder)?.current;
     if (node) {
       const allSubFolderIds = getDescendantIds(node);
       const tags = await getCategoryTags(category, allSubFolderIds);
-      setFolderTags(tags);
       return tags;
     }
     return [];
-  }, { revalidateOnFocus: false, dedupingInterval: 60000 });
+  }, { 
+    revalidateOnFocus: false, 
+    dedupingInterval: 60000,
+    keepPreviousData: true // Giữ data cũ khi đang fetch key mới để tránh flicker
+  });
 
-  // Không xóa folderTags ngay lập tức để tránh flicker khi chuyển folder.
-  // SWR sẽ tự động cập nhật khi key thay đổi.
-  // useEffect(() => { if (!selectedFolderId) setFolderTags([]); }, [selectedFolderId]);
+  // Gỡ bỏ useEffect cũ cho folderTags
 
   useEffect(() => {
     setAllLoadedResources(initialResources);
@@ -400,12 +401,9 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
       baseTagsNames = Array.from(names);
     } else {
       // Trong chế độ duyệt:
-      // 1. Ưu tiên tag của folder hiện tại nếu đã load xong
-      // 2. Nếu đang load hoặc folder chưa có tag, dùng categoryTags làm nền tảng để không bị trống
-      const currentContextTags = (selectedFolderId && folderTags && folderTags.length > 0) 
-        ? folderTags 
-        : categoryTags;
-        
+      // 1. Nếu đang ở trong một folder, ưu tiên dùng tag của folder đó (từ SWR)
+      // 2. Nếu không có folder (gốc), dùng categoryTags
+      const currentContextTags = selectedFolderId ? (swrFolderTags || []) : categoryTags;
       baseTagsNames = currentContextTags.map(t => (typeof t === 'string' ? t : t.name).toLowerCase());
     }
 
@@ -424,7 +422,7 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
         if (a.count !== b.count) return b.count - a.count;
         return a.name.localeCompare(b.name);
       });
-  }, [tagFrequencyMap, selectedFolderId, categoryTags, folderTags, inPageSearch, selectedTags, selectedFormats]);
+  }, [tagFrequencyMap, selectedFolderId, categoryTags, swrFolderTags, inPageSearch, selectedTags, selectedFormats]);
 
   const { currentSubfolders, parentFolder } = useMemo(() => {
     if (!selectedFolderId) return { currentSubfolders: folders, parentFolder: null };
