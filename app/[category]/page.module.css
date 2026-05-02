@@ -252,6 +252,7 @@
   overflow: hidden;
   height: 380px; /* Perfectly synced with real ResourceCard */
   box-sizing: border-box;
+  animation: skeleton_fade_in 0.4s ease forwards;
 }
 
 .skeletonThumb {
@@ -295,6 +296,12 @@
   gap: 16px;
   height: 70px; /* Perfectly synced with real SoundButton */
   box-sizing: border-box;
+  animation: skeleton_fade_in 0.4s ease forwards;
+}
+
+@keyframes skeleton_fade_in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .skeletonThumbSound {

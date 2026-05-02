@@ -551,6 +551,8 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
       setSelectedFolderId(folderId);
       setSelectedFolderName(folderName);
       setVisibleCount(PAGE_SIZE_DISPLAY);
+      setAllLoadedResources([]); // Immediate clear to avoid "Old resources + New folders" jitter
+      setIsFetchLoading(true); // Force skeleton immediately
       
       updateUrl({ folder: folderId });
 
@@ -608,13 +610,29 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
 
       // 1. ADD SKELETONS if loading (this hides the gap better than empty grid)
       if (isFetchLoading && filteredResources.length === 0) {
-        return Array.from({ length: 8 }).map((_, i) => (
-          <div key={`skeleton-${i}`} className={styles.skeletonCard}>
-            <div className={styles.skeletonThumb} />
-            <div className={styles.skeletonCardBody}>
-              <div style={{ height: "14px", width: "80%", background: "var(--text-primary)", opacity: 0.1, borderRadius: "2px" }} />
-              <div style={{ height: "10px", width: "40%", background: "var(--text-primary)", opacity: 0.05, borderRadius: "2px" }} />
-            </div>
+        const isAudio = info.layout === "audio" || info.layout === "sound";
+        return Array.from({ length: 12 }).map((_, i) => (
+          <div 
+            key={`skeleton-${i}`} 
+            className={isAudio ? styles.skeletonCardSound : styles.skeletonCard}
+          >
+            {isAudio ? (
+              <>
+                <div className={styles.skeletonThumbSound} />
+                <div className={styles.skeletonInfoSound}>
+                  <div className={styles.skeletonLine} style={{ width: "60%" }} />
+                  <div className={styles.skeletonLine} style={{ width: "30%", opacity: 0.5 }} />
+                </div>
+              </>
+            ) : (
+              <>
+                <div className={styles.skeletonThumb} />
+                <div className={styles.skeletonCardBody}>
+                  <div className={styles.skeletonLine} style={{ width: "80%" }} />
+                  <div className={styles.skeletonLine} style={{ width: "40%", opacity: 0.5 }} />
+                </div>
+              </>
+            )}
           </div>
         ));
       }
