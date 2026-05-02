@@ -152,29 +152,36 @@ const SoundButton = memo(function SoundButton({
   // Reset state when ID changes or on unmount
   useEffect(() => {
     const cleanup = () => {
-      // We DO NOT stop the audio on unmount anymore, to allow background playback while scrolling.
-      // The mediaManager subscription will handle stopping if another sound starts.
-      
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      
-      // We keep the local state for a moment, but it will be gone on next mount
-      // unless synced by the useEffect above.
+      if (preloadTimeoutRef.current) clearTimeout(preloadTimeoutRef.current);
     };
 
     return cleanup;
   }, [id]);
 
+  const preloadTimeoutRef = useRef(null);
+
   const handleMouseEnter = useCallback(() => {
     setIsHovered(true);
-    const audio = initAudio();
-    if (audio && audio.readyState < 2 && audio.paused) {
-      audio.preload = "auto";
-      audio.load();
-    }
+    
+    // Debounce preloading to prevent network congestion during fast scrolling
+    if (preloadTimeoutRef.current) clearTimeout(preloadTimeoutRef.current);
+    
+    preloadTimeoutRef.current = setTimeout(() => {
+      const audio = initAudio();
+      if (audio && audio.readyState < 2 && audio.paused) {
+        audio.preload = "auto";
+        audio.load();
+      }
+    }, 200);
   }, [initAudio]);
 
   const handleMouseLeave = useCallback(() => {
     setIsHovered(false);
+    if (preloadTimeoutRef.current) {
+      clearTimeout(preloadTimeoutRef.current);
+      preloadTimeoutRef.current = null;
+    }
   }, []);
 
   const togglePlay = useCallback(() => {

@@ -53,11 +53,15 @@ const FilterSection = memo(function FilterSection({
   }, [selectedTags, updateUrl, searchParams]);
 
   const handleFormatsChange = (vals) => {
-    setSelectedFormats(vals);
+    startTransition(() => {
+      setSelectedFormats(vals);
+    });
   };
 
   const handleTagsChange = (vals) => {
-    setSelectedTags(vals);
+    startTransition(() => {
+      setSelectedTags(vals);
+    });
   };
 
   const handleSortChange = (val) => {

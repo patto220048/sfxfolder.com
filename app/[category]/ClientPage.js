@@ -18,7 +18,7 @@ import ResourceGrid from "./components/ResourceGrid";
 import styles from "./page.module.css";
 
 const PAGE_SIZE_DISPLAY = 24;
-const PAGE_SIZE_BATCH = 200;
+const PAGE_SIZE_BATCH = 50;
 
 const findInTree = (nodes, targetId, parent = null) => {
   if (!nodes || !targetId) return null;

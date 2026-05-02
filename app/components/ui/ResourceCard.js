@@ -148,18 +148,28 @@ const ResourceCard = memo(function ResourceCard({
     return unsubscribe;
   }, []);
 
-  // Cleanup rAF on unmount
+  const hoverTimeoutRef = useRef(null);
+
+  // Cleanup timeout on unmount
   useEffect(() => {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
     };
   }, []);
 
   const handleMouseEnter = () => {
-    setIsHovering(true);
+    if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+    hoverTimeoutRef.current = setTimeout(() => {
+      setIsHovering(true);
+    }, 200);
   };
 
   const handleMouseLeave = () => {
+    if (hoverTimeoutRef.current) {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = null;
+    }
     setIsHovering(false);
   };
 

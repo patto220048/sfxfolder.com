@@ -1,40 +1,33 @@
-import { NextResponse } from "next/server";
-import { getResources } from "@/app/lib/api";
+import { NextResponse } from 'next/server';
+import { getResources } from '@/app/lib/api';
 
 export async function GET(request) {
-  try {
-    const { searchParams } = new URL(request.url);
-    
-    // Extract parameters from URL
-    const categorySlug = searchParams.get("categorySlug");
-    const rawFolderId = searchParams.get("folderId");
-    let folderId = rawFolderId;
-    if (rawFolderId === "null") {
-      folderId = null;
-    } else if (rawFolderId && rawFolderId.includes(",")) {
-      folderId = rawFolderId.split(",");
-    }
-    const offset = parseInt(searchParams.get("offset") || "0");
-    const limit = parseInt(searchParams.get("limit") || "20");
-    const selectedTags = searchParams.get("tags") ? searchParams.get("tags").split(",") : [];
-    const selectedFormats = searchParams.get("formats") ? searchParams.get("formats").split(",") : [];
-    const searchTerm = searchParams.get("search") || "";
-    const sortOrder = searchParams.get("sort") || "newest";
+  const { searchParams } = new URL(request.url);
+  
+  const categorySlug = searchParams.get('categorySlug');
+  const folderId = searchParams.get('folderId');
+  const searchTerm = searchParams.get('searchTerm');
+  const tags = searchParams.get('tags') ? searchParams.get('tags').split(',') : [];
+  const formats = searchParams.get('formats') ? searchParams.get('formats').split(',') : [];
+  const limit = parseInt(searchParams.get('limit') || '40');
+  const offset = parseInt(searchParams.get('offset') || '0');
+  const sortOrder = searchParams.get('sortOrder') || 'newest';
 
+  try {
     const resources = await getResources({
       categorySlug,
-      folderId,
-      offset,
-      limit,
-      selectedTags,
-      selectedFormats,
+      folderId: folderId === 'null' ? null : (folderId === 'undefined' ? undefined : folderId),
       searchTerm,
+      selectedTags: tags,
+      selectedFormats: formats,
+      limit,
+      offset,
       sortOrder
     });
 
     return NextResponse.json(resources);
   } catch (error) {
-    console.error("API Resources Error:", error);
-    return NextResponse.json({ error: "Failed to fetch resources" }, { status: 500 });
+    console.error('API Error in /api/resources:', error);
+    return NextResponse.json({ error: 'Failed to fetch resources' }, { status: 500 });
   }
 }

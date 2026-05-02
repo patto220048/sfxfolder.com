@@ -129,7 +129,7 @@ async function getCachedCategoryData(slug, tags = [], formats = []) {
         categorySlug: slug, 
         selectedTags: tags, 
         selectedFormats: formats,
-        limit: 200 
+        limit: 50 
       });
 
       // 4. Fetch all tags for this category

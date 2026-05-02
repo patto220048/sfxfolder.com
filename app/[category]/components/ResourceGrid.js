@@ -177,7 +177,7 @@ const ResourceGrid = ({
                 isLoadingMore
               }}
               onRowsRendered={({ stopIndex }) => {
-                if (stopIndex >= rowCount - 2 && hasMoreDB && !isLoadingMore) {
+                if (stopIndex >= rowCount - 1 && hasMoreDB && !isLoadingMore) {
                   if (onLoadMore) onLoadMore();
                 }
               }}
