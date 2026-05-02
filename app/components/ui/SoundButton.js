@@ -164,7 +164,7 @@ const SoundButton = memo(function SoundButton({
     
     preloadTimeoutRef.current = setTimeout(() => {
       // If ANY item is already playing globally, don't interrupt it for a hover preload
-      const activeId = mediaManager.getActiveId();
+      const activeId = typeof mediaManager.getActiveId === 'function' ? mediaManager.getActiveId() : null;
       if (activeId) return;
 
       const audio = mediaManager.getSharedAudio();

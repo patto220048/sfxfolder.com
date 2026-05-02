@@ -3,6 +3,7 @@
 import { memo, useTransition, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import FilterBar from "@/app/components/ui/FilterBar";
+import { mediaManager } from "@/app/lib/mediaManager";
 
 const FilterSection = memo(function FilterSection({
   info,
@@ -53,18 +54,21 @@ const FilterSection = memo(function FilterSection({
   }, [selectedTags, updateUrl, searchParams]);
 
   const handleFormatsChange = (vals) => {
+    mediaManager.stopAll();
     startTransition(() => {
       setSelectedFormats(vals);
     });
   };
 
   const handleTagsChange = (vals) => {
+    mediaManager.stopAll();
     startTransition(() => {
       setSelectedTags(vals);
     });
   };
 
   const handleSortChange = (val) => {
+    mediaManager.stopAll();
     startTransition(() => {
       setSortBy(val);
       updateUrl({ sort: val });
@@ -72,6 +76,7 @@ const FilterSection = memo(function FilterSection({
   };
 
   const handleBreadcrumbClick = (id) => {
+    mediaManager.stopAll();
     if (!id) handleSelectFolder(null);
     else {
       const folder = findInTree(folders, id);

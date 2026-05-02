@@ -67,10 +67,11 @@ const Row = memo(({ index, style, ...rowProps }) => {
               resource={item}
               downloadUrl={item.downloadUrl || item.fileUrl}
               cardType={
-                info.layout === "font" ? "font" :
-                info.layout === "video" || info.layout === "image" ? info.layout :
+                (info.layout === "video" || info.layout === "image" || info.layout === "font") ? info.layout :
+                (category === "green-screen" || category === "greenscreen" || category === "video-meme" || category === "animation") ? "video" : 
                 category === "image-overlay" ? "image" :
-                category === "preset-lut" ? "preview" : "video"
+                category === "preset-lut" ? "preview" :
+                "video"
               }
               index={startIndex + i}
               onPreview={() => onPreview(item)}

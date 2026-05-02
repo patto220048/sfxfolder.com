@@ -313,6 +313,8 @@
   align-items: flex-start;
   gap: var(--space-1);
   padding-top: var(--space-2);
+  min-height: 48px; /* Fixed height to prevent vertical jitter */
+  transition: all 0.3s ease;
 }
 
 .tagsScroll {

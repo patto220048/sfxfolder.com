@@ -236,13 +236,29 @@ const ResourceCard = memo(function ResourceCard({
 
   const hoverTimeoutRef = useRef(null);
 
-  // Cleanup timeout on unmount
+  // Cleanup timeout and video state on unmount
   useEffect(() => {
     return () => {
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
     };
   }, []);
+
+  // Video playback on hover
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    if (isHovering) {
+      mediaManager.play(video, 'video');
+      video.play().then(() => {
+        if (!rafRef.current) rafRef.current = requestAnimationFrame(updateVideoProgress);
+      }).catch(() => {});
+    } else {
+      video.pause();
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    }
+  }, [isHovering, updateVideoProgress]);
 
   const handleMouseEnter = () => {
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
@@ -264,7 +280,7 @@ const ResourceCard = memo(function ResourceCard({
       case "video":
         return (
           <div className={styles.preview}>
-            {thumbnailUrl ? (
+            {!!thumbnailUrl ? (
               <>
                 {isHovering && resolvedUrl ? (
                   <video
@@ -279,19 +295,19 @@ const ResourceCard = memo(function ResourceCard({
                   />
                 ) : (
                   <Image
-                    src={getOptimizedUrl(thumbnailUrl || downloadUrl || fileUrl, { width: 480 })}
+                    src={getOptimizedUrl(thumbnailUrl, { width: 480 })}
                     alt={displayName}
                     fill
                     className={styles.cardImage}
                     priority={index < 4}
                     onError={(e) => {
                       // Fallback to original URL if optimized one fails
-                      e.target.src = thumbnailUrl || downloadUrl || fileUrl;
+                      e.target.src = thumbnailUrl;
                     }}
                   />
                 )}
               </>
-            ) : resolvedUrl ? (
+            ) : (effectiveCardType === "video" || isVideoFormat(resourceObj)) && resolvedUrl ? (
               <video
                 ref={videoRef}
                 src={`${resolvedUrl}#t=0.1`}
@@ -300,6 +316,15 @@ const ResourceCard = memo(function ResourceCard({
                 muted
                 playsInline
                 preload="metadata"
+                poster={""}
+              />
+            ) : resolvedUrl && isImageFormat(resourceObj) ? (
+              <Image
+                src={getOptimizedUrl(resolvedUrl, { width: 480 })}
+                alt={displayName}
+                fill
+                className={styles.cardImage}
+                priority={index < 4}
               />
             ) : (
               <div className={styles.placeholderThumb}>

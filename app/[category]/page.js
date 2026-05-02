@@ -165,10 +165,12 @@ export default async function CategoryPage({ params, searchParams }) {
 
   try {
     const data = await getCachedCategoryData(slug, urlTags, urlFormats);
-    info = data.categoryInfo;
-    flatFolders = data.flatFolders;
-    allResources = data.allResources;
-    categoryTags = data.categoryTags;
+    if (data) {
+      info = data.categoryInfo;
+      flatFolders = data.flatFolders;
+      allResources = data.allResources;
+      categoryTags = data.categoryTags;
+    }
   } catch (e) {
     console.error("Fetch error in category page:", e.message);
   }

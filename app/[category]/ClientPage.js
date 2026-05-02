@@ -305,7 +305,7 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
     return () => clearTimeout(timeoutId);
   }, [isInitialized, debouncedFolderId, debouncedFormats, debouncedTags, debouncedSortBy, debouncedSearch, slug]);
 
-  const tagKey = (debouncedFolderId && isInitialized) ? [`tags`, slug, debouncedFolderId] : null;
+  const tagKey = (selectedFolderId && isInitialized) ? [`tags`, slug, selectedFolderId] : null;
   const { data: swrFolderTags } = useSWR(tagKey, async ([, category, folder]) => {
     const node = findInTree(folders, folder)?.current;
     if (node) {
@@ -414,6 +414,7 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
         name,
         count: tagFrequencyMap.get(name) || 0
       }))
+      .filter(t => isFiltered || t.count > 0 || selectedTagsSet.has(t.name))
       .sort((a, b) => {
         // Ưu tiên các tag đang được chọn lên đầu
         const aSelected = selectedTagsSet.has(a.name);
