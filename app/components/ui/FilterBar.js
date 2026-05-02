@@ -276,7 +276,7 @@ const FilterBar = memo(function FilterBar({
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </motion.div>
   );
 });
 
