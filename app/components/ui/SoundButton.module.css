@@ -257,6 +257,20 @@
   color: var(--text-muted);
 }
 
+.format {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+}
+
 .dlCount {
   display: flex;
   align-items: center;
