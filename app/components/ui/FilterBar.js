@@ -130,6 +130,7 @@ const FilterBar = memo(function FilterBar({
             <AnimatePresence>
               {isSearchExpanded ? (
                 <motion.div
+                  key="search-input-container"
                   initial={{ width: 40, opacity: 0 }}
                   animate={{ width: 220, opacity: 1 }}
                   exit={{ width: 40, opacity: 0 }}

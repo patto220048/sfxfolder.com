@@ -96,6 +96,12 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
       } else {
         params.set(key, value);
       }
+
+      // Cập nhật ref ngay lập tức để useEffect không ghi đè ngược lại
+      if (key === "tags") lastSyncedTagsRef.current = Array.isArray(value) ? value.join(",") : (value || "");
+      if (key === "format") lastSyncedFormatsRef.current = Array.isArray(value) ? value.join(",") : (value || "");
+      if (key === "folder") lastSyncedFolderRef.current = value;
+      if (key === "sort") lastSyncedSortRef.current = value;
     });
     router.push(`${pathname}?${params.toString()}`, { scroll: false });
   }, [pathname, router, searchParams]);
@@ -135,6 +141,11 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
     }
 
     if (!hasLoadedInitialStateRef.current || prevSlugRef.current !== slug) {
+      lastSyncedFolderRef.current = initialFolderId;
+      lastSyncedFormatsRef.current = initialFormats.join(",");
+      lastSyncedTagsRef.current = initialTags.join(",");
+      lastSyncedSortRef.current = initialSort;
+
       const initialStack = initialFolderId ? [initialFolderId] : [null];
       setHistoryStack(initialStack);
       historyStackRef.current = initialStack;
@@ -150,11 +161,17 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
     setIsInitialized(true);
   }, [slug, folders]);
 
+  const lastSyncedTagsRef = useRef("");
+  const lastSyncedFormatsRef = useRef("");
+  const lastSyncedFolderRef = useRef(null);
+  const lastSyncedSortRef = useRef("newest");
+
   useEffect(() => {
     if (!isInitialized || isPending) return;
     
     const folderId = searchParams.get("folder") || null;
-    if (folderId !== selectedFolderId) {
+    if (folderId !== lastSyncedFolderRef.current) {
+      lastSyncedFolderRef.current = folderId;
       setSelectedFolderId(folderId);
       const result = findInTree(folders, folderId);
       setSelectedFolderName(result?.current ? (result.current.path || result.current.name) : null);
@@ -162,18 +179,23 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
     }
     
     const formatsStr = searchParams.get("format") || "";
-    if (formatsStr !== selectedFormats.join(",")) {
+    if (formatsStr !== lastSyncedFormatsRef.current) {
+      lastSyncedFormatsRef.current = formatsStr;
       setSelectedFormats(formatsStr ? formatsStr.split(",") : []);
     }
     
     const tagsStr = searchParams.get("tags") || "";
-    if (tagsStr !== selectedTags.join(",")) {
+    if (tagsStr !== lastSyncedTagsRef.current) {
+      lastSyncedTagsRef.current = tagsStr;
       setSelectedTags(tagsStr ? tagsStr.split(",") : []);
     }
     
     const sort = searchParams.get("sort") || "newest";
-    if (sort !== sortBy) setSortBy(sort);
-  }, [searchParams, isInitialized, folders, selectedFolderId, selectedFormats, selectedTags, sortBy, isPending]);
+    if (sort !== lastSyncedSortRef.current) {
+      lastSyncedSortRef.current = sort;
+      setSortBy(sort);
+    }
+  }, [searchParams, isInitialized, folders]);
 
   useEffect(() => {
     if (!isInitialized || !resSlug) return;
@@ -298,13 +320,36 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
     // Nếu đang ở cấp gốc (không chọn folder) và KHÔNG có bộ lọc nào kích hoạt,
     // chúng ta sẽ ẩn danh sách Resource để chỉ hiện các Folder con.
     const isAtRoot = !selectedFolderId;
-    const isFiltering = debouncedSearch || debouncedTags.length > 0 || debouncedFormats.length > 0 || resSlug;
+    const hasSearch = inPageSearch && inPageSearch.trim().length > 0;
+    const hasTags = selectedTags && selectedTags.length > 0;
+    const hasFormats = selectedFormats && selectedFormats.length > 0;
+    const isFiltering = hasSearch || hasTags || hasFormats || resSlug;
 
+    // Ở trang gốc, chỉ hiện item khi có bộ lọc. Nếu không thì ẩn để hiện Folder.
     if (isAtRoot && !isFiltering) {
       return [];
     }
 
     let results = [...allLoadedResources];
+    
+    // Lọc cục bộ ngay lập tức
+    if (hasSearch) {
+      const s = inPageSearch.toLowerCase().trim();
+      results = results.filter(r => 
+        (r.name && r.name.toLowerCase().includes(s)) || 
+        (r.tags && r.tags.some(t => t.toLowerCase().includes(s)))
+      );
+    }
+    if (hasFormats) {
+      results = results.filter(r => selectedFormats.includes(r.fileFormat));
+    }
+    if (hasTags) {
+      const selectedSet = new Set(selectedTags.map(t => t.toLowerCase()));
+      results = results.filter(r => 
+        r.tags && r.tags.some(t => selectedSet.has(t.toLowerCase()))
+      );
+    }
+
     if (resSlug) {
       const target = results.find(r => r.slug === resSlug);
       if (target) return [target];
@@ -314,7 +359,7 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
       case "name": results.sort((a, b) => (a.name || "").localeCompare(b.name || "")); break;
     }
     return results;
-  }, [allLoadedResources, sortBy, resSlug, selectedFolderId, debouncedSearch, debouncedTags, debouncedFormats]);
+  }, [allLoadedResources, sortBy, resSlug, selectedFolderId, inPageSearch, selectedTags, selectedFormats]);
 
   // 1. Tối ưu: Chỉ tính toán bản đồ tần suất tag khi danh sách tài nguyên thay đổi
   const tagFrequencyMap = useMemo(() => {

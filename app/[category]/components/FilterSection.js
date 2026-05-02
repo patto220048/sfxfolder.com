@@ -1,6 +1,7 @@
 "use client";
 
-import { memo, useTransition } from "react";
+import { memo, useTransition, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import FilterBar from "@/app/components/ui/FilterBar";
 
 const FilterSection = memo(function FilterSection({
@@ -24,20 +25,39 @@ const FilterSection = memo(function FilterSection({
   findInTree,
   isLoading
 }) {
+  const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
+  // Đồng bộ Format URL sau khi người dùng ngừng thao tác
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const currentFormatsStr = searchParams.get("format") || "";
+      const newFormatsStr = selectedFormats.join(",");
+      if (currentFormatsStr !== newFormatsStr) {
+        updateUrl({ format: selectedFormats });
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [selectedFormats, updateUrl, searchParams]);
+
+  // Đồng bộ Tag URL sau khi người dùng ngừng thao tác
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const currentTagsStr = searchParams.get("tags") || "";
+      const newTagsStr = selectedTags.join(",");
+      if (currentTagsStr !== newTagsStr) {
+        updateUrl({ tags: selectedTags });
+      }
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [selectedTags, updateUrl, searchParams]);
+
   const handleFormatsChange = (vals) => {
-    startTransition(() => {
-      setSelectedFormats(vals);
-      updateUrl({ format: vals });
-    });
+    setSelectedFormats(vals);
   };
 
   const handleTagsChange = (vals) => {
-    startTransition(() => {
-      setSelectedTags(vals);
-      updateUrl({ tags: vals });
-    });
+    setSelectedTags(vals);
   };
 
   const handleSortChange = (val) => {
