@@ -54,9 +54,8 @@ const Sidebar = memo(function Sidebar({
     // Set CSS variable immediately to prevent layout shifts in components that depend on it
     document.documentElement.style.setProperty('--sidebar-width', `${initialWidth}px`);
     
-    // Small delay to ensure browser has applied width before enabling transitions
-    const timer = setTimeout(() => setIsReady(true), 150);
-    return () => clearTimeout(timer);
+    // Enable transitions immediately — CSS variable is already set
+    setIsReady(true);
   }, []);
 
   // Update CSS variable when width changes during resize

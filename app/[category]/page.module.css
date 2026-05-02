@@ -97,15 +97,14 @@
 .gridWrapper {
   position: relative;
   width: 100%;
-  min-height: 800px;
   contain: layout;
-  will-change: transform, opacity;
 }
 
 .grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 24px;
+  transition: filter 0.4s ease-in-out, opacity 0.4s ease-in-out;
 }
 
 /* ---------- Sound Grid (list layout) ---------- */
@@ -113,6 +112,30 @@
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
+  transition: filter 0.4s ease-in-out, opacity 0.4s ease-in-out;
+}
+
+/* Loading blur state (replaces framer-motion) */
+.gridLoading {
+  filter: blur(12px) grayscale(0.5);
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+/* Skeleton overlay (replaces AnimatePresence motion.div) */
+.skeletonOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  pointer-events: none;
+  z-index: 10;
+  animation: skeletonFadeIn 0.3s ease forwards;
+}
+
+@keyframes skeletonFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* ---------- Empty ---------- */

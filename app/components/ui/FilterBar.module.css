@@ -5,10 +5,8 @@
   padding: var(--space-3) 0;
   border-bottom: 1px solid var(--border-default);
   margin-bottom: var(--space-4);
-  height: 120px; /* Rigidly locked height */
-  min-height: 120px;
-  overflow: hidden;
-  contain: layout;
+  min-height: 120px; /* Minimum to prevent CLS */
+  contain: content;
 }
 
 .topRow {
@@ -323,14 +321,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: nowrap; /* Prevent vertical growth */
-  overflow-x: auto;
+  flex-wrap: wrap;
   padding: 4px 0;
-  scrollbar-width: none; /* Hide for clean look */
-}
-
-.tagsScroll::-webkit-scrollbar {
-  display: none;
 }
 
 .tagChip {

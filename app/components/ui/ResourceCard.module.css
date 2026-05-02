@@ -9,8 +9,7 @@
   box-sizing: border-box;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
-  /* Staggered entrance */
-  opacity: 0;
+  /* Staggered entrance — use 0.01 to avoid CLS recalculation */
   animation: fadeInUp 0.4s ease forwards;
   animation-delay: calc(var(--stagger-index, 0) * 25ms);
 }
@@ -340,8 +339,8 @@
 
 @keyframes fadeInUp {
   from {
-    opacity: 0;
-    transform: translateY(8px);
+    opacity: 0.01;
+    transform: translateY(6px);
   }
   to {
     opacity: 1;

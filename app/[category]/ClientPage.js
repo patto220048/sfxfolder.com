@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef, useCallback, useTransition } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useSidebar } from "@/app/context/SidebarContext";
 
@@ -421,10 +420,10 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
     if (!inPageSearch && selectedFormats.length === 0 && selectedTags.length === 0) {
       return currentFolder 
         ? (currentFolder.totalResourceCount ?? currentFolder.resourceCount ?? 0) 
-        : (info.resourceCount || 0);
+        : (info.resourceCount || initialResources.length || 0);
     }
     return filteredResources.length;
-  }, [currentFolder, info.resourceCount, inPageSearch, selectedFormats, selectedTags, filteredResources.length]);
+  }, [currentFolder, info.resourceCount, initialResources.length, inPageSearch, selectedFormats, selectedTags, filteredResources.length]);
 
   const breadcrumbs = useMemo(() => {
     const path = [];
@@ -685,38 +684,18 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
     const gridClass = (info.layout === "audio" || info.layout === "sound") ? styles.soundGrid : styles.grid;
 
     return (
-      <div className={styles.gridWrapper} style={{ minHeight: '800px' }}>
-        <motion.div 
-          className={gridClass}
-          initial={false}
-          animate={{
-            filter: isLoading ? "blur(12px) grayscale(0.5)" : "blur(0px) grayscale(0)",
-            opacity: isLoading ? 0.3 : 1,
-          }}
-          transition={{ duration: 0.4, ease: "easeInOut" }}
+      <div className={styles.gridWrapper}>
+        <div 
+          className={`${gridClass} ${isLoading ? styles.gridLoading : ''}`}
         >
           {renderGridItems()}
-        </motion.div>
+        </div>
         
         {/* Skeleton Overlay - Unified with isFetchLoading */}
-        <AnimatePresence>
-          {isFetchLoading && (
-            <motion.div 
-              key="skeleton-overlay"
-              className={gridClass} 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.3 }}
-              style={{ 
-                position: 'absolute', 
-                top: 0, 
-                left: 0, 
-                width: '100%', 
-                pointerEvents: 'none', 
-                zIndex: 10
-              }}
-            >
+        {isFetchLoading && (
+          <div 
+            className={`${gridClass} ${styles.skeletonOverlay}`}
+          >
               {Array.from({ length: 12 }).map((_, i) => {
                 const isSoundLayout = gridClass === styles.soundGrid;
                 if (isSoundLayout) {
@@ -741,9 +720,8 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
                   </div>
                 );
               })}
-            </motion.div>
-          )}
-        </AnimatePresence>
+          </div>
+        )}
 
         {/* Sentinel for Infinite Scroll */}
         <div ref={loadMoreRef} className={styles.observerSentinel}>

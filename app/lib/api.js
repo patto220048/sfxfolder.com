@@ -679,13 +679,10 @@ export const getCategories = unstable_cache(
 export const getAdminCategories = fetchCategoriesInternal;
 
 
-export async function getCategoryBySlug(slug) {
+async function fetchCategoryBySlugInternal(slug) {
   const { data, error } = await supabase
     .from('categories')
-    .select(`
-      *,
-      resources:resources(count)
-    `)
+    .select('*')
     .eq('slug', slug)
     .single();
 
@@ -696,10 +693,15 @@ export async function getCategoryBySlug(slug) {
   
   return {
     ...data,
-    resourceCount: data.resources?.[0]?.count || 0,
     formats: data.formats || []
   };
 }
+
+export const getCategoryBySlug = unstable_cache(
+  fetchCategoryBySlugInternal,
+  ['category-by-slug'],
+  { revalidate: REVALIDATE_TIME, tags: ['categories'] }
+);
 
 
 /**

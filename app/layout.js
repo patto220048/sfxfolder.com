@@ -1,3 +1,4 @@
+import { Inter, JetBrains_Mono } from 'next/font/google';
 import { ThemeProvider } from "@/app/components/providers/ThemeProvider";
 import "./globals.css";
 import "./animations.css";
@@ -11,6 +12,18 @@ import { AuthProvider } from "@/app/lib/auth-context";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import SmoothScroll from "@/app/components/layout/SmoothScroll";
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-jetbrains',
+  display: 'swap',
+});
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://sfxfolder.com';
 
@@ -113,7 +126,7 @@ export default async function RootLayout({ children }) {
   };
 
   return (
-    <html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`} data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
         <link rel="icon" href="/favicon.ico?v=2" sizes="any" />
         <link rel="icon" href="/favicon.png?v=2" type="image/png" />
