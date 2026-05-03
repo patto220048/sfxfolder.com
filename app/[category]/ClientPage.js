@@ -403,9 +403,9 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
       baseTagsNames = Array.from(names);
     } else {
       // Trong chế độ duyệt:
-      // 1. Ưu tiên dùng swrFolderTags nếu có (kể cả data cũ từ keepPreviousData)
-      // 2. Nếu đang ở root hoặc chưa bao giờ load folder tags, dùng categoryTags
-      const currentContextTags = (selectedFolderId && swrFolderTags) ? swrFolderTags : categoryTags;
+      // 1. Ưu tiên dùng swrFolderTags nếu có (và không rỗng)
+      // 2. Nếu đang ở root hoặc folder không có tags riêng, dùng categoryTags làm fallback
+      const currentContextTags = (selectedFolderId && swrFolderTags && swrFolderTags.length > 0) ? swrFolderTags : categoryTags;
       baseTagsNames = currentContextTags.map(t => (typeof t === 'string' ? t : t.name).toLowerCase());
     }
 
