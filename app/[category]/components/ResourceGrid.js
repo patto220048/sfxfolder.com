@@ -68,10 +68,10 @@ const Row = memo(({ index, style, ...rowProps }) => {
               resource={item}
               downloadUrl={item.downloadUrl || item.fileUrl}
               cardType={
-                (info.layout === "video" || info.layout === "image" || info.layout === "font") ? info.layout :
+                (info.layout === "video" || info.layout === "image" || info.layout === "font" || info.layout === "lut") ? info.layout :
                 (category === "green-screen" || category === "greenscreen" || category === "video-meme" || category === "animation") ? "video" : 
                 category === "image-overlay" ? "image" :
-                category === "preset-lut" ? "preview" :
+                category === "preset-lut" ? "lut" :
                 "video"
               }
               index={startIndex + i}

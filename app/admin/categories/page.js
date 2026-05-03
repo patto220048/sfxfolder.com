@@ -35,7 +35,8 @@ export default function CategoriesPage() {
     layout: "media",
     color: "#FFFFFF",
     icon: "box",
-    formats: []
+    formats: [],
+    reference_image_url: ""
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -50,7 +51,8 @@ export default function CategoriesPage() {
       layout: "media",
       color: "#FFFFFF",
       icon: "box",
-      formats: []
+      formats: [],
+      reference_image_url: ""
     });
     setError("");
     setModalOpen(true);
@@ -66,7 +68,8 @@ export default function CategoriesPage() {
       layout: cat.layout || "media",
       color: cat.color || "#FFFFFF",
       icon: cat.icon || "box",
-      formats: cat.formats || []
+      formats: cat.formats || [],
+      reference_image_url: cat.reference_image_url || ""
     });
     setError("");
     setModalOpen(true);
@@ -323,8 +326,22 @@ export default function CategoriesPage() {
                     <option value="media">General Media (Auto-detect)</option>
                     <option value="audio">Audio List (Sound Player)</option>
                     <option value="font">Font Grid (Type Preview)</option>
+                    <option value="lut">LUT Grid (Before/After Slider)</option>
                   </select>
                 </div>
+
+                {formData.layout === "lut" && (
+                  <div className={styles.inputGroup}>
+                    <label>Reference Image URL (for LUT Preview)</label>
+                    <input 
+                      type="text" 
+                      value={formData.reference_image_url || ""} 
+                      onChange={(e) => setFormData(p => ({ ...p, reference_image_url: e.target.value }))} 
+                      placeholder="e.g. /placeholders/log-reference.jpg"
+                    />
+                    <p className={styles.helpText}>This image will be used as the "Before" state for LUT previews.</p>
+                  </div>
+                )}
 
                 <div className={styles.inputGroup}>
                   <label>Primary Color</label>

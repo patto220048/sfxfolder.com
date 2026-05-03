@@ -7,7 +7,7 @@ import Link from "next/link";
 import { Download as DownloadCount, Play, Eye, Volume2, VolumeX } from "lucide-react";
 import DownloadButton from "./DownloadButton";
 import { mediaManager } from "@/app/lib/mediaManager";
-import { isVideoFormat, isImageFormat, isFontFormat, getOptimizedUrl } from "@/app/lib/mediaUtils";
+import { isVideoFormat, isImageFormat, isFontFormat, isLUTFormat, getOptimizedUrl } from "@/app/lib/mediaUtils";
 import styles from "./ResourceCard.module.css";
 
 function formatSize(bytes) {
@@ -44,6 +44,7 @@ const ResourceCard = memo(function ResourceCard({
     if (isVideoFormat(resourceObj)) return "video";
     if (isImageFormat(resourceObj)) return "image";
     if (isFontFormat(resourceObj)) return "font";
+    if (isLUTFormat(resourceObj)) return "lut";
     return cardType;
   }, [cardType, resourceObj]);
   const resolvedUrl = downloadUrl || fileUrl;
@@ -427,6 +428,38 @@ const ResourceCard = memo(function ResourceCard({
               <span className={styles.fontName}>{displayName}</span>
             </div>
             <div className={styles.formatBadge}>{fileFormat}</div>
+          </div>
+        );
+
+      case "lut":
+        return (
+          <div className={styles.preview}>
+            <div className={styles.lutCardHeader}>
+              <span className={styles.lutTypeBadge}>LUT PRESET</span>
+            </div>
+            {thumbnailUrl ? (
+              <Image
+                src={getOptimizedUrl(thumbnailUrl, { width: 480 })}
+                alt={displayName}
+                fill
+                className={styles.cardImage}
+                priority={index < 4}
+              />
+            ) : (
+              <div className={styles.placeholderThumb}>
+                <div className={styles.lutPreview}>
+                  <div className={styles.lutStrip}>
+                    <span className={styles.lutColor} style={{ background: "#ff6b6b" }} />
+                    <span className={styles.lutColor} style={{ background: "#feca57" }} />
+                    <span className={styles.lutColor} style={{ background: "#48dbfb" }} />
+                    <span className={styles.lutColor} style={{ background: "#ff9ff3" }} />
+                    <span className={styles.lutColor} style={{ background: "#54a0ff" }} />
+                  </div>
+                </div>
+                <span className={styles.formatBig}>{fileFormat?.toUpperCase() || "LUT"}</span>
+              </div>
+            )}
+            <div className={styles.formatBadge}>{fileFormat || "LUT"}</div>
           </div>
         );
 

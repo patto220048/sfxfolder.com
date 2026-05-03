@@ -3,7 +3,12 @@
 import { useEffect, useRef, useState } from "react";
 import { X, Music } from "lucide-react";
 import { mediaManager } from "@/app/lib/mediaManager";
-import { isVideoFormat, isImageFormat, isFontFormat, isAudioFormat, getOptimizedUrl } from "@/app/lib/mediaUtils";
+import dynamic from "next/dynamic";
+const LUTPreview = dynamic(() => import("./LUTPreview"), {
+  loading: () => <div style={{ height: '500px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#000', borderRadius: '12px' }}>Loading Preview...</div>,
+  ssr: false
+});
+import { isVideoFormat, isImageFormat, isFontFormat, isAudioFormat, isLUTFormat, getOptimizedUrl } from "@/app/lib/mediaUtils";
 import DownloadButton from "./DownloadButton";
 import styles from "./PreviewOverlay.module.css";
 
@@ -128,6 +133,7 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
   const isImage = isImageFormat(resource);
   const isFont = isFontFormat(resource);
   const isAudio = isAudioFormat(resource);
+  const isLUT = isLUTFormat(resource);
 
   return (
     <div className={styles.previewOverlay} onClick={onClose}>
@@ -206,8 +212,16 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
             </div>
           )}
           
+          {isLUT && (
+            <LUTPreview 
+              lutUrl={resource.downloadUrl || resource.fileUrl} 
+              referenceImageUrl={resource.category?.reference_image_url || "https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=2025&auto=format&fit=crop"} 
+              name={resource.name}
+            />
+          )}
+          
           {/* Default fallback if format not supported */}
-          {!isVideo && !isImage && !isFont && !isAudio && (
+          {!isVideo && !isImage && !isFont && !isAudio && !isLUT && (
             <div className={styles.largePreviewFont}>
               <p>Preview not available for this format</p>
               <p style={{ fontSize: '1rem', opacity: 0.7 }}>{resource.fileName || resource.name} ({resource.fileFormat || "unknown"})</p>

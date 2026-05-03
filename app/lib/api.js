@@ -725,6 +725,7 @@ export async function addCategory(categoryData) {
       color: categoryData.color || '#FFFFFF',
       icon: categoryData.icon || 'box',
       formats: categoryData.formats || [],
+      reference_image_url: categoryData.reference_image_url || null,
       created_at: now
     }])
     .select();

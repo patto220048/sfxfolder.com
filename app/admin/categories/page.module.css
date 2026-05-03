@@ -165,6 +165,7 @@
 .media { color: #facc15; border-color: #facc15; }
 .sound { color: #00f0ff; border-color: #00f0ff; }
 .font { color: #a855f7; border-color: #a855f7; }
+.lut { color: #f97316; border-color: #f97316; }
 
 .formatList {
   display: flex;
@@ -425,4 +426,11 @@
   .formGrid {
     grid-template-columns: 1fr;
   }
+}
+
+.helpText {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  font-style: italic;
 }

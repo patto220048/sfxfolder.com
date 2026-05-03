@@ -6,6 +6,7 @@ export const VIDEO_EXTENSIONS = ['mp4', 'webm', 'mov', 'mkv', 'avi', 'm4v'];
 export const AUDIO_EXTENSIONS = ['mp3', 'wav', 'ogg', 'flac', 'm4a', 'aac', 'wma'];
 export const IMAGE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'webp', 'gif', 'svg', 'ico', 'bmp'];
 export const FONT_EXTENSIONS = ['ttf', 'otf', 'woff', 'woff2', 'eot'];
+export const LUT_EXTENSIONS = ['cube', '3dl'];
 
 /**
  * Gets the extension from a file name or format string
@@ -38,11 +39,17 @@ export const isFontFormat = (res) => {
   return FONT_EXTENSIONS.includes(format.toLowerCase());
 };
 
+export const isLUTFormat = (res) => {
+  const format = res?.fileFormat || getExtension(res?.fileName || res?.name);
+  return LUT_EXTENSIONS.includes(format.toLowerCase());
+};
+
 export const getMediaType = (res) => {
   if (isVideoFormat(res)) return 'video';
   if (isAudioFormat(res)) return 'audio';
   if (isImageFormat(res)) return 'image';
   if (isFontFormat(res)) return 'font';
+  if (isLUTFormat(res)) return 'lut';
   return 'other';
 };
 
