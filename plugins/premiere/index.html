@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>RE-SRC Web Plugin</title>
+    <script>
+        // Polyfill and Error Catcher for older CEF
+        window.onerror = function(msg, url, line, col, error) {
+            var status = document.getElementById('status');
+            status.style.color = '#ff4444';
+            status.innerText = 'JS ERROR: ' + msg + ' (Line: ' + line + ')';
+            console.error('GLOBAL ERROR:', msg, 'at', url, ':', line);
+        };
+
+        // Fix for some older environments
+        if (typeof global === 'undefined') { window.global = window; }
+    </script>
+    <style>
+        body {
+            background-color: #1a1a2e; /* Dark Blue - so we know it loaded */
+            color: #eee;
+            font-family: sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        #web-container {
+            flex: 1;
+            border: none;
+            background: #000;
+        }
+        .header {
+            padding: 8px;
+            background: #252545;
+            font-size: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+        }
+        .status { color: #00ff00; }
+        #error-display {
+            background: #441111;
+            color: #ffaaaa;
+            padding: 8px;
+            font-size: 11px;
+            display: none;
+            border-bottom: 1px solid #ff0000;
+        }
+        .debug-controls {
+            padding: 10px;
+            background: #333;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            border-bottom: 2px solid #555;
+        }
+        button {
+            padding: 8px 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .btn-local { background: #4CAF50; color: white; }
+        .btn-prod { background: #f44336; color: white; }
+        .btn-reload { background: #2196F3; color: white; }
+    </style>
+</head>
+<body>
+    <div id="error-display"></div>
+    <div class="header">
+        <span style="color:#ffcc00; font-weight:bold;">RE-SRC V2.0</span>
+        <span id="status" class="status">Connecting...</span>
+    </div>
+
+    <div class="debug-controls">
+        <button class="btn-prod" onclick="reloadWeb('https://sfxfolder.com')">TRY PRODUCTION (RED)</button>
+        <button class="btn-local" onclick="reloadWeb('http://localhost:3000')">Try Localhost</button>
+        <button class="btn-local" onclick="reloadWeb('http://localhost:3000/test.html')">TEST SIMPLE PAGE</button>
+        <button class="btn-reload" onclick="location.reload()">Reload Plugin</button>
+    </div>
+
+    <iframe id="web-container" src="http://localhost:3000"></iframe>
+    
+    <div id="download-progress" style="position:fixed;bottom:0;width:100%;height:4px;background:#333;display:none;">
+        <div id="progress-bar" style="width:0%;height:100%;background:#0078d4;"></div>
+    </div>
+
+    <script src="./lib/CSInterface.js"></script>
+    
+    <script>
+        function showError(msg) {
+            var div = document.getElementById('error-display');
+            div.style.display = 'block';
+            div.innerText = msg;
+        }
+
+        function reloadWeb(url) {
+            document.getElementById('web-container').src = url;
+            document.getElementById('status').innerText = "Reloading: " + url;
+        }
+
+        try {
+            var csInterface = new CSInterface();
+            document.getElementById('status').innerText = "Connected";
+
+            if (typeof require !== 'undefined') {
+                var fs = require('fs');
+                var path = require('path');
+                var https = require('https');
+                var http = require('http');
+                var os = require('os');
+
+                var downloadFolder = path.join(os.tmpdir(), 'RE-SRC-Cache');
+                if (!fs.existsSync(downloadFolder)) { fs.mkdirSync(downloadFolder); }
+
+                window.addEventListener('message', function(event) {
+                    if (event.data.type === 'IMPORT_ASSET') {
+                        var targetPath = path.join(downloadFolder, event.data.fileName);
+                        downloadFile(event.data.url, targetPath);
+                    }
+                });
+            } else {
+                showError("Node.js is DISABLED. Please check manifest.xml <Parameter>--enable-nodejs</Parameter>");
+            }
+        } catch (e) {
+            showError("System Error: " + e.message);
+        }
+
+        function downloadFile(url, dest) {
+            document.getElementById('download-progress').style.display = 'block';
+            var file = fs.createWriteStream(dest);
+            var protocol = url.startsWith('https') ? https : http;
+            protocol.get(url, function(response) {
+                response.pipe(file);
+                file.on('finish', function() {
+                    file.close(function() {
+                        document.getElementById('download-progress').style.display = 'none';
+                        var safePath = dest.replace(/\\/g, '/');
+                        csInterface.evalScript('importToTimeline("' + safePath + '")');
+                    });
+                });
+            });
+        }
+    </script>
+</body>
+</html>

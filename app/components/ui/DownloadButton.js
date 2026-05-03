@@ -22,6 +22,8 @@ export default function DownloadButton({ downloadUrl, fileUrl, fileName, fileFor
     return `${baseName}${ext}`;
   };
 
+  const isInsidePlugin = typeof window !== 'undefined' && window.self !== window.top;
+
   const handleClick = async (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -56,22 +58,32 @@ export default function DownloadButton({ downloadUrl, fileUrl, fileName, fileFor
       
       if (!signedUrl) throw new Error("No download URL returned");
 
-      // 2. Trigger Native Browser Download via Hidden Anchor
-      // This method prevents the browser from entering a 'pending navigation' state
-      // which can block subsequent requests (like opening folders).
-      const link = document.createElement('a');
-      link.href = signedUrl;
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      
-      // Cleanup
-      setTimeout(() => {
-        document.body.removeChild(link);
-      }, 100);
+      if (isInsidePlugin) {
+        // 2. Tích hợp với Premiere Plugin: Gửi URL để Plugin tự tải và import
+        window.parent.postMessage({
+          type: 'IMPORT_ASSET',
+          url: signedUrl,
+          fileName: getDownloadName()
+        }, '*');
+        
+        setState("done");
+        setTimeout(() => setState("idle"), 2000);
+      } else {
+        // 2. Trigger Native Browser Download via Hidden Anchor
+        const link = document.createElement('a');
+        link.href = signedUrl;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        
+        // Cleanup
+        setTimeout(() => {
+          document.body.removeChild(link);
+        }, 100);
 
-      setState("done");
-      setTimeout(() => setState("idle"), 2000);
+        setState("done");
+        setTimeout(() => setState("idle"), 2000);
+      }
     } catch (err) {
       console.error("Download failed:", err);
       setState("idle");
@@ -83,7 +95,7 @@ export default function DownloadButton({ downloadUrl, fileUrl, fileName, fileFor
       className={`${styles.btn} ${styles[state]} ${size === "compact" ? styles.compact : ""}`}
       onClick={handleClick}
       disabled={state === "downloading" || !resolvedUrl}
-      aria-label={`Download ${fileName || "file"}`}
+      aria-label={`${isInsidePlugin ? 'Add' : 'Download'} ${fileName || "file"}`}
     >
       {state === "done" ? (
         <Check size={16} className={styles.checkIcon} />
@@ -94,7 +106,7 @@ export default function DownloadButton({ downloadUrl, fileUrl, fileName, fileFor
       )}
       {size !== "compact" && (
         <span className={styles.text}>
-          {state === "idle" && "Download"}
+          {state === "idle" && (isInsidePlugin ? "Add" : "Download")}
           {state === "downloading" && "..."}
           {state === "done" && "Done!"}
         </span>
@@ -102,3 +114,4 @@ export default function DownloadButton({ downloadUrl, fileUrl, fileName, fileFor
     </button>
   );
 }
+

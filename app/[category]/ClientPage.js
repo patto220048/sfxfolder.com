@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef, useCallback, useTransition, useDeferredValue } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback, useTransition, useDeferredValue, Suspense } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useSidebar } from "@/app/context/SidebarContext";
 import useSWR from "swr";
@@ -43,7 +43,7 @@ const getDescendantIds = (node) => {
   return ids;
 };
 
-export default function ClientPage({ slug, info, folders, resources: initialResources, categoryTags = [] }) {
+function ClientPageContent({ slug, info, folders, resources: initialResources, categoryTags = [] }) {
   const [selectedFolderId, setSelectedFolderId] = useState(null);
   const [selectedFolderName, setSelectedFolderName] = useState(null);
   const [selectedFormats, setSelectedFormats] = useState([]);
@@ -564,5 +564,13 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
         />
       )}
     </>
+  );
+}
+
+export default function ClientPage(props) {
+  return (
+    <Suspense fallback={<div style={{ padding: '20px', color: '#666' }}>Loading...</div>}>
+      <ClientPageContent {...props} />
+    </Suspense>
   );
 }

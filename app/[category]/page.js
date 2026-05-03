@@ -4,6 +4,8 @@ import { buildFolderTree } from "@/app/lib/folderUtils";
 import ClientPage from "./ClientPage";
 import { unstable_cache } from "next/cache";
 import { Suspense } from "react";
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://sfxfolder.com';
 

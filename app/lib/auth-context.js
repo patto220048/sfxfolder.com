@@ -185,6 +185,18 @@ export function AuthProvider({ children }) {
   // ─── Auth Methods ───
 
   const loginWithGoogle = async () => {
+    // Check if we are inside the Adobe Premiere Plugin environment
+    const isPlugin = typeof window !== "undefined" && !!window.__adobe_cep__;
+
+    if (isPlugin) {
+      // If in Plugin, open the login page in the default system browser (Chrome/Edge)
+      // Note: You will need to handle the token sync back to the plugin
+      const loginUrl = `${window.location.origin}/auth/login?mode=plugin`;
+      window.cep.util.openURLInDefaultBrowser(loginUrl);
+      showToast("Please complete login in your external browser.", "success");
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
