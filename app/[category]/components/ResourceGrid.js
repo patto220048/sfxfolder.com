@@ -9,8 +9,8 @@ import SoundButton from "@/app/components/ui/SoundButton";
 import styles from "../page.module.css";
 
 // Row renderer outside component to prevent re-creation
-const Row = memo(({ index, style, ...rowProps }) => {
-  const { columnCount, flatItems, rowCount, category, onPreview, router, handleSelectFolder, info, hasMoreDB, isLoadingMore, isPlugin } = rowProps;
+const Row = memo(({ index, style, data }) => {
+  const { columnCount, flatItems, rowCount, category, onPreview, router, handleSelectFolder, info, hasMoreDB, isLoadingMore, isPlugin } = data;
   
   if (index === rowCount - 1 && (isLoadingMore || hasMoreDB)) {
     return (
@@ -195,8 +195,8 @@ const ResourceGrid = ({
               key={`${columnCount}-${isSoundLayout}-${isFiltering}`}
               rowCount={rowCount}
               rowHeight={(index) => getRowHeight(index, columnCount)}
-              rowComponent={Row}
-              rowProps={{ 
+              children={Row}
+              itemData={{ 
                 columnCount, 
                 flatItems, 
                 rowCount, 

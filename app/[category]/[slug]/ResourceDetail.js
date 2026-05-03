@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback, memo } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import {
   ArrowLeft,
@@ -65,6 +65,9 @@ export default function ResourceDetail({
   categoryColor,
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isPlugin = searchParams.get("mode") === "plugin" || (typeof window !== 'undefined' && window.location.search.includes('mode=plugin'));
+  
   const displayName = (resource.name || "Untitled").replace(/\.[^/.]+$/, "");
   const isVideo = isVideoFormat(resource);
   const isImage = isImageFormat(resource);
@@ -606,6 +609,7 @@ export default function ResourceDetail({
               fileName={resource.name}
               fileFormat={resource.fileFormat}
               resourceId={resource.id}
+              isPlugin={isPlugin}
             />
           </div>
 
@@ -644,6 +648,7 @@ export default function ResourceDetail({
                       primaryColor={categoryColor}
                       similarity={res.similarity}
                       onPreview={() => router.push(`/${categorySlug}/${res.slug}`)}
+                      isPlugin={isPlugin}
                     />
                   </div>
                 );

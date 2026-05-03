@@ -15,7 +15,7 @@ export default function DownloadButton({ downloadUrl, fileUrl, fileName, fileFor
   // Resolve URL: prefer downloadUrl, fallback to fileUrl
   const resolvedUrl = downloadUrl || fileUrl;
 
-  const isInsidePlugin = isPlugin || (typeof window !== 'undefined' && window.self !== window.top);
+  const isInsidePlugin = isPlugin || (typeof window !== 'undefined' && window.location.search.includes('mode=plugin'));
 
   // Build proper filename with extension
   const getDownloadName = () => {
@@ -35,7 +35,11 @@ export default function DownloadButton({ downloadUrl, fileUrl, fileName, fileFor
 
     // Premium Check - All resources now require Premium
     if (!isAdmin && !isPremium) {
-      alert("Please login with a Premium account to add assets to Premiere.");
+      if (isInsidePlugin) {
+        alert("Please login with a Premium account to add assets to Premiere.");
+      } else {
+        alert("Please upgrade to a Premium account to download this asset.");
+      }
       window.dispatchEvent(new CustomEvent("need-premium"));
       return;
     }

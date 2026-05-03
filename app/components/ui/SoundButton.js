@@ -46,6 +46,8 @@ const SoundButton = memo(function SoundButton({
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   
+  const isInsidePlugin = isPlugin || (typeof window !== 'undefined' && window.location.search.includes('mode=plugin'));
+  
   const { user, session, isPremium: userIsPremium, isAdmin, loading } = useAuth();
   const router = useRouter();
 
@@ -316,7 +318,11 @@ const SoundButton = memo(function SoundButton({
 
     // Premium check - All resources now require Premium
     if (!isAdmin && !userIsPremium) {
-      alert("Please login with a Premium account to add assets to Premiere.");
+      if (isInsidePlugin) {
+        alert("Please login with a Premium account to add assets to Premiere.");
+      } else {
+        alert("Please upgrade to a Premium account to download this asset.");
+      }
       window.dispatchEvent(new CustomEvent("need-premium"));
       return;
     }
