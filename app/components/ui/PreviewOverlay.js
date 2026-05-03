@@ -215,7 +215,7 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
           {isLUT && (
             <LUTPreview 
               lutUrl={resource.downloadUrl || resource.fileUrl} 
-              referenceImageUrl={resource.thumbnailUrl || resource.category?.reference_image_url || "/images/samples/portrait.png"} 
+              referenceImageUrl={resource.thumbnailUrl || resource.category?.reference_image_url} 
               name={resource.name}
             />
           )}

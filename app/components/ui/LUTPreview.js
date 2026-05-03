@@ -8,53 +8,51 @@ const getOptimizedUrl = (url, { width, quality }) => {
   return `${baseUrl}?q=${quality}&w=${width}&auto=format&fit=crop`;
 };
 
-const DEFAULT_REFERENCES = [
-  { id: 'portrait', label: 'Portrait', url: '/images/samples/portrait.png' },
-  { id: 'cinematic', label: 'Cinema', url: '/images/samples/cinematic.png' },
-  { id: 'landscape', label: 'Nature', url: '/images/samples/nature.png' },
+const SAMPLE_IMAGES = [
+  { id: 'portrait', name: 'Portrait', url: '/images/samples/portrait.png' },
+  { id: 'cinematic', name: 'Cinematic', url: '/images/samples/cinematic.png' },
+  { id: 'nature', name: 'Nature', url: '/images/samples/nature.png' },
 ];
 
 export default function LUTPreview({ 
   lutUrl, 
   referenceImageUrl, 
-  thumbnailUrl, // alias
+  thumbnailUrl, 
   name, 
-  resourceName, // alias
+  resourceName, 
   variant = 'full' 
 }) {
   const isCard = variant === 'card';
-  const finalRefImg = referenceImageUrl || thumbnailUrl;
   const finalName = name || resourceName;
-
-  const canvasRef = useRef(null);
-  const containerRef = useRef(null);
   const [sliderPos, setSliderPos] = useState(50);
   const [isResizing, setIsResizing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentSampleId, setCurrentSampleId] = useState(SAMPLE_IMAGES[0].id);
+
+  const activeImageUrl = (referenceImageUrl || thumbnailUrl) ? (referenceImageUrl || thumbnailUrl) : 
+    (SAMPLE_IMAGES.find(s => s.id === currentSampleId)?.url || SAMPLE_IMAGES[0].url);
+
   const [activeRefImg, setActiveRefImg] = useState(() => {
-    if (finalRefImg) {
-      return finalRefImg.startsWith('http') 
-        ? getOptimizedUrl(finalRefImg, { width: 2560, quality: 95 }) 
-        : finalRefImg;
-    }
-    return DEFAULT_REFERENCES[0].url;
+    return activeImageUrl.startsWith('http') 
+        ? getOptimizedUrl(activeImageUrl, { width: 2560, quality: 95 }) 
+        : activeImageUrl;
   });
+
+  const canvasRef = useRef(null);
+  const containerRef = useRef(null);
   const sliderPosRef = useRef(50);
-  const glResourcesRef = useRef({ program: null, sliderLoc: null, gl: null });
 
   useEffect(() => {
     sliderPosRef.current = sliderPos;
   }, [sliderPos]);
 
   useEffect(() => {
-    if (finalRefImg) {
-      const finalUrl = finalRefImg.startsWith('http')
-        ? getOptimizedUrl(finalRefImg, { width: 2560, quality: 95 })
-        : finalRefImg;
-      setActiveRefImg(finalUrl);
-    }
-  }, [finalRefImg]);
+    const finalUrl = activeImageUrl.startsWith('http')
+      ? getOptimizedUrl(activeImageUrl, { width: 2560, quality: 95 })
+      : activeImageUrl;
+    setActiveRefImg(finalUrl);
+  }, [activeImageUrl]);
 
   const handleMove = useCallback((clientX) => {
     if (!containerRef.current) return;
@@ -226,19 +224,24 @@ void main() {
     <div className={`${styles.container} ${isCard ? styles.cardMode : ''}`} ref={containerRef}>
       {!isCard && (
         <div className={styles.header}>
-          <div className={styles.refSelector}>
-            <span className={styles.selectorLabel}>Samples:</span>
-            <div className={styles.refButtons}>
-              {DEFAULT_REFERENCES.map((ref) => (
-                <button
-                  key={ref.id}
-                  className={`${styles.refButton} ${activeRefImg === ref.url ? styles.refButtonActive : ""}`}
-                  onClick={() => setActiveRefImg(ref.url)}
-                >
-                  {ref.label}
-                </button>
-              ))}
-            </div>
+          <div className={styles.titleWrapper}>
+            <h3 className={styles.previewTitle}>{finalName}</h3>
+          </div>
+          
+          <div className={styles.sampleSwitcher}>
+            <span className={styles.switcherLabel}>Samples:</span>
+            {SAMPLE_IMAGES.map((sample) => (
+              <button
+                key={sample.id}
+                className={`${styles.sampleButton} ${currentSampleId === sample.id ? styles.sampleActive : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentSampleId(sample.id);
+                }}
+              >
+                {sample.name}
+              </button>
+            ))}
           </div>
         </div>
       )}
@@ -287,6 +290,7 @@ void main() {
                 <span className={styles.labelAfter}>LUT PREVIEW</span>
               </div>
             </div>
+
           </>
         )}
       </div>
