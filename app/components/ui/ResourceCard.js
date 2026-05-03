@@ -440,7 +440,7 @@ const ResourceCard = memo(function ResourceCard({
             
             <div className={styles.staticLutThumbnail} style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
               <Image
-                src={getOptimizedUrl(thumbnailUrl || "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=1964&auto=format&fit=crop", { width: 1200, quality: 90 })}
+                src={getOptimizedUrl(thumbnailUrl || "/images/samples/portrait.png", { width: 1200, quality: 90 })}
                 alt={displayName}
                 fill
                 className={styles.cardImage}
@@ -460,10 +460,10 @@ const ResourceCard = memo(function ResourceCard({
                 <div style={{ 
                   position: 'absolute',
                   top: 0,
-                  left: 0,
+                  right: 0, // Move to right
                   width: '50%',
                   height: '100%',
-                  borderRight: '1px solid rgba(255,255,255,0.3)',
+                  borderLeft: '1px solid rgba(255,255,255,0.3)',
                   backgroundColor: 'rgba(0, 50, 150, 0.05)',
                   backdropFilter: 'contrast(1.1) saturate(1.1)',
                   WebkitBackdropFilter: 'contrast(1.1) saturate(1.1)',
@@ -472,7 +472,7 @@ const ResourceCard = memo(function ResourceCard({
                   <div style={{
                     position: 'absolute',
                     top: '50%',
-                    right: '-8px',
+                    left: '-8px', // Adjust handle position for right side
                     width: '16px',
                     height: '16px',
                     backgroundColor: 'white',
@@ -485,32 +485,37 @@ const ResourceCard = memo(function ResourceCard({
                 
                 <div style={{ 
                   position: 'absolute',
-                  bottom: '12px',
+                  bottom: '24px',
                   left: 0,
                   right: 0,
                   display: 'flex',
-                  justifyContent: 'space-around',
-                  padding: 0,
-                  zIndex: 110
+                  zIndex: 110,
+                  pointerEvents: 'none'
                 }}>
-                  <span style={{ 
-                    background: 'rgba(0,0,0,0.6)', 
-                    color: 'white', 
-                    padding: '3px 8px', 
-                    fontSize: '9px', 
-                    fontWeight: 'bold',
-                    borderRadius: '2px',
-                    backdropFilter: 'blur(4px)'
-                  }}>LUT PREVIEW</span>
-                  <span style={{ 
-                    background: 'rgba(0,0,0,0.6)', 
-                    color: 'white', 
-                    padding: '3px 8px', 
-                    fontSize: '9px', 
-                    fontWeight: 'bold',
-                    borderRadius: '2px',
-                    backdropFilter: 'blur(4px)'
-                  }}>ORIGINAL</span>
+                  <div style={{ width: '50%', textAlign: 'center' }}>
+                    <span style={{ 
+                      background: 'rgba(0,0,0,0.6)', 
+                      color: 'white', 
+                      padding: '3px 8px', 
+                      fontSize: '9px', 
+                      fontWeight: 'bold',
+                      borderRadius: '2px',
+                      backdropFilter: 'blur(4px)',
+                      letterSpacing: '1px'
+                    }}>ORIGINAL</span>
+                  </div>
+                  <div style={{ width: '50%', textAlign: 'center' }}>
+                    <span style={{ 
+                      background: 'rgba(0,0,0,0.6)', 
+                      color: 'white', 
+                      padding: '3px 8px', 
+                      fontSize: '9px', 
+                      fontWeight: 'bold',
+                      borderRadius: '2px',
+                      backdropFilter: 'blur(4px)',
+                      letterSpacing: '1px'
+                    }}>LUT PREVIEW</span>
+                  </div>
                 </div>
               </div>
             </div>

@@ -9,31 +9,52 @@ const getOptimizedUrl = (url, { width, quality }) => {
 };
 
 const DEFAULT_REFERENCES = [
-  { id: 'portrait', label: 'Portrait', url: getOptimizedUrl('https://images.unsplash.com/photo-1531746020798-e6953c6e8e04', { width: 2560, quality: 95 }) },
-  { id: 'cinematic', label: 'Cinema', url: getOptimizedUrl('https://images.unsplash.com/photo-1536440136628-849c177e76a1', { width: 2560, quality: 95 }) },
-  { id: 'landscape', label: 'Nature', url: getOptimizedUrl('https://images.unsplash.com/photo-1472214103451-9374bd1c798e', { width: 2560, quality: 95 }) },
-  { id: 'interior', label: 'Indoor', url: getOptimizedUrl('https://images.unsplash.com/photo-1513694203232-719a280e022f', { width: 2560, quality: 95 }) },
+  { id: 'portrait', label: 'Portrait', url: '/images/samples/portrait.png' },
+  { id: 'cinematic', label: 'Cinema', url: '/images/samples/cinematic.png' },
+  { id: 'landscape', label: 'Nature', url: '/images/samples/nature.png' },
 ];
 
-export default function LUTPreview({ lutUrl, referenceImageUrl, name, variant = 'full' }) {
+export default function LUTPreview({ 
+  lutUrl, 
+  referenceImageUrl, 
+  thumbnailUrl, // alias
+  name, 
+  resourceName, // alias
+  variant = 'full' 
+}) {
   const isCard = variant === 'card';
+  const finalRefImg = referenceImageUrl || thumbnailUrl;
+  const finalName = name || resourceName;
+
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
   const [sliderPos, setSliderPos] = useState(50);
   const [isResizing, setIsResizing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeRefImg, setActiveRefImg] = useState(
-    referenceImageUrl 
-      ? getOptimizedUrl(referenceImageUrl, { width: 2560, quality: 95 }) 
-      : DEFAULT_REFERENCES[0].url
-  );
+  const [activeRefImg, setActiveRefImg] = useState(() => {
+    if (finalRefImg) {
+      return finalRefImg.startsWith('http') 
+        ? getOptimizedUrl(finalRefImg, { width: 2560, quality: 95 }) 
+        : finalRefImg;
+    }
+    return DEFAULT_REFERENCES[0].url;
+  });
   const sliderPosRef = useRef(50);
   const glResourcesRef = useRef({ program: null, sliderLoc: null, gl: null });
 
   useEffect(() => {
     sliderPosRef.current = sliderPos;
   }, [sliderPos]);
+
+  useEffect(() => {
+    if (finalRefImg) {
+      const finalUrl = finalRefImg.startsWith('http')
+        ? getOptimizedUrl(finalRefImg, { width: 2560, quality: 95 })
+        : finalRefImg;
+      setActiveRefImg(finalUrl);
+    }
+  }, [finalRefImg]);
 
   const handleMove = useCallback((clientX) => {
     if (!containerRef.current) return;
@@ -44,12 +65,12 @@ export default function LUTPreview({ lutUrl, referenceImageUrl, name, variant = 
   }, []);
 
   const onMouseDown = (e) => {
-    e.stopPropagation();
     setIsResizing(true);
+    handleMove(e.clientX);
   };
   const onTouchStart = (e) => {
-    e.stopPropagation();
     setIsResizing(true);
+    handleMove(e.touches[0].clientX);
   };
 
   useEffect(() => {
@@ -113,7 +134,7 @@ uniform float uSliderPos;
 void main() {
   vec4 color = texture(uSampler, vTextureCoord);
   vec3 lookup = clamp(color.rgb, 0.0, 1.0);
-  if (vTextureCoord.x < uSliderPos) {
+  if (vTextureCoord.x > uSliderPos) {
     vec3 graded = texture(uLutSampler, lookup).rgb;
     outColor = vec4(graded, color.a);
   } else {
@@ -156,6 +177,7 @@ void main() {
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
         gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
@@ -221,7 +243,11 @@ void main() {
         </div>
       )}
 
-      <div className={styles.comparisonWrapper}>
+      <div 
+        className={styles.comparisonWrapper} 
+        onMouseDown={onMouseDown}
+        onTouchStart={onTouchStart}
+      >
         <canvas ref={canvasRef} className={styles.canvas} />
         
         {isLoading && (
@@ -242,16 +268,24 @@ void main() {
             <div 
               className={styles.slider} 
               style={{ left: `${sliderPos}%` }}
-              onMouseDown={onMouseDown}
-              onTouchStart={onTouchStart}
             >
               <div className={styles.sliderLine} />
               <div className={styles.sliderHandle} />
             </div>
 
             <div className={styles.labels}>
-              <span className={styles.labelBefore}>LUT PREVIEW</span>
-              <span className={styles.labelAfter}>ORIGINAL</span>
+              <div 
+                className={styles.labelWrapper}
+                style={{ opacity: Math.max(0, Math.min(1, (sliderPos - 15) / 15)) }}
+              >
+                <span className={styles.labelBefore}>ORIGINAL</span>
+              </div>
+              <div 
+                className={styles.labelWrapper}
+                style={{ opacity: Math.max(0, Math.min(1, (85 - sliderPos) / 15)) }}
+              >
+                <span className={styles.labelAfter}>LUT PREVIEW</span>
+              </div>
             </div>
           </>
         )}

@@ -215,7 +215,7 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
           {isLUT && (
             <LUTPreview 
               lutUrl={resource.downloadUrl || resource.fileUrl} 
-              referenceImageUrl={resource.thumbnailUrl || resource.category?.reference_image_url || "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?q=80&w=1964&auto=format&fit=crop"} 
+              referenceImageUrl={resource.thumbnailUrl || resource.category?.reference_image_url || "/images/samples/portrait.png"} 
               name={resource.name}
             />
           )}
