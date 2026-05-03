@@ -306,7 +306,7 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
   }, [isInitialized, debouncedFolderId, debouncedFormats, debouncedTags, debouncedSortBy, debouncedSearch, slug]);
 
   const tagKey = (selectedFolderId && isInitialized) ? [`tags`, slug, selectedFolderId] : null;
-  const { data: swrFolderTags } = useSWR(tagKey, async ([, category, folder]) => {
+  const { data: swrFolderTags, isValidating: isTagsValidating } = useSWR(tagKey, async ([, category, folder]) => {
     const node = findInTree(folders, folder)?.current;
     if (node) {
       const allSubFolderIds = getDescendantIds(node);
@@ -403,9 +403,9 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
       baseTagsNames = Array.from(names);
     } else {
       // Trong chế độ duyệt:
-      // 1. Nếu đang ở trong một folder, ưu tiên dùng tag của folder đó (từ SWR)
-      // 2. Nếu không có folder (gốc), dùng categoryTags
-      const currentContextTags = selectedFolderId ? (swrFolderTags || []) : categoryTags;
+      // 1. Ưu tiên dùng swrFolderTags nếu có (kể cả data cũ từ keepPreviousData)
+      // 2. Nếu đang ở root hoặc chưa bao giờ load folder tags, dùng categoryTags
+      const currentContextTags = (selectedFolderId && swrFolderTags) ? swrFolderTags : categoryTags;
       baseTagsNames = currentContextTags.map(t => (typeof t === 'string' ? t : t.name).toLowerCase());
     }
 
@@ -414,15 +414,18 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
         name,
         count: tagFrequencyMap.get(name) || 0
       }))
-      .filter(t => isFiltered || t.count > 0 || selectedTagsSet.has(t.name))
+      .filter(t => isFiltered ? (t.count > 0 || selectedTagsSet.has(t.name)) : true)
       .sort((a, b) => {
         // Ưu tiên các tag đang được chọn lên đầu
         const aSelected = selectedTagsSet.has(a.name);
         const bSelected = selectedTagsSet.has(b.name);
         if (aSelected && !bSelected) return -1;
         if (!aSelected && bSelected) return 1;
-        // Sau đó sắp xếp theo số lượng giảm dần
-        if (a.count !== b.count) return b.count - a.count;
+
+        if (isFiltered && a.count !== b.count) {
+          return b.count - a.count;
+        }
+        
         return a.name.localeCompare(b.name);
       });
   }, [tagFrequencyMap, selectedFolderId, categoryTags, swrFolderTags, inPageSearch, selectedTags, selectedFormats]);
@@ -529,7 +532,7 @@ export default function ClientPage({ slug, info, folders, resources: initialReso
           pathname={pathname}
           folders={folders}
           findInTree={findInTree}
-          isLoading={isInitialLoading || isFetchLoading}
+          isLoading={isInitialLoading || isFetchLoading || isTagsValidating}
         />
 
         <ResourceGrid 

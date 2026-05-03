@@ -339,7 +339,7 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   white-space: nowrap;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: background 0.2s, border-color 0.2s, color 0.2s, opacity 0.2s;
   font-family: var(--font-mono);
   text-transform: lowercase;
   backdrop-filter: blur(4px);

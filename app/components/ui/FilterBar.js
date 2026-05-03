@@ -209,7 +209,7 @@ const FilterBar = memo(function FilterBar({
         </div>
       </div>
 
-      <AnimatePresence mode="popLayout">
+      <AnimatePresence mode="popLayout" initial={false}>
         <motion.div 
           layout 
           initial={{ opacity: 0, y: -10 }}
@@ -238,7 +238,7 @@ const FilterBar = memo(function FilterBar({
                 )}
               </motion.div>
               <div className={styles.tagsScroll}>
-                <AnimatePresence mode="popLayout">
+                <AnimatePresence mode="popLayout" initial={false}>
                   {tags.map((tag) => (
                     <motion.button
                       layout
