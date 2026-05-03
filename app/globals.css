@@ -91,6 +91,24 @@
   --bg-social-icon: rgba(255, 255, 255, 0.03);
 }
 
+.is-plugin {
+  --navbar-height: 0px !important;
+}
+
+/* Force monochrome for plugin mode */
+.is-plugin [style*="--cat-color"],
+.is-plugin [style*="color"],
+.is-plugin [style*="--active-color"] {
+  --cat-color: var(--text-primary) !important;
+  --active-color: var(--text-primary) !important;
+}
+
+.is-plugin h1, 
+.is-plugin h2, 
+.is-plugin h3 {
+  color: var(--text-primary) !important;
+}
+
 [data-theme='light'] {
   --bg-primary: #FFFFFF;
   --bg-card: #F9F9F9;

@@ -16,9 +16,22 @@ export async function POST(request) {
 
     // 1. Check if user is authenticated
     const supabase = await createServerSupabaseClient();
-    const {
+    let {
       data: { user },
     } = await supabase.auth.getUser();
+
+    // Fallback: Check Authorization header (required for some plugin environments where cookies are blocked)
+    if (!user) {
+      const authHeader = request.headers.get("Authorization");
+      if (authHeader?.startsWith("Bearer ")) {
+        const token = authHeader.split(" ")[1];
+        const { data: { user: headerUser }, error: headerError } = await supabase.auth.getUser(token);
+        if (!headerError && headerUser) {
+          user = headerUser;
+          console.log("[DownloadAPI] Authenticated via Authorization header:", user.email);
+        }
+      }
+    }
 
     if (!user) {
       return NextResponse.json(

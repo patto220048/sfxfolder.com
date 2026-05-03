@@ -502,3 +502,54 @@
 .navBtn:hover:not(:disabled) svg {
   transform: scale(1.1);
 }
+/* ---------- Plugin Mode Specific ---------- */
+.pluginLayout {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background: var(--bg-primary);
+}
+
+.pluginSidebar {
+  width: 260px;
+  min-width: 260px;
+  height: 100%;
+  border-right: 1px solid var(--border-default);
+  overflow-y: auto;
+  background: var(--bg-surface);
+  flex-shrink: 0;
+}
+
+.pluginContent {
+  flex: 1;
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 16px !important;
+  position: relative;
+}
+
+.pluginGridWrapper {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  position: relative;
+}
+
+.pluginHeader {
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.pluginGrid {
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)) !important;
+  gap: 12px !important;
+}
+
+.pluginSoundGrid {
+  grid-template-columns: 1fr !important;
+  gap: 8px !important;
+}

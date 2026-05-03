@@ -23,6 +23,7 @@ const FilterBar = memo(function FilterBar({
   onBreadcrumbClick,
   primaryColor = "var(--premium-gold)",
   isLoading = false,
+  isPlugin = false,
 }) {
   const [isSortOpen, setIsSortOpen] = useState(false);
   const [isSearchExpanded, setIsSearchExpanded] = useState(inPageSearch.length > 0);
@@ -71,30 +72,32 @@ const FilterBar = memo(function FilterBar({
     <motion.div layout className={styles.container} id="filter-bar">
       <div className={styles.topRow}>
         <div className={styles.leftGroup}>
-          <div className={styles.breadcrumbWrapper}>
-            <button 
-              className={styles.breadcrumbBtn} 
-              onClick={() => {
-                onBreadcrumbClick?.(null);
-              }}
-              title={`Back to all ${categoryName}`}
-            >
-              <Filter size={14} className={styles.breadcrumbIcon} />
-              <span className={styles.breadcrumbText}>{categoryName}</span>
-            </button>
-            
-            {breadcrumbs.map((bc, idx) => (
-              <div key={bc.id} className={styles.breadcrumbPiece}>
-                <span className={styles.breadcrumbSep}>/</span>
-                <button 
-                  className={`${styles.breadcrumbBtn} ${idx === breadcrumbs.length - 1 ? styles.activeBreadcrumb : ""}`}
-                  onClick={() => onBreadcrumbClick?.(bc.id)}
-                >
-                  {bc.name}
-                </button>
-              </div>
-            ))}
-          </div>
+          {!isPlugin && (
+            <div className={styles.breadcrumbWrapper}>
+              <button 
+                className={styles.breadcrumbBtn} 
+                onClick={() => {
+                  onBreadcrumbClick?.(null);
+                }}
+                title={`Back to all ${categoryName}`}
+              >
+                <Filter size={14} className={styles.breadcrumbIcon} />
+                <span className={styles.breadcrumbText}>{categoryName}</span>
+              </button>
+              
+              {breadcrumbs.map((bc, idx) => (
+                <div key={bc.id} className={styles.breadcrumbPiece}>
+                  <span className={styles.breadcrumbSep}>/</span>
+                  <button 
+                    className={`${styles.breadcrumbBtn} ${idx === breadcrumbs.length - 1 ? styles.activeBreadcrumb : ""}`}
+                    onClick={() => onBreadcrumbClick?.(bc.id)}
+                  >
+                    {bc.name}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
 
           <div className={styles.chipGroup}>
             {resSlug && (
@@ -210,7 +213,7 @@ const FilterBar = memo(function FilterBar({
       </div>
 
       <AnimatePresence>
-        {(tags.length > 0 || isLoading) && (
+        {!isPlugin && (tags.length > 0 || isLoading) && (
           <motion.div 
             layout 
             key="tags-row"

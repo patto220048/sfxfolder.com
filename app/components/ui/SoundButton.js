@@ -36,6 +36,7 @@ const SoundButton = memo(function SoundButton({
   primaryColor = "#FFFFFF",
   isPremium,
   similarity,
+  isPlugin = false,
   ...otherProps
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -45,7 +46,7 @@ const SoundButton = memo(function SoundButton({
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   
-  const { user, isPremium: userIsPremium, isAdmin } = useAuth();
+  const { user, session, isPremium: userIsPremium, isAdmin, loading } = useAuth();
   const router = useRouter();
 
   const audioRef = useRef(null);
@@ -308,20 +309,32 @@ const SoundButton = memo(function SoundButton({
   const handleDownload = async (e) => {
     e.stopPropagation();
 
+    if (loading) {
+      alert("Still checking your account... please wait a second.");
+      return;
+    }
+
     // Premium check - All resources now require Premium
     if (!isAdmin && !userIsPremium) {
+      alert("Please login with a Premium account to add assets to Premiere.");
       window.dispatchEvent(new CustomEvent("need-premium"));
       return;
     }
 
+    console.log("Starting asset download for Premiere:", id);
     if (isDownloading) return;
 
     setIsDownloading(true);
     try {
       // 1. Call our API to increment count and get a Secure Signed Download URL
+      const headers = { 'Content-Type': 'application/json' };
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const response = await fetch('/api/download', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ resourceId: id }),
       });
 
@@ -338,17 +351,34 @@ const SoundButton = memo(function SoundButton({
       
       if (!signedUrl) throw new Error("No download URL returned");
 
-      // 2. Trigger Native Browser Download via Hidden Anchor
-      const link = document.createElement('a');
-      link.href = signedUrl;
-      link.style.display = 'none';
-      document.body.appendChild(link);
-      link.click();
-      
-      // Cleanup
-      setTimeout(() => {
-        document.body.removeChild(link);
-      }, 100);
+      const getDownloadName = () => {
+        const baseName = (name || fileName || "download").replace(/\.[^/.]+$/, "");
+        const ext = fileFormat ? `.${fileFormat.replace(/^\./, "").toLowerCase()}` : "";
+        return `${baseName}${ext}`;
+      };
+
+      if (isPlugin || (typeof window !== 'undefined' && window.self !== window.top)) {
+        // 2. Integration with Premiere Plugin: Send URL for the Panel to download and import
+        console.log("POSTING MESSAGE TO PARENT FROM SOUNDBUTTON:", signedUrl);
+        window.parent.postMessage({
+          type: 'IMPORT_ASSET',
+          url: signedUrl,
+          fileName: getDownloadName(),
+          resourceId: id
+        }, '*');
+      } else {
+        // 2. Trigger Native Browser Download via Hidden Anchor
+        const link = document.createElement('a');
+        link.href = signedUrl;
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        
+        // Cleanup
+        setTimeout(() => {
+          document.body.removeChild(link);
+        }, 100);
+      }
     } catch (err) {
       console.error("Download failed:", err);
     }
@@ -467,9 +497,9 @@ const SoundButton = memo(function SoundButton({
         className={styles.downloadBtn}
         onClick={handleDownload}
         disabled={isDownloading || !downloadUrl}
-        aria-label={`Download ${displayName}`}
+        aria-label={`${isPlugin ? 'Import' : 'Download'} ${displayName}`}
       >
-        <Download size={14} />
+        {isPlugin ? <span className={styles.importText}>ADD</span> : <Download size={14} />}
       </button>
     </div>
   );

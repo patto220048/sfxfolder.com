@@ -6,8 +6,9 @@
   position: sticky;
   top: var(--navbar-height);
   flex-shrink: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
   z-index: var(--z-sidebar);
   overscroll-behavior: contain;
   transition: none; /* No transition on mount to prevent CLS */
@@ -17,34 +18,34 @@
   transition: width var(--transition-base);
 }
 
-/* Standard thin scrollbar for Firefox */
-.sidebar {
+/* Standard thin scrollbar for Firefox - moved to .content */
+.content {
   scrollbar-width: thin;
   scrollbar-color: var(--border-default) transparent;
 }
 
 /* Custom Scrollbar for Chrome/Safari/Edge - Integrated with interaction zone */
-.sidebar::-webkit-scrollbar {
+.content::-webkit-scrollbar {
   width: 6px; 
 }
 
-.sidebar::-webkit-scrollbar-track {
+.content::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.sidebar::-webkit-scrollbar-thumb {
+.content::-webkit-scrollbar-thumb {
   background: var(--border-default);
   border-radius: 10px;
   border: 1.5px solid transparent; /* Gives a floating/centered appearance */
   background-clip: content-box;
 }
 
-.sidebar:hover::-webkit-scrollbar-thumb {
+.content:hover::-webkit-scrollbar-thumb {
   background: var(--space-400, #444);
   background-clip: content-box;
 }
 
-.sidebar::-webkit-scrollbar-thumb:hover {
+.content::-webkit-scrollbar-thumb:hover {
   background: var(--cat-color, var(--premium-gold)) !important;
   background-clip: content-box;
 }
@@ -99,6 +100,55 @@
   padding: var(--space-2) 0;
   /* Protect content from overlapping with scrollbar/resizer zone */
   padding-right: 12px;
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+}
+
+.footer {
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border-default);
+  background: var(--bg-card);
+  flex-shrink: 0;
+}
+
+.profileBtn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.profileBtn:hover {
+  background: var(--bg-hover);
+  border-color: var(--cat-color, var(--premium-gold));
+}
+
+.avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.loginIcon {
+  color: var(--text-muted);
+}
+
+.profileName {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
 }
 
 .allBtn {

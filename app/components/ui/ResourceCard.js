@@ -34,6 +34,7 @@ const ResourceCard = memo(function ResourceCard({
   onPreview,
   detailUrl,
   primaryColor = "#FFFFFF",
+  isPlugin = false,
   ...otherProps
 }) {
   const resourceObj = { id, name, fileName, fileFormat, downloadUrl, ...otherProps };
@@ -624,7 +625,13 @@ const ResourceCard = memo(function ResourceCard({
             <Eye size={16} />
           </Link>
         )}
-        <DownloadButton downloadUrl={resolvedUrl} fileName={name} fileFormat={fileFormat} resourceId={id} />
+        <DownloadButton 
+          downloadUrl={resolvedUrl} 
+          fileName={name} 
+          fileFormat={fileFormat} 
+          resourceId={id} 
+          isPlugin={isPlugin}
+        />
       </div>
     </div>
   );

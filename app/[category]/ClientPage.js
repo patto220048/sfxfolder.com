@@ -15,6 +15,7 @@ import { mediaManager } from "@/app/lib/mediaManager";
 import NavigationHeader from "./components/NavigationHeader";
 import FilterSection from "./components/FilterSection";
 import ResourceGrid from "./components/ResourceGrid";
+import Sidebar from "@/app/components/layout/Sidebar";
 
 import styles from "./page.module.css";
 
@@ -43,7 +44,7 @@ const getDescendantIds = (node) => {
   return ids;
 };
 
-function ClientPageContent({ slug, info, folders, resources: initialResources, categoryTags = [] }) {
+function ClientPageContent({ slug, info, folders, resources: initialResources, categoryTags = [], isPlugin: propIsPlugin = false }) {
   const [selectedFolderId, setSelectedFolderId] = useState(null);
   const [selectedFolderName, setSelectedFolderName] = useState(null);
   const [selectedFormats, setSelectedFormats] = useState([]);
@@ -78,6 +79,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const isPlugin = propIsPlugin || pathname?.startsWith("/plugins/") || searchParams.get("mode") === "plugin" || (typeof window !== 'undefined' && window.location.search.includes('mode=plugin'));
   const resSlug = searchParams.get("res");
   const { setFolderId } = useSidebar();
 
@@ -499,71 +501,147 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
     }).finally(() => setIsLoadingMore(false));
   }, [isInitialLoading, isFetchLoading, isLoadingMore, hasMoreDB, serverOffset, debouncedSearch, debouncedFormats, debouncedTags, debouncedFolderId, slug, folders]);
 
-  return (
-    <>
-      <div className={styles.main}>
-        <NavigationHeader 
-          selectedFolderId={selectedFolderId}
-          resetToRoot={resetToRoot}
-          goBack={goBack}
-          goForward={goForward}
-          historyPointer={historyPointer}
-          historyStack={historyStack}
-          currentFolder={currentFolder}
-          info={info}
-        />
 
-        <FilterSection
-          info={info}
-          selectedFormats={selectedFormats}
-          setSelectedFormats={setSelectedFormats}
-          availableTags={availableTags}
-          selectedTags={selectedTags}
-          setSelectedTags={setSelectedTags}
-          sortBy={sortBy}
-          setSortBy={setSortBy}
-          inPageSearch={inPageSearch}
-          setInPageSearch={setInPageSearch}
-          resSlug={resSlug}
-          breadcrumbs={breadcrumbs}
-          handleSelectFolder={handleSelectFolder}
-          updateUrl={updateUrl}
-          router={router}
-          pathname={pathname}
-          folders={folders}
-          findInTree={findInTree}
-          isLoading={isInitialLoading || isFetchLoading || isTagsValidating}
-        />
+  if (isPlugin) {
+    return (
+      <div className={styles.pluginLayout}>
+        <aside className={styles.pluginSidebar}>
+          <Sidebar 
+            folders={folders} 
+            categorySlug={slug}
+            categoryName={info.name}
+            primaryColor={info.color}
+            isPluginSidebar={true}
+          />
+        </aside>
 
-        <ResourceGrid 
-          filteredResources={filteredResources}
-          currentSubfolders={currentSubfolders}
-          isInitialLoading={isInitialLoading}
-          isFetchLoading={isFetchLoading}
-          isPending={isPending}
-          isLoadingMore={isLoadingMore}
-          hasMoreDB={hasMoreDB}
-          info={info}
-          slug={slug}
-          handleSelectFolder={handleSelectFolder}
-          setPreviewResource={setPreviewResource}
-          router={router}
-          inPageSearch={deferredSearch}
-          selectedFormats={selectedFormats}
-          selectedTags={selectedTags}
-          resSlug={resSlug}
-          onLoadMore={handleLoadMore}
-        />
+        <div className={styles.pluginContent}>
+          <FilterSection
+            info={info}
+            selectedFormats={selectedFormats}
+            setSelectedFormats={setSelectedFormats}
+            availableTags={availableTags}
+            selectedTags={selectedTags}
+            setSelectedTags={setSelectedTags}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            inPageSearch={inPageSearch}
+            setInPageSearch={setInPageSearch}
+            resSlug={resSlug}
+            breadcrumbs={breadcrumbs}
+            handleSelectFolder={handleSelectFolder}
+            updateUrl={updateUrl}
+            router={router}
+            pathname={pathname}
+            folders={folders}
+            findInTree={findInTree}
+            isLoading={isInitialLoading || isFetchLoading || isTagsValidating}
+            isPlugin={isPlugin}
+          />
+
+          <ResourceGrid 
+            filteredResources={filteredResources}
+            currentSubfolders={currentSubfolders}
+            isInitialLoading={isInitialLoading}
+            isFetchLoading={isFetchLoading}
+            isPending={isPending}
+            isLoadingMore={isLoadingMore}
+            hasMoreDB={hasMoreDB}
+            info={info}
+            slug={slug}
+            handleSelectFolder={handleSelectFolder}
+            setPreviewResource={setPreviewResource}
+            router={router}
+            inPageSearch={deferredSearch}
+            selectedFormats={selectedFormats}
+            selectedTags={selectedTags}
+            resSlug={resSlug}
+            onLoadMore={handleLoadMore}
+            isPlugin={isPlugin}
+          />
+        </div>
+
+        {previewResource && (
+          <PreviewOverlay 
+            previewResource={previewResource}
+            onClose={() => setPreviewResource(null)} 
+            showDownload={true} 
+            showInsert={isPlugin}
+            isPlugin={isPlugin}
+          />
+        )}
       </div>
+    );
+  }
+
+  // Standard Web Layout
+  return (
+    <div className={styles.main}>
+      <NavigationHeader 
+        selectedFolderId={selectedFolderId}
+        resetToRoot={resetToRoot}
+        goBack={goBack}
+        goForward={goForward}
+        historyPointer={historyPointer}
+        historyStack={historyStack}
+        currentFolder={currentFolder}
+        info={info}
+      />
+
+      <FilterSection
+        info={info}
+        selectedFormats={selectedFormats}
+        setSelectedFormats={setSelectedFormats}
+        availableTags={availableTags}
+        selectedTags={selectedTags}
+        setSelectedTags={setSelectedTags}
+        sortBy={sortBy}
+        setSortBy={setSortBy}
+        inPageSearch={inPageSearch}
+        setInPageSearch={setInPageSearch}
+        resSlug={resSlug}
+        breadcrumbs={breadcrumbs}
+        handleSelectFolder={handleSelectFolder}
+        updateUrl={updateUrl}
+        router={router}
+        pathname={pathname}
+        folders={folders}
+        findInTree={findInTree}
+        isLoading={isInitialLoading || isFetchLoading || isTagsValidating}
+        isPlugin={isPlugin}
+      />
+
+      <ResourceGrid 
+        filteredResources={filteredResources}
+        currentSubfolders={currentSubfolders}
+        isInitialLoading={isInitialLoading}
+        isFetchLoading={isFetchLoading}
+        isPending={isPending}
+        isLoadingMore={isLoadingMore}
+        hasMoreDB={hasMoreDB}
+        info={info}
+        slug={slug}
+        handleSelectFolder={handleSelectFolder}
+        setPreviewResource={setPreviewResource}
+        router={router}
+        inPageSearch={deferredSearch}
+        selectedFormats={selectedFormats}
+        selectedTags={selectedTags}
+        resSlug={resSlug}
+        onLoadMore={handleLoadMore}
+        isPlugin={isPlugin}
+      />
 
       {previewResource && (
         <PreviewOverlay 
-          resource={previewResource} 
+          previewResource={previewResource}
           onClose={() => setPreviewResource(null)} 
           showDownload={true} 
+          showInsert={false}
+          isPlugin={false}
         />
       )}
-    </>
+    </div>
   );
 }
 

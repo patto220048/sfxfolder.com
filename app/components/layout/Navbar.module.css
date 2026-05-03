@@ -37,7 +37,7 @@
 .logoText {
   font-family: var(--font-heading);
   font-size: 1.5rem;
-  font-weight: 800; /* Bold & sturdy */
+  font-weight: 800;
   letter-spacing: -0.05em;
   color: var(--text-primary);
   text-transform: uppercase;
@@ -228,12 +228,12 @@
 .authAction {
   display: flex;
   align-items: center;
-  min-width: 40px; /* Width of UserMenu trigger */
+  min-width: 40px;
 }
 
 @media (min-width: 769px) {
   .authAction {
-    min-width: 110px; /* Approximate width of 'Sign In' button */
+    min-width: 110px;
   }
 }
 
@@ -264,4 +264,58 @@
   .hamburger {
     display: flex;
   }
+}
+
+/* ---------- Plugin Specific Overrides ---------- */
+.pluginNavbar { 
+  height: 40px !important; 
+  min-height: 40px !important; 
+  border-bottom: 1px solid #333; 
+  background: #111 !important; 
+  position: fixed !important;
+}
+
+.pluginNavbar .inner { 
+  height: 100% !important; 
+  padding: 0 10px !important; 
+  max-width: none !important;
+  justify-content: flex-start !important;
+  gap: 10px;
+}
+
+.pluginLinks { 
+  display: flex !important; 
+  gap: 15px !important; 
+  margin: 0 !important; 
+  padding: 0 !important; 
+  overflow-x: auto; 
+  scrollbar-width: none; 
+  flex: 1; 
+  list-style: none !important;
+}
+
+.pluginLinks::-webkit-scrollbar { 
+  display: none; 
+}
+
+.pluginLink { 
+  font-size: 11px !important; 
+  white-space: nowrap; 
+  padding: 0 5px !important; 
+  opacity: 0.8; 
+  color: #fff !important;
+  text-decoration: none !important;
+  font-weight: 700 !important;
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
+
+.pluginLink:hover { 
+  opacity: 1; 
+}
+
+.pluginNavbar .actions {
+  flex: 0 0 auto !important;
+  gap: 5px !important;
 }

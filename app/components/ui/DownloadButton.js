@@ -7,13 +7,15 @@ import { incrementDownloadCount } from "@/app/lib/api";
 import { useAuth } from "@/app/lib/auth-context";
 import styles from "./DownloadButton.module.css";
 
-export default function DownloadButton({ downloadUrl, fileUrl, fileName, fileFormat, resourceId, size, isPremiumResource }) {
+export default function DownloadButton({ downloadUrl, fileUrl, fileName, fileFormat, resourceId, size, isPremiumResource, isPlugin = false }) {
   const [state, setState] = useState("idle"); // idle | downloading | done
-  const { user, isPremium, isAdmin } = useAuth();
+  const { user, session, isPremium, isAdmin, loading } = useAuth();
   const router = useRouter();
 
   // Resolve URL: prefer downloadUrl, fallback to fileUrl
   const resolvedUrl = downloadUrl || fileUrl;
+
+  const isInsidePlugin = isPlugin || (typeof window !== 'undefined' && window.self !== window.top);
 
   // Build proper filename with extension
   const getDownloadName = () => {
@@ -22,14 +24,18 @@ export default function DownloadButton({ downloadUrl, fileUrl, fileName, fileFor
     return `${baseName}${ext}`;
   };
 
-  const isInsidePlugin = typeof window !== 'undefined' && window.self !== window.top;
-
   const handleClick = async (e) => {
     e.preventDefault();
     e.stopPropagation();
 
+    if (loading) {
+      alert("Still checking your account... please wait a second.");
+      return;
+    }
+
     // Premium Check - All resources now require Premium
     if (!isAdmin && !isPremium) {
+      alert("Please login with a Premium account to add assets to Premiere.");
       window.dispatchEvent(new CustomEvent("need-premium"));
       return;
     }
@@ -39,9 +45,14 @@ export default function DownloadButton({ downloadUrl, fileUrl, fileName, fileFor
 
     try {
       // 1. Call our API to increment count and get a Secure Signed Download URL
+      const headers = { 'Content-Type': 'application/json' };
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const response = await fetch('/api/download', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         body: JSON.stringify({ resourceId: resourceId }),
       });
 
@@ -60,10 +71,12 @@ export default function DownloadButton({ downloadUrl, fileUrl, fileName, fileFor
 
       if (isInsidePlugin) {
         // 2. Tích hợp với Premiere Plugin: Gửi URL để Plugin tự tải và import
+        console.log("POSTING MESSAGE TO PARENT:", signedUrl);
         window.parent.postMessage({
           type: 'IMPORT_ASSET',
           url: signedUrl,
-          fileName: getDownloadName()
+          fileName: getDownloadName(),
+          resourceId: resourceId
         }, '*');
         
         setState("done");

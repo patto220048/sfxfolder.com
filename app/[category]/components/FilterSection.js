@@ -24,7 +24,8 @@ const FilterSection = memo(function FilterSection({
   pathname,
   folders,
   findInTree,
-  isLoading
+  isLoading,
+  isPlugin = false
 }) {
   const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
@@ -103,6 +104,7 @@ const FilterSection = memo(function FilterSection({
       categoryName={info.name}
       onBreadcrumbClick={handleBreadcrumbClick}
       isLoading={isLoading}
+      isPlugin={isPlugin}
     />
   );
 });

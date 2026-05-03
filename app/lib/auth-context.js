@@ -20,12 +20,14 @@ const AuthContext = createContext({
   updatePassword: () => {},
   resendVerificationEmail: () => {},
   refreshProfile: () => {},
+  setSession: () => {},
   setIsPasswordSettled: () => {},
 });
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
+  const [session, setSessionState] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { showToast } = useToast();
@@ -120,30 +122,41 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let mounted = true;
-    let previousPathname = pathname;
+
+    // Initial session check
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("[Auth] Initial getSession:", session?.user?.email);
+      if (mounted) {
+        setSessionState(session);
+        setUser(session?.user ?? null);
+        if (session?.user) {
+          fetchProfile(session.user.id);
+        }
+        setLoading(false);
+      }
+    });
 
     // Listen for auth state changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("[Auth] onAuthStateChange event:", event, session?.user?.email);
       if (!mounted) return;
+      
+      console.log(`[AuthListener] Event: ${event}`);
+      setSessionState(session);
+      const sessionUser = session?.user ?? null;
+      setUser(sessionUser);
       
       // If we are currently processing an internal update (like updatePassword), 
       // we skip the automatic profile fetch to avoid Lock Stolen errors.
       if (isAuthUpdating.current) {
         if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
-          console.log(`[AuthListener] Event ${event} detected during update - suppressing profile fetch to prevent deadlock.`);
-          const sessionUser = session?.user ?? null;
-          setUser(sessionUser);
           if (mounted) setLoading(false);
           return;
         }
       }
 
-      console.log(`[AuthListener] Event: ${event}`);
-      const sessionUser = session?.user ?? null;
-      setUser(sessionUser);
-      
       if (sessionUser) {
         await fetchProfile(sessionUser.id);
       } else {
@@ -184,23 +197,27 @@ export function AuthProvider({ children }) {
 
   // ─── Auth Methods ───
 
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = async (next = "") => {
     // Check if we are inside the Adobe Premiere Plugin environment
     const isPlugin = typeof window !== "undefined" && !!window.__adobe_cep__;
 
     if (isPlugin) {
-      // If in Plugin, open the login page in the default system browser (Chrome/Edge)
-      // Note: You will need to handle the token sync back to the plugin
-      const loginUrl = `${window.location.origin}/auth/login?mode=plugin`;
+      // If in Plugin, open the dedicated sync page in the system browser
+      const loginUrl = `${window.location.origin}/plugin-auth`;
       window.cep.util.openURLInDefaultBrowser(loginUrl);
       showToast("Please complete login in your external browser.", "success");
       return;
     }
 
+    const redirectTo = new URL(`${window.location.origin}/auth/callback`);
+    if (next) {
+      redirectTo.searchParams.set("next", next);
+    }
+
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`,
+        redirectTo: redirectTo.toString(),
       },
     });
     if (error) throw error;
@@ -254,6 +271,7 @@ export function AuthProvider({ children }) {
     } finally {
       setUser(null);
       setProfile(null);
+      setSessionState(null);
       setIsLoggingOut(false);
       // Hard refresh to clear all client-side state and avoid UI hanging
       window.location.reload();
@@ -315,6 +333,24 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const setSession = async (access_token, refresh_token) => {
+    const { data, error } = await supabase.auth.setSession({
+      access_token,
+      refresh_token,
+    });
+    if (error) throw error;
+    
+    setSessionState(data.session);
+    setUser(data.session?.user ?? null);
+    
+    // Immediately fetch profile for the new session to ensure derived states (isPremium) are updated
+    if (data.session?.user) {
+      await fetchProfile(data.session.user.id);
+    }
+    
+    return data;
+  };
+
   const refreshProfile = () => {
     if (user?.id) return fetchProfile(user.id);
     return Promise.resolve(null);
@@ -334,6 +370,7 @@ export function AuthProvider({ children }) {
       value={{
         user,
         profile,
+        session,
         loading,
         isAdmin,
         isPremium,
@@ -346,6 +383,7 @@ export function AuthProvider({ children }) {
         updatePassword,
         resendVerificationEmail,
         refreshProfile,
+        setSession,
         setIsPasswordSettled,
       }}
     >

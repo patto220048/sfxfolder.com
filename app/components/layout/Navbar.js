@@ -15,7 +15,7 @@ import { useAuth } from "@/app/lib/auth-context";
 import { useSiteData } from "@/app/context/SiteContext";
 import styles from "./Navbar.module.css";
 
-export default function Navbar() {
+export default function Navbar({ isPlugin = false }) {
   const { settings, categories } = useSiteData();
   const { user, loading: authLoading } = useAuth();
   const pathname = usePathname();
@@ -77,62 +77,45 @@ export default function Navbar() {
   return (
     <>
       <nav
-        className={`${styles.navbar} ${scrolled ? styles.scrolled : ""}`}
+        className={`${styles.navbar} ${scrolled ? styles.scrolled : ""} ${isPlugin ? styles.pluginNavbar : ""}`}
         id="main-navbar"
       >
         <div className={styles.inner}>
-          {/* Logo */}
-          <Link 
-            href="/" 
-            className={styles.logo}
-            onClick={(e) => handleLinkClick(e, "/")}
-          >
-            <span className={styles.logoText}>
-              {settings?.site_name || "SFXFolder.com"}
-            </span>
-          </Link>
+          {/* Logo - Hide in plugin */}
+          {!isPlugin && (
+            <Link 
+              href="/" 
+              className={styles.logo}
+              onClick={(e) => handleLinkClick(e, "/")}
+            >
+              <span className={styles.logoText}>
+                {settings?.site_name || "SFXFolder.com"}
+              </span>
+            </Link>
+          )}
 
-          {/* Desktop nav */}
-          <ul className={styles.links}>
-            {categories.slice(0, 4).map((cat) => (
+          {/* Desktop nav - Simplified in plugin */}
+          <ul className={`${styles.links} ${isPlugin ? styles.pluginLinks : ""}`}>
+            {categories.map((cat) => (
               <li key={cat.slug}>
                 <Link 
-                  href={`/${cat.slug}`} 
-                  className={styles.link}
-                  onClick={(e) => handleLinkClick(e, `/${cat.slug}`)}
+                  href={isPlugin ? `/plugins/premiere?category=${cat.slug}` : `/${cat.slug}`} 
+                  className={`${styles.link} ${isPlugin ? styles.pluginLink : ""}`}
+                  onClick={(e) => handleLinkClick(e, isPlugin ? `/plugins/premiere?category=${cat.slug}` : `/${cat.slug}`)}
                 >
                   {cat.name}
                 </Link>
               </li>
             ))}
-            
-            {categories.length > 4 && (
-              <li className={styles.moreDropdown}>
-                <span className={styles.link}>More ▾</span>
-                <ul className={styles.dropdown}>
-                  {categories.slice(4).map((cat) => (
-                    <li key={cat.slug}>
-                      <Link 
-                        href={`/${cat.slug}`} 
-                        className={styles.dropdownLink}
-                        onClick={(e) => handleLinkClick(e, `/${cat.slug}`)}
-                      >
-                        {cat.name}
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
-              </li>
-            )}
           </ul>
 
           {/* Actions */}
           <div className={styles.actions}>
-            <ThemeToggle />
-            <GlobalAudioSettings />
+            {!isPlugin && <ThemeToggle />}
+            {!isPlugin && <GlobalAudioSettings />}
             
-            <Link href="/search" className={styles.searchBtn} aria-label="Search">
-              <Search size={20} />
+            <Link href={isPlugin ? "/plugins/premiere?q=" : "/search"} className={styles.searchBtn} aria-label="Search">
+              <Search size={18} />
             </Link>
 
             {/* Auth: Sign In button or User Menu */}
@@ -148,18 +131,20 @@ export default function Navbar() {
                   aria-label="Sign in"
                 >
                   <UserCircle size={22} />
-                  <span className={styles.signInText}>Sign In</span>
+                  {!isPlugin && <span className={styles.signInText}>Sign In</span>}
                 </button>
               )}
             </div>
 
-            <button
-              className={styles.hamburger}
-              onClick={() => setMobileOpen(!mobileOpen)}
-              aria-label="Toggle menu"
-            >
-              {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+            {!isPlugin && (
+              <button
+                className={styles.hamburger}
+                onClick={() => setMobileOpen(!mobileOpen)}
+                aria-label="Toggle menu"
+              >
+                {mobileOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+            )}
           </div>
         </div>
 

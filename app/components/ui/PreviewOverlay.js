@@ -9,12 +9,31 @@ const LUTPreview = dynamic(() => import("./LUTPreview"), {
   ssr: false
 });
 import { isVideoFormat, isImageFormat, isFontFormat, isAudioFormat, isLUTFormat, getOptimizedUrl } from "@/app/lib/mediaUtils";
+import { useAuth } from "@/app/lib/auth-context";
 import DownloadButton from "./DownloadButton";
 import styles from "./PreviewOverlay.module.css";
 
-export default function PreviewOverlay({ resource, onClose, showDownload = false }) {
+export default function PreviewOverlay({ resource, onClose, showDownload = false, isPlugin = false }) {
   const mediaRef = useRef(null);
   const [isHovering, setIsHovering] = useState(false);
+  const { user, session, isPremium, isAdmin } = useAuth();
+
+  useEffect(() => {
+    console.log("PreviewOverlay mounted:", { 
+      resourceName: resource?.name, 
+      resourceId: resource?.id, 
+      isPlugin 
+    });
+    // Attempt to log to parent
+    try {
+      if (window.parent && window.parent.postMessage) {
+        window.parent.postMessage({ 
+          type: 'DEBUG_LOG', 
+          message: 'PreviewOverlay mounted. isPlugin: ' + isPlugin 
+        }, '*');
+      }
+    } catch (e) {}
+  }, [resource, isPlugin]);
 
   // Handle ESC key to close
   useEffect(() => {
@@ -26,6 +45,7 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
   }, [onClose]);
 
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isInserting, setIsInserting] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
 
@@ -234,14 +254,94 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
             <h2>{resource.name || resource.fileName || "Untitled"}</h2>
             {showDownload && (
               <div className={styles.previewDownload}>
-                <DownloadButton 
-                  downloadUrl={resource.downloadUrl} 
-                  fileUrl={resource.fileUrl}
-                  fileName={resource.name || resource.fileName}
-                  fileFormat={resource.fileFormat}
-                  resourceId={resource.id}
-                  size="compact"
-                />
+                {isPlugin && (
+                  <button 
+                    className={styles.insertBtn}
+                    disabled={isInserting}
+                    onClick={async (e) => {
+                      console.log("INSERT ATTEMPT STARTED");
+                      try {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // Try logging to parent safely
+                        try {
+                          if (window.parent && window.parent.postMessage) {
+                            window.parent.postMessage({ type: 'DEBUG_LOG', message: 'Insert button clicked inside iframe' }, '*');
+                          }
+                        } catch (e) {}
+
+                        if (isInserting) return;
+
+                        // Check auth
+                        if (!isAdmin && !isPremium) {
+                          alert("Please login with a Premium account to insert assets into Premiere.");
+                          return;
+                        }
+                        
+                        setIsInserting(true);
+                        
+                        // 1. Fetch secure signed URL from API
+                        console.log("Calling /api/download for resource:", resource.id);
+                        const headers = { 'Content-Type': 'application/json' };
+                        if (session?.access_token) {
+                          headers['Authorization'] = `Bearer ${session.access_token}`;
+                        }
+
+                        const response = await fetch('/api/download', {
+                          method: 'POST',
+                          headers,
+                          body: JSON.stringify({ resourceId: resource.id }),
+                        });
+
+                        if (!response.ok) {
+                          const errorData = await response.json();
+                          throw new Error(errorData.error || "Failed to get download URL");
+                        }
+
+                        const { downloadUrl: signedUrl } = await response.json();
+                        
+                        if (!signedUrl) throw new Error("No download URL returned");
+
+                        const fileName = resource.name || resource.fileName || "asset";
+                        const extension = resource.fileFormat || signedUrl.split('.').pop().split('?')[0] || "mp4";
+                        const fullFileName = fileName.endsWith(`.${extension}`) ? fileName : `${fileName}.${extension}`;
+
+                        console.log("Inserting to Premiere with secure URL:", fullFileName);
+                        
+                        // 2. Send to Premiere Panel
+                        if (window.parent !== window) {
+                          window.parent.postMessage({
+                            type: 'IMPORT_ASSET',
+                            url: signedUrl,
+                            fileName: fullFileName,
+                            resourceId: resource.id
+                          }, '*');
+                        } else {
+                          alert("Insert only works inside Adobe Premiere Pro");
+                        }
+                      } catch (err) {
+                        console.error("Insert failed:", err);
+                        alert(err.message || "Failed to insert asset");
+                      } finally {
+                        setIsInserting(false);
+                      }
+                    }}
+                  >
+                    {isInserting ? "PREPARING..." : "INSERT"}
+                  </button>
+                )}
+                {!isPlugin && (
+                  <DownloadButton 
+                    downloadUrl={resource.downloadUrl} 
+                    fileUrl={resource.fileUrl}
+                    fileName={resource.name || resource.fileName}
+                    fileFormat={resource.fileFormat}
+                    resourceId={resource.id}
+                    size="compact"
+                    isPlugin={isPlugin}
+                  />
+                )}
               </div>
             )}
           </div>

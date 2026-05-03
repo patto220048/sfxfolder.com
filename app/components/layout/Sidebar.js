@@ -3,8 +3,10 @@
 
 import { memo, useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { ChevronRight, Menu, X } from "lucide-react";
+import { ChevronRight, Menu, X, User, LogIn } from "lucide-react";
 import { useSidebar } from "@/app/context/SidebarContext";
+import { useAuth } from "@/app/lib/auth-context";
+import AuthModal from "@/app/components/auth/AuthModal";
 
 
 
@@ -22,16 +24,27 @@ const Sidebar = memo(function Sidebar({
   selectedFolderId,
   onSelectFolder,
   primaryColor = "#FFFFFF",
+  isPluginSidebar = false
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { selectedFolderId: contextFolderId } = useSidebar();
+  
+  const isPluginMode = searchParams?.get('mode') === 'plugin';
+  
+  // Auto-hide standard sidebar if we are in plugin mode but this is not the designated plugin sidebar
+  if (isPluginMode && !isPluginSidebar) {
+    return null;
+  }
   
   const urlFolderId = searchParams?.get("folder");
   const effectiveFolderId = selectedFolderId || contextFolderId || urlFolderId;
 
 
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  const { user, profile } = useAuth();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   const [width, setWidth] = useState(DEFAULT_WIDTH);
   const [isResizing, setIsResizing] = useState(false);
@@ -183,6 +196,38 @@ const Sidebar = memo(function Sidebar({
             }}
           />
         </div>
+
+        {/* Plugin Auth Section - Only shown in plugin mode */}
+        {isPluginMode && (
+          <div className={styles.footer}>
+            {console.log("[Sidebar] Rendering footer. User:", user?.id, "Profile:", profile?.full_name)}
+            {user ? (
+              <button 
+                className={styles.profileBtn}
+                onClick={() => router.push('/account')}
+              >
+                {profile?.avatar_url ? (
+                  <img src={profile.avatar_url} className={styles.avatar} alt="Avatar" />
+                ) : (
+                  <User size={18} className={styles.loginIcon} />
+                )}
+                <span className={styles.profileName}>{profile?.full_name || user.email?.split('@')[0]}</span>
+              </button>
+            ) : (
+              <button 
+                className={styles.profileBtn}
+                onClick={() => setIsAuthModalOpen(true)}
+              >
+                <LogIn size={18} className={styles.loginIcon} />
+                <span className={styles.profileName}>Login / Sync</span>
+              </button>
+            )}
+          </div>
+        )}
+
+        {isAuthModalOpen && (
+          <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+        )}
       </aside>
 
       {/* Mobile overlay */}

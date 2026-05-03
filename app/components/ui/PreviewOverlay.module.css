@@ -276,3 +276,26 @@
     height: 32px;
   }
 }
+
+.insertBtn {
+  background: var(--premium-gold);
+  color: #000;
+  border: none;
+  padding: 0 20px;
+  height: 42px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  letter-spacing: 1px;
+}
+
+.insertBtn:hover {
+  filter: brightness(1.1);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+}

@@ -10,7 +10,7 @@ import styles from "../page.module.css";
 
 // Row renderer outside component to prevent re-creation
 const Row = memo(({ index, style, ...rowProps }) => {
-  const { columnCount, flatItems, rowCount, category, onPreview, router, handleSelectFolder, info, hasMoreDB, isLoadingMore } = rowProps;
+  const { columnCount, flatItems, rowCount, category, onPreview, router, handleSelectFolder, info, hasMoreDB, isLoadingMore, isPlugin } = rowProps;
   
   if (index === rowCount - 1 && (isLoadingMore || hasMoreDB)) {
     return (
@@ -60,6 +60,7 @@ const Row = memo(({ index, style, ...rowProps }) => {
               onPreview={() => item.slug ? router.push(`/${category}/${item.slug}`) : onPreview(item)}
               primaryColor={info.color}
               info={info}
+              isPlugin={isPlugin}
             />
           ) : (
             <ResourceCard
@@ -79,6 +80,7 @@ const Row = memo(({ index, style, ...rowProps }) => {
               detailUrl={item.slug ? `/${category}/${item.slug}` : null}
               primaryColor={info.color}
               info={info}
+              isPlugin={isPlugin}
             />
           )
         )
@@ -111,6 +113,7 @@ const ResourceGrid = ({
   onLoadMore,
   hasMoreDB,
   isLoadingMore,
+  isPlugin = false,
 }) => {
   const isFiltering = inPageSearch || selectedFormats?.length > 0 || selectedTags?.length > 0 || resSlug;
   const isSoundLayout = info.layout === "audio" || info.layout === "sound";
@@ -127,13 +130,15 @@ const ResourceGrid = ({
 
   const getColumnCount = (width) => {
     if (isSoundLayout) {
+      if (isPlugin) return width > 600 ? 2 : 1;
       return width > 1400 ? 3 : width > 900 ? 2 : 1;
     }
+    if (isPlugin) return width > 600 ? 3 : width > 350 ? 2 : 1;
     return width > 1200 ? 4 : width > 900 ? 3 : width > 768 ? 2 : 1;
   };
 
   const getRowHeight = (index, currentColumnCount) => {
-    if (isSoundLayout) return 86;
+    if (isSoundLayout) return isPlugin ? 72 : 86;
     
     const hasLoader = hasMoreDB || isLoadingMore;
     const baseRowCount = Math.ceil(flatItems.length / currentColumnCount);
@@ -145,19 +150,19 @@ const ResourceGrid = ({
     const rowItems = flatItems.slice(startIndex, startIndex + currentColumnCount);
     
     // If no items in row (shouldn't happen), default to resource height
-    if (rowItems.length === 0) return 404;
+    if (rowItems.length === 0) return isPlugin ? 280 : 404;
     
     // Check if the row contains any resources
     const hasResource = rowItems.some(item => !item._isFolder);
     
-    if (hasResource) return 404;
-    return 86; // Match audio row height
+    if (hasResource) return isPlugin ? 280 : 404;
+    return isPlugin ? 72 : 86; // Match audio row height
   };
 
   if (isLoading && flatItems.length === 0) {
     return (
-      <div className={styles.gridWrapper}>
-        <div className={isSoundLayout ? styles.soundGrid : styles.grid}>
+      <div className={isPlugin ? styles.pluginGridWrapper : styles.gridWrapper}>
+        <div className={isSoundLayout ? (isPlugin ? styles.pluginSoundGrid : styles.soundGrid) : (isPlugin ? styles.pluginGrid : styles.grid)}>
           {Array.from({ length: 12 }).map((_, i) => (
             <div key={i} className={isSoundLayout ? styles.skeletonCardSound : styles.skeletonCard} />
           ))}
@@ -170,8 +175,12 @@ const ResourceGrid = ({
     return <div className={styles.empty}><p>No resources found.</p></div>;
   }
 
+  const wrapperStyle = isPlugin 
+    ? { flex: 1, width: '100%', minHeight: '300px', position: 'relative' } 
+    : { height: 'calc(100vh - 280px)', minHeight: '600px', width: '100%' };
+
   return (
-    <div className={styles.gridWrapper} style={{ height: 'calc(100vh - 280px)', minHeight: '600px', width: '100%' }}>
+    <div className={isPlugin ? styles.pluginGridWrapper : styles.gridWrapper} style={wrapperStyle}>
       <AutoSizer 
         renderProp={({ height, width }) => {
           if (!height || !width) return null;
@@ -197,7 +206,8 @@ const ResourceGrid = ({
                 handleSelectFolder,
                 info,
                 hasMoreDB,
-                isLoadingMore
+                isLoadingMore,
+                isPlugin
               }}
               onRowsRendered={({ stopIndex }) => {
                 if (stopIndex >= rowCount - 1 && hasMoreDB && !isLoadingMore) {

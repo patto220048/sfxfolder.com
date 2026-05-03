@@ -32,15 +32,16 @@
             background: #000;
         }
         .header {
-            padding: 8px;
-            background: #252545;
-            font-size: 10px;
+            padding: 4px 8px;
+            background: #111;
+            font-size: 9px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             border-bottom: 1px solid #333;
+            color: #666;
         }
-        .status { color: #00ff00; }
+        .status { color: #4CAF50; font-family: monospace; }
         #error-display {
             background: #441111;
             color: #ffaaaa;
@@ -50,24 +51,25 @@
             border-bottom: 1px solid #ff0000;
         }
         .debug-controls {
-            padding: 10px;
-            background: #333;
+            padding: 4px;
+            background: #111;
             display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            border-bottom: 2px solid #555;
+            gap: 4px;
+            border-bottom: 1px solid #333;
         }
         button {
-            padding: 8px 12px;
-            font-weight: bold;
+            padding: 2px 6px;
+            font-size: 9px;
+            font-weight: normal;
             text-transform: uppercase;
-            border: none;
-            border-radius: 4px;
+            border: 1px solid #444;
+            border-radius: 2px;
+            background: #222;
+            color: #aaa;
             cursor: pointer;
         }
-        .btn-local { background: #4CAF50; color: white; }
-        .btn-prod { background: #f44336; color: white; }
-        .btn-reload { background: #2196F3; color: white; }
+        button:hover { background: #333; color: white; }
+        .btn-reload { background: #0078d4; color: white; border-color: #0078d4; }
     </style>
 </head>
 <body>
@@ -78,13 +80,13 @@
     </div>
 
     <div class="debug-controls">
-        <button class="btn-prod" onclick="reloadWeb('https://sfxfolder.com')">TRY PRODUCTION (RED)</button>
-        <button class="btn-local" onclick="reloadWeb('http://localhost:3000')">Try Localhost</button>
-        <button class="btn-local" onclick="reloadWeb('http://localhost:3000/test.html')">TEST SIMPLE PAGE</button>
-        <button class="btn-reload" onclick="location.reload()">Reload Plugin</button>
+        <button onclick="reloadWeb('https://sfxfolder.com/plugins/premiere')">PROD</button>
+        <button onclick="reloadWeb('http://localhost:3000/plugins/premiere')">3000</button>
+        <button onclick="reloadWeb('http://localhost:3001/plugins/premiere')">3001</button>
+        <button class="btn-reload" onclick="location.reload()">RELOAD PANEL</button>
     </div>
 
-    <iframe id="web-container" src="http://localhost:3000"></iframe>
+    <iframe id="web-container" src="http://localhost:3000/plugins/premiere?mode=plugin"></iframe>
     
     <div id="download-progress" style="position:fixed;bottom:0;width:100%;height:4px;background:#333;display:none;">
         <div id="progress-bar" style="width:0%;height:100%;background:#0078d4;"></div>
@@ -100,8 +102,11 @@
         }
 
         function reloadWeb(url) {
+            if (url.indexOf('mode=plugin') === -1) {
+                url += (url.indexOf('?') === -1 ? '?' : '&') + 'mode=plugin';
+            }
             document.getElementById('web-container').src = url;
-            document.getElementById('status').innerText = "Reloading: " + url;
+            document.getElementById('status').innerText = "LOAD: " + url.split('?')[0];
         }
 
         try {
@@ -119,9 +124,37 @@
                 if (!fs.existsSync(downloadFolder)) { fs.mkdirSync(downloadFolder); }
 
                 window.addEventListener('message', function(event) {
+                    console.log("Panel received message:", event.data);
+                    
+                    if (event.data.type === 'DEBUG_LOG') {
+                        console.log("IFRAME DEBUG:", event.data.message);
+                        return;
+                    }
+
+                    var activeDownloads = window._activeDownloads || {};
+                    window._activeDownloads = activeDownloads;
+
                     if (event.data.type === 'IMPORT_ASSET') {
-                        var targetPath = path.join(downloadFolder, event.data.fileName);
-                        downloadFile(event.data.url, targetPath);
+                        var fileName = event.data.fileName;
+                        var resourceId = event.data.resourceId || 'unknown';
+                        
+                        // Avoid concurrent downloads of the same specific resource
+                        if (activeDownloads[resourceId]) {
+                            console.log("Download already in progress for:", resourceId);
+                            return;
+                        }
+                        
+                        var status = document.getElementById('status');
+                        status.innerText = "Downloading: " + fileName;
+                        
+                        // Use a unique filename with timestamp to avoid EBUSY (file busy/locked) errors
+                        // when the same file is downloaded multiple times or still being accessed
+                        var timestamp = new Date().getTime();
+                        var uniqueFileName = timestamp + "_" + fileName;
+                        var targetPath = path.join(downloadFolder, uniqueFileName);
+                        
+                        activeDownloads[resourceId] = true;
+                        downloadFile(event.data.url, targetPath, fileName, resourceId);
                     }
                 });
             } else {
@@ -131,19 +164,56 @@
             showError("System Error: " + e.message);
         }
 
-        function downloadFile(url, dest) {
+        function downloadFile(url, dest, originalName, resourceId) {
+            var status = document.getElementById('status');
+            var progressBar = document.getElementById('progress-bar');
             document.getElementById('download-progress').style.display = 'block';
+            progressBar.style.width = '0%';
+            
             var file = fs.createWriteStream(dest);
             var protocol = url.startsWith('https') ? https : http;
-            protocol.get(url, function(response) {
+            
+            var request = protocol.get(url, function(response) {
+                if (response.statusCode !== 200) {
+                    status.innerText = "Download Error: " + response.statusCode;
+                    document.getElementById('download-progress').style.display = 'none';
+                    file.close();
+                    fs.unlink(dest, function() {}); // Xóa file lỗi
+                    return;
+                }
+
+                var len = parseInt(response.headers['content-length'], 10);
+                var cur = 0;
+
+                response.on('data', function(chunk) {
+                    cur += chunk.length;
+                    if (len) {
+                        var percent = (100.0 * cur / len).toFixed(2);
+                        progressBar.style.width = percent + '%';
+                    }
+                });
+
                 response.pipe(file);
+                
                 file.on('finish', function() {
                     file.close(function() {
+                        if (window._activeDownloads) delete window._activeDownloads[resourceId];
                         document.getElementById('download-progress').style.display = 'none';
+                        status.innerText = "Importing to Timeline...";
                         var safePath = dest.replace(/\\/g, '/');
-                        csInterface.evalScript('importToTimeline("' + safePath + '")');
+                        csInterface.evalScript('importToTimeline("' + safePath + '")', function(result) {
+                            status.innerText = result || "Done";
+                        });
                     });
                 });
+            });
+
+            request.on('error', function(err) {
+                if (window._activeDownloads) delete window._activeDownloads[resourceId];
+                status.innerText = "Connection Error: " + err.message;
+                document.getElementById('download-progress').style.display = 'none';
+                file.close();
+                fs.unlink(dest, function() {});
             });
         }
     </script>

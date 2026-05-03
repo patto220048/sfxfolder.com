@@ -74,9 +74,10 @@ export async function getProfile(userId) {
       .single();
 
     if (error) {
-      console.warn("Error fetching profile:", error.message);
+      console.warn("Error fetching profile directly:", error.message);
       return null;
     }
+    console.log("[api] getProfile direct success:", data?.full_name);
     return mapProfile(data);
   }
 
@@ -86,9 +87,10 @@ export async function getProfile(userId) {
       const response = await fetch(`/api/profile?userId=${userId}&t=${Date.now()}`);
       if (!response.ok) throw new Error("Proxy profile fetch failed");
       const data = await response.json();
+      console.log("[api] getProfile proxy success:", data?.full_name);
       return mapProfile(data);
     } catch (e) {
-      console.error("Client profile fetch fallback:", e);
+      console.error("Client profile fetch fallback to direct:", e);
       return fetchLogic();
     }
   }
