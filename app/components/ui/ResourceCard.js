@@ -460,13 +460,11 @@ const ResourceCard = memo(function ResourceCard({
                 <div style={{ 
                   position: 'absolute',
                   top: 0,
-                  right: 0, // Move to right
+                  right: 0,
                   width: '50%',
                   height: '100%',
-                  borderLeft: '1px solid rgba(255,255,255,0.3)',
-                  backgroundColor: 'rgba(0, 50, 150, 0.05)',
-                  backdropFilter: 'contrast(1.1) saturate(1.1)',
-                  WebkitBackdropFilter: 'contrast(1.1) saturate(1.1)',
+                  borderLeft: '1px solid rgba(255,255,255,0.7)',
+                  backgroundColor: 'rgba(0, 0, 0, 0.02)',
                   zIndex: 100
                 }}>
                   <div style={{
@@ -494,26 +492,32 @@ const ResourceCard = memo(function ResourceCard({
                 }}>
                   <div style={{ width: '50%', textAlign: 'center' }}>
                     <span style={{ 
-                      background: 'rgba(0,0,0,0.6)', 
+                      background: 'rgba(20, 20, 20, 0.85)', 
                       color: 'white', 
-                      padding: '3px 8px', 
+                      padding: '4px 10px', 
                       fontSize: '9px', 
                       fontWeight: 'bold',
                       borderRadius: '2px',
-                      backdropFilter: 'blur(4px)',
-                      letterSpacing: '1px'
+                      backdropFilter: 'blur(8px)',
+                      WebkitBackdropFilter: 'blur(8px)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      letterSpacing: '1px',
+                      boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
                     }}>ORIGINAL</span>
                   </div>
                   <div style={{ width: '50%', textAlign: 'center' }}>
                     <span style={{ 
-                      background: 'rgba(0,0,0,0.6)', 
+                      background: 'rgba(20, 20, 20, 0.85)', 
                       color: 'white', 
-                      padding: '3px 8px', 
+                      padding: '4px 10px', 
                       fontSize: '9px', 
                       fontWeight: 'bold',
                       borderRadius: '2px',
-                      backdropFilter: 'blur(4px)',
-                      letterSpacing: '1px'
+                      backdropFilter: 'blur(8px)',
+                      WebkitBackdropFilter: 'blur(8px)',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      letterSpacing: '1px',
+                      boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
                     }}>LUT PREVIEW</span>
                   </div>
                 </div>
