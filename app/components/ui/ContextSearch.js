@@ -173,7 +173,6 @@ export default function ContextSearch({ isPlugin = false }) {
     setActiveIndex(0);
     setActiveFolder(null); // Clear folder context on close
     setFilters(prev => ({ ...prev, type: 'all' })); // Reset type filter on close
-    window.dispatchEvent(new CustomEvent("local-search", { detail: "" }));
   }, []);
 
   useEffect(() => {
@@ -189,8 +188,6 @@ export default function ContextSearch({ isPlugin = false }) {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     
     debounceRef.current = setTimeout(async () => {
-      // Sync with background grid
-      window.dispatchEvent(new CustomEvent("local-search", { detail: query }));
       
       try {
         let found = await searchResourcesClient(query, {
@@ -285,10 +282,14 @@ export default function ContextSearch({ isPlugin = false }) {
         e.preventDefault();
         if (displayList[activeIndex]) {
           handleItemClick(displayList[activeIndex]);
-        } else if (query.trim() && !isPlugin) {
-          // Navigate to search page with the query
-          window.location.href = `/search?q=${encodeURIComponent(query.trim())}`;
-          close();
+        } else if (query.trim()) {
+          if (isPlugin) {
+            close();
+          } else {
+            // Navigate to search page with the query
+            window.location.href = `/search?q=${encodeURIComponent(query.trim())}`;
+            close();
+          }
         }
         break;
     }
@@ -437,8 +438,10 @@ export default function ContextSearch({ isPlugin = false }) {
           placeholder="Quick search..."
           value={query}
           onChange={(e) => {
-            setQuery(e.target.value);
+            const newQuery = e.target.value;
+            setQuery(newQuery);
             setActiveIndex(0);
+            window.dispatchEvent(new CustomEvent("local-search", { detail: newQuery }));
           }}
           className={styles.input}
           id="context-search-input"
