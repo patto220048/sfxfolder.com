@@ -341,6 +341,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
   const filteredResources = useMemo(() => {
     // Nếu đang ở cấp gốc (không chọn folder) và KHÔNG có bộ lọc nào kích hoạt,
     // chúng ta sẽ ẩn danh sách Resource để chỉ hiện các Folder con.
+    // Trong plugin mode, luôn hiển thị resources ở root.
     const isAtRoot = !selectedFolderId;
     const hasSearch = inPageSearch && inPageSearch.trim().length > 0;
     const hasTags = selectedTags && selectedTags.length > 0;
@@ -348,7 +349,8 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
     const isFiltering = hasSearch || hasTags || hasFormats || resSlug;
 
     // Ở trang gốc, chỉ hiện item khi có bộ lọc. Nếu không thì ẩn để hiện Folder.
-    if (isAtRoot && !isFiltering) {
+    // Bỏ qua logic này trong plugin mode — luôn hiện resources.
+    if (isAtRoot && !isFiltering && !isPlugin) {
       return [];
     }
 
