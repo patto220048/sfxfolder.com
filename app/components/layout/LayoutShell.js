@@ -31,7 +31,7 @@ function LayoutContent({ children, initialCategories }) {
         {children}
       </main>
       {!isAdmin && !isPlugin && pathname !== "/about-us" && <Footer />}
-      {!isAdmin && !isPlugin && pathname !== "/about-us" && <ContextSearch />}
+      {!isAdmin && pathname !== "/about-us" && <ContextSearch isPlugin={isPlugin} />}
     </div>
   );
 }

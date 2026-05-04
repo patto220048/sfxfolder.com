@@ -45,7 +45,7 @@ function highlightText(text, matches = [], keyName) {
   return <>{elements}</>;
 }
 
-export default function ContextSearch() {
+export default function ContextSearch({ isPlugin = false }) {
   const [visible, setVisible] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [query, setQuery] = useState("");
@@ -232,15 +232,23 @@ export default function ContextSearch() {
     const folderId = item.folderId;
 
     if (categorySlug && itemSlug) {
-      // Navigate to category page with folder and resource parameters
-      let url = `/${categorySlug}?res=${itemSlug}`;
-      if (folderId) {
-        url += `&folder=${folderId}`;
+      if (isPlugin) {
+        let url = `/plugins/premiere?category=${categorySlug}&res=${itemSlug}`;
+        if (folderId) {
+          url += `&folder=${folderId}`;
+        }
+        window.location.href = url;
+      } else {
+        // Navigate to category page with folder and resource parameters
+        let url = `/${categorySlug}?res=${itemSlug}`;
+        if (folderId) {
+          url += `&folder=${folderId}`;
+        }
+        window.location.href = url;
       }
-      window.location.href = url;
       close();
     }
-  }, [saveRecent, close]);
+  }, [saveRecent, close, isPlugin]);
 
   const handleKeyDown = useCallback((e) => {
     const displayList = results;
@@ -275,13 +283,14 @@ export default function ContextSearch() {
         e.preventDefault();
         if (displayList[activeIndex]) {
           handleItemClick(displayList[activeIndex]);
-        } else if (query.trim()) {
+        } else if (query.trim() && !isPlugin) {
+          // Navigate to search page with the query
           window.location.href = `/search?q=${encodeURIComponent(query.trim())}`;
           close();
         }
         break;
     }
-  }, [results, activeIndex, activeFolder, handleItemClick, query, close]);
+  }, [results, activeIndex, activeFolder, handleItemClick, query, close, isPlugin]);
 
   useEffect(() => {
     const handleContextMenu = (e) => {
@@ -353,7 +362,11 @@ export default function ContextSearch() {
     
     if (item.type === 'folder') {
       const categorySlug = item.categorySlug || 'all';
-      window.location.href = `/${categorySlug}?folder=${item.id}`;
+      if (isPlugin) {
+        window.location.href = `/plugins/premiere?category=${categorySlug}&folder=${item.id}`;
+      } else {
+        window.location.href = `/${categorySlug}?folder=${item.id}`;
+      }
       close();
       return;
     }
@@ -363,8 +376,11 @@ export default function ContextSearch() {
     const itemSlug = item.slug;
 
     if (categorySlug && itemSlug) {
-      // Direct navigation to dedicated details page
-      window.location.href = `/${categorySlug}/${itemSlug}`;
+      if (isPlugin) {
+        window.location.href = `/plugins/premiere?category=${categorySlug}&res=${itemSlug}`;
+      } else {
+        window.location.href = `/${categorySlug}/${itemSlug}`;
+      }
       close();
     }
   };
