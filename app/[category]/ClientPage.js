@@ -559,7 +559,17 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
                 const params = new URLSearchParams(searchParams);
                 params.set("category", cat.slug);
                 params.delete("folder");
-                router.push(`${pathname}?${params.toString()}`);
+                params.delete("res");
+                params.delete("tags");
+                params.delete("format");
+                
+                // Reset local state
+                startTransition(() => {
+                  setSelectedFolderId(null);
+                  setSelectedFolderName(null);
+                  setFolderId(null);
+                  router.push(`${pathname}?${params.toString()}`);
+                });
               }}
             >
               {getCategoryIcon(cat.slug)}
