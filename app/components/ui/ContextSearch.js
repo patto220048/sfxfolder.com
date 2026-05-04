@@ -270,7 +270,7 @@ export default function ContextSearch({ isPlugin = false }) {
 
     if (categorySlug && itemSlug) {
       if (isPlugin) {
-        let url = `/plugins/premiere?category=${categorySlug}&res=${itemSlug}`;
+        let url = `/plugins/premiere?category=${categorySlug}&res=${itemSlug}&mode=plugin`;
         if (folderId) {
           url += `&folder=${folderId}`;
         }
@@ -359,6 +359,7 @@ export default function ContextSearch({ isPlugin = false }) {
     };
 
     const handleClickOutside = (e) => {
+      if (!visible) return;
       if (containerRef.current && !containerRef.current.contains(e.target)) {
         // If clicking on an interactive element (sidebar, button, etc.),
         // just close silently — let the clicked element handle its own navigation

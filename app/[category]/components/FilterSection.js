@@ -98,7 +98,7 @@ const FilterSection = memo(function FilterSection({
       inPageSearch={inPageSearch}
       onSearchChange={setInPageSearch}
       resSlug={resSlug}
-      onClearRes={() => router.push(pathname)}
+      onClearRes={() => updateUrl({ res: null })}
       primaryColor={info.color}
       breadcrumbs={breadcrumbs}
       categoryName={info.name}

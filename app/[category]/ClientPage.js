@@ -206,19 +206,29 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
   }, [searchParams, isInitialized, folders]);
 
   useEffect(() => {
-    if (!isInitialized || !resSlug) return;
-    const existing = allLoadedResources.find(r => r.slug === resSlug);
-    if (!existing) {
-      getResourceBySlug(resSlug).then(resource => {
-        if (resource) {
-          setAllLoadedResources(prev => {
-            if (prev.find(r => r.id === resource.id)) return prev;
-            return [resource, ...prev];
-          });
+    if (!isInitialized) return;
+    
+    if (resSlug) {
+      const existing = allLoadedResources.find(r => r.slug === resSlug);
+      if (existing) {
+        if (previewResource?.slug !== resSlug) {
+          setPreviewResource(existing);
         }
-      });
+      } else {
+        getResourceBySlug(resSlug).then(resource => {
+          if (resource) {
+            setAllLoadedResources(prev => {
+              if (prev.find(r => r.id === resource.id)) return prev;
+              return [resource, ...prev];
+            });
+            setPreviewResource(resource);
+          }
+        });
+      }
+    } else if (previewResource) {
+      setPreviewResource(null);
     }
-  }, [resSlug, allLoadedResources, isInitialized]);
+  }, [resSlug, allLoadedResources, isInitialized, previewResource]);
 
   useEffect(() => {
     const handleLocalSearch = (e) => setInPageSearch(e.detail || "");
@@ -618,7 +628,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
         {previewResource && (
           <PreviewOverlay 
             previewResource={previewResource}
-            onClose={() => setPreviewResource(null)} 
+            onClose={() => updateUrl({ res: null })} 
             showDownload={true} 
             showInsert={isPlugin}
             isPlugin={isPlugin}
@@ -690,7 +700,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
       {previewResource && (
         <PreviewOverlay 
           previewResource={previewResource}
-          onClose={() => setPreviewResource(null)} 
+          onClose={() => updateUrl({ res: null })} 
           showDownload={true} 
           showInsert={false}
           isPlugin={false}

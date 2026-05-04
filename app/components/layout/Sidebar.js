@@ -2,7 +2,7 @@
 "use client";
 
 import { memo, useState, useEffect, useCallback, useRef } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { ChevronRight, Menu, X, User, LogIn, PanelLeftClose, PanelLeftOpen, Settings, CreditCard, Info, Globe, LogOut, Loader2 } from "lucide-react";
 import { useSidebar } from "@/app/context/SidebarContext";
 import { useAuth } from "@/app/lib/auth-context";
@@ -29,9 +29,9 @@ const Sidebar = memo(function Sidebar({
 
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const { selectedFolderId: contextFolderId } = useSidebar();
-  
-  const isPluginMode = searchParams?.get('mode') === 'plugin';
+  const isPluginMode = isPluginSidebar || searchParams?.get('mode') === 'plugin' || pathname?.startsWith('/plugins/');
   
   // Auto-hide standard sidebar if we are in plugin mode but this is not the designated plugin sidebar
   if (isPluginMode && !isPluginSidebar) {
