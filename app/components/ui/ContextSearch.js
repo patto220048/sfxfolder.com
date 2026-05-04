@@ -523,7 +523,11 @@ export default function ContextSearch({ isPlugin = false }) {
             <li
               key={item.id}
               className={`${styles.resultItem} ${idx === activeIndex ? styles.active : ""}`}
-              onMouseEnter={() => setActiveIndex(idx)}
+              onPointerMove={(e) => {
+                if (Math.abs(e.movementX) > 0 || Math.abs(e.movementY) > 0) {
+                  setActiveIndex(idx);
+                }
+              }}
               onClick={() => handleItemClick(item)}
             >
               <span className={styles.resultIcon}>
