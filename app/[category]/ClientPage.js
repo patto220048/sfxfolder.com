@@ -115,6 +115,9 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
     const id = folder?.id || null;
     const name = folder ? (folder.path || folder.name) : null;
 
+    // Auto-close ContextSearch when navigating via sidebar
+    window.dispatchEvent(new CustomEvent("close-context-search"));
+
     startTransition(() => {
       setSelectedFolderId(id);
       setSelectedFolderName(name);
@@ -222,6 +225,16 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
     window.addEventListener("local-search", handleLocalSearch);
     return () => window.removeEventListener("local-search", handleLocalSearch);
   }, []);
+
+  // When ContextSearch closes (click outside / ESC), navigate to root
+  useEffect(() => {
+    const handleNavigateToRoot = () => {
+      setInPageSearch("");
+      handleSelectFolder(null);
+    };
+    window.addEventListener("navigate-to-root", handleNavigateToRoot);
+    return () => window.removeEventListener("navigate-to-root", handleNavigateToRoot);
+  }, [handleSelectFolder]);
 
   useEffect(() => {
     if (!isInitialized) return;
@@ -349,8 +362,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
     const isFiltering = hasSearch || hasTags || hasFormats || resSlug;
 
     // Ở trang gốc, chỉ hiện item khi có bộ lọc. Nếu không thì ẩn để hiện Folder.
-    // Bỏ qua logic này trong plugin mode — luôn hiện resources.
-    if (isAtRoot && !isFiltering && !isPlugin) {
+    if (isAtRoot && !isFiltering) {
       return [];
     }
 

@@ -167,7 +167,21 @@ export default function ContextSearch({ isPlugin = false }) {
     });
   }, [query, filters, activeFolder]);
 
+  // Close modal and navigate to root (for click outside / ESC)
   const close = useCallback(() => {
+    setVisible(false);
+    hasTypedRef.current = false;
+    setQuery("");
+    setResults([]);
+    setActiveIndex(-1);
+    setActiveFolder(null);
+    setFilters(prev => ({ ...prev, type: 'all' }));
+    // Tell ClientPage to navigate to "All Resources" (root)
+    window.dispatchEvent(new CustomEvent("navigate-to-root"));
+  }, []);
+
+  // Close modal and commit search query (for Enter key)
+  const closeWithSearch = useCallback(() => {
     setVisible(false);
     if (hasTypedRef.current) {
       const trimmed = query.trim();
@@ -177,9 +191,27 @@ export default function ContextSearch({ isPlugin = false }) {
     setQuery("");
     setResults([]);
     setActiveIndex(-1);
-    setActiveFolder(null); // Clear folder context on close
-    setFilters(prev => ({ ...prev, type: 'all' })); // Reset type filter on close
+    setActiveFolder(null);
+    setFilters(prev => ({ ...prev, type: 'all' }));
   }, [query]);
+
+  // Silent close — just hide the modal, no events (used by sidebar folder navigation)
+  const closeSilent = useCallback(() => {
+    setVisible(false);
+    hasTypedRef.current = false;
+    setQuery("");
+    setResults([]);
+    setActiveIndex(-1);
+    setActiveFolder(null);
+    setFilters(prev => ({ ...prev, type: 'all' }));
+  }, []);
+
+  // Listen for sidebar folder changes to auto-close
+  useEffect(() => {
+    const handleExternalClose = () => closeSilent();
+    window.addEventListener("close-context-search", handleExternalClose);
+    return () => window.removeEventListener("close-context-search", handleExternalClose);
+  }, [closeSilent]);
 
   useEffect(() => {
     if (!visible) return;
@@ -294,11 +326,11 @@ export default function ContextSearch({ isPlugin = false }) {
         if (activeIndex >= 0 && displayList[activeIndex]) {
           handleItemClick(displayList[activeIndex]);
         } else if (query.trim()) {
-          close();
+          closeWithSearch();
         }
         break;
     }
-  }, [results, activeIndex, activeFolder, handleItemClick, query, close, isPlugin]);
+  }, [results, activeIndex, activeFolder, handleItemClick, query, close, closeWithSearch, isPlugin]);
 
   useEffect(() => {
     const handleContextMenu = (e) => {
@@ -328,7 +360,14 @@ export default function ContextSearch({ isPlugin = false }) {
 
     const handleClickOutside = (e) => {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
-        close();
+        // If clicking on an interactive element (sidebar, button, etc.),
+        // just close silently — let the clicked element handle its own navigation
+        const isInteractive = e.target.closest('button, a, [role="button"], nav, aside');
+        if (isInteractive) {
+          closeSilent();
+        } else {
+          close();
+        }
       }
     };
 
