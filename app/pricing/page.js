@@ -69,12 +69,14 @@ export default async function PricingPage() {
   };
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
+    <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
       />
-      <PricingClient config={finalConfig} />
-    </Suspense>
+      <Suspense fallback={<div>Loading...</div>}>
+        <PricingClient config={finalConfig} />
+      </Suspense>
+    </>
   );
 }

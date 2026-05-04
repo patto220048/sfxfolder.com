@@ -127,7 +127,7 @@ export default function ContactPage() {
             </div>
             <p className={styles.centeredText}>
               Have a question about our resources, or need help with a subscription? 
-              Fill out the form and we'll get back to you as soon as possible.
+              Fill out the form and we&apos;ll get back to you as soon as possible.
             </p>
             <form className={styles.form} onSubmit={handleSubmit}>
               <Script 

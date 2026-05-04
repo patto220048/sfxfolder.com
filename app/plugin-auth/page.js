@@ -89,10 +89,10 @@ export default function PluginAuthPage() {
         <div className={styles.instructions}>
           <h3>How to sync:</h3>
           <ol>
-            <li>Click "COPY CODE" above</li>
+            <li>Click &quot;COPY CODE&quot; above</li>
             <li>Go back to Premiere Pro</li>
             <li>Paste the code into the login field</li>
-            <li>Click "CONNECT"</li>
+            <li>Click &quot;CONNECT&quot;</li>
           </ol>
         </div>
       </div>

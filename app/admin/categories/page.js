@@ -339,7 +339,7 @@ export default function CategoriesPage() {
                       onChange={(e) => setFormData(p => ({ ...p, reference_image_url: e.target.value }))} 
                       placeholder="e.g. /placeholders/log-reference.jpg"
                     />
-                    <p className={styles.helpText}>This image will be used as the "Before" state for LUT previews.</p>
+                    <p className={styles.helpText}>This image will be used as the &quot;Before&quot; state for LUT previews.</p>
                   </div>
                 )}
 
