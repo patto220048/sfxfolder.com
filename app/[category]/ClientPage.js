@@ -207,7 +207,12 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
     const existing = allLoadedResources.find(r => r.slug === resSlug);
     if (!existing) {
       getResourceBySlug(resSlug).then(resource => {
-        if (resource) setAllLoadedResources(prev => [resource, ...prev]);
+        if (resource) {
+          setAllLoadedResources(prev => {
+            if (prev.find(r => r.id === resource.id)) return prev;
+            return [resource, ...prev];
+          });
+        }
       });
     }
   }, [resSlug, allLoadedResources, isInitialized]);
