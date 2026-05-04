@@ -54,7 +54,7 @@ export default function ContextSearch({ isPlugin = false }) {
   const [results, setResults] = useState([]);
   const [recentItems, setRecentItems] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [activeFolder, setActiveFolder] = useState(null);
   const [availableCategories, setAvailableCategories] = useState([]);
@@ -170,7 +170,7 @@ export default function ContextSearch({ isPlugin = false }) {
     setVisible(false);
     setQuery("");
     setResults([]);
-    setActiveIndex(0);
+    setActiveIndex(-1);
     setActiveFolder(null); // Clear folder context on close
     setFilters(prev => ({ ...prev, type: 'all' })); // Reset type filter on close
   }, []);
@@ -259,14 +259,19 @@ export default function ContextSearch({ isPlugin = false }) {
         break;
       case "ArrowUp":
         e.preventDefault();
-        setActiveIndex((i) => Math.max(i - 1, 0));
+        setActiveIndex((i) => {
+          if (i <= 0) return -1;
+          return i - 1;
+        });
         break;
       case "ArrowRight":
         {
-          const currentItem = displayList[activeIndex];
-          if (currentItem?.type === 'folder') {
-            e.preventDefault();
-            handleItemClick(currentItem);
+          if (activeIndex >= 0) {
+            const currentItem = displayList[activeIndex];
+            if (currentItem?.type === 'folder') {
+              e.preventDefault();
+              handleItemClick(currentItem);
+            }
           }
         }
         break;
@@ -280,7 +285,7 @@ export default function ContextSearch({ isPlugin = false }) {
         break;
       case "Enter":
         e.preventDefault();
-        if (displayList[activeIndex]) {
+        if (activeIndex >= 0 && displayList[activeIndex]) {
           handleItemClick(displayList[activeIndex]);
         } else if (query.trim()) {
           if (isPlugin) {
@@ -440,7 +445,7 @@ export default function ContextSearch({ isPlugin = false }) {
           onChange={(e) => {
             const newQuery = e.target.value;
             setQuery(newQuery);
-            setActiveIndex(0);
+            setActiveIndex(-1);
             window.dispatchEvent(new CustomEvent("local-search", { detail: newQuery }));
           }}
           className={styles.input}

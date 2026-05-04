@@ -41,6 +41,13 @@ const FilterBar = memo(function FilterBar({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // Auto-expand search if an external query comes in (e.g., from ContextSearch)
+  useEffect(() => {
+    if (inPageSearch.length > 0) {
+      setIsSearchExpanded(true);
+    }
+  }, [inPageSearch]);
+
   const selectedFormatsSet = useMemo(() => new Set(selectedFormats), [selectedFormats]);
   const selectedTagsSet = useMemo(() => new Set(selectedTags), [selectedTags]);
 
