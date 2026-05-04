@@ -620,10 +620,24 @@ const ResourceCard = memo(function ResourceCard({
       </div>
 
       <div className={styles.actions}>
-        {detailUrl && (
-          <Link href={detailUrl} className={styles.detailBtn} title="View details">
+        {!isPlugin && (onPreview || detailUrl) && (
+          <button
+            type="button"
+            className={styles.detailBtn}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (onPreview) {
+                onPreview();
+              } else if (detailUrl) {
+                // If no onPreview, fallback to navigation if detailUrl exists
+                window.location.href = detailUrl;
+              }
+            }}
+            title="View details"
+          >
             <Eye size={16} />
-          </Link>
+          </button>
         )}
         <DownloadButton 
           downloadUrl={resolvedUrl} 

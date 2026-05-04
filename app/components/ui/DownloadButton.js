@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Download, Check, Loader2 } from "lucide-react";
+import { Download, Check, Loader2, Plus } from "lucide-react";
 import { incrementDownloadCount } from "@/app/lib/api";
 import { useAuth } from "@/app/lib/auth-context";
 import styles from "./DownloadButton.module.css";
@@ -119,11 +119,11 @@ export default function DownloadButton({ downloadUrl, fileUrl, fileName, fileFor
       ) : state === "downloading" ? (
         <Loader2 size={16} className={styles.loaderIcon} />
       ) : (
-        <Download size={16} className={styles.downloadIcon} />
+        isInsidePlugin ? <Plus size={16} color="white" /> : <Download size={16} className={styles.downloadIcon} />
       )}
-      {size !== "compact" && (
+      {size !== "compact" && !isInsidePlugin && (
         <span className={styles.text}>
-          {state === "idle" && (isInsidePlugin ? "Add" : "Download")}
+          {state === "idle" && "Download"}
           {state === "downloading" && "..."}
           {state === "done" && "Done!"}
         </span>

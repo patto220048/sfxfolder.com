@@ -2,7 +2,7 @@
 
 import { memo, useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Download, Eye } from "lucide-react";
+import { Download, Eye, Plus } from "lucide-react";
 import { useAuth } from "@/app/lib/auth-context";
 import { incrementDownloadCount } from "@/app/lib/api";
 import { mediaManager } from "@/app/lib/mediaManager";
@@ -487,7 +487,7 @@ const SoundButton = memo(function SoundButton({
       )}
 
       {/* Detail Page Link */}
-      {onPreview && (
+      {!isInsidePlugin && onPreview && (
         <button
           className={styles.previewBtn}
           onClick={onPreview}
@@ -505,7 +505,7 @@ const SoundButton = memo(function SoundButton({
         disabled={isDownloading || !downloadUrl}
         aria-label={`${isPlugin ? 'Import' : 'Download'} ${displayName}`}
       >
-        {isPlugin ? <span className={styles.importText}>ADD</span> : <Download size={14} />}
+        {isPlugin ? <Plus size={16} color="white" /> : <Download size={14} />}
       </button>
     </div>
   );

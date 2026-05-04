@@ -56,7 +56,7 @@ const Row = memo(({ index, style, columnCount, flatItems, rowCount, category, on
               sound={item}
               downloadUrl={item.downloadUrl || item.fileUrl}
               index={startIndex + i}
-              onPreview={() => item.slug ? router.push(`/${category}/${item.slug}`) : onPreview(item)}
+              onPreview={() => (!isPlugin && item.slug) ? router.push(`/${category}/${item.slug}`) : onPreview(item)}
               primaryColor={info.color}
               info={info}
               isPlugin={isPlugin}
@@ -76,7 +76,7 @@ const Row = memo(({ index, style, columnCount, flatItems, rowCount, category, on
               }
               index={startIndex + i}
               onPreview={() => onPreview(item)}
-              detailUrl={item.slug ? `/${category}/${item.slug}` : null}
+              detailUrl={(!isPlugin && item.slug) ? `/${category}/${item.slug}` : null}
               primaryColor={info.color}
               info={info}
               isPlugin={isPlugin}
