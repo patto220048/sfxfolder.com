@@ -40,6 +40,10 @@ export function AuthProvider({ children }) {
   // Flag to prevent onAuthStateChange from triggering profile fetches during internal auth updates
   const isAuthUpdating = useRef(false);
 
+  // Environment detection
+  const isDev = process.env.NODE_ENV === 'development';
+  const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+
   // Fetch user profile from profiles table
   const fetchProfile = useCallback(async (userId) => {
     if (!userId) {
@@ -318,15 +322,33 @@ export function AuthProvider({ children }) {
       return;
     }
 
-    const redirectTo = new URL(`${window.location.origin}/auth/callback`);
-    if (next) {
-      redirectTo.searchParams.set("next", next);
+    const targetOrigin = window.location.origin;
+    const redirectTo = new URL(`${targetOrigin}/auth/callback`);
+    
+    // Clean up next parameter
+    let nextPath = next;
+    if (nextPath && nextPath.startsWith('http')) {
+      try {
+        nextPath = new URL(nextPath).pathname + new URL(nextPath).search;
+      } catch (e) {
+        nextPath = '/';
+      }
     }
+
+    if (nextPath && nextPath !== '/') {
+      redirectTo.searchParams.set("next", nextPath);
+    }
+
+    console.log("[Auth] Google Login Redirecting to:", redirectTo.toString());
 
     const { error } = await supabase.auth.signInWithOAuth({
       provider: "google",
       options: {
         redirectTo: redirectTo.toString(),
+        queryParams: {
+          access_type: "offline",
+          prompt: "consent",
+        },
       },
     });
     if (error) throw error;
@@ -341,13 +363,19 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  const signup = async (email, password, fullName = "") => {
+  const signup = async (email, password, fullName = "", next = "") => {
+    const redirectUrl = new URL(`${currentOrigin}/auth/callback`);
+    redirectUrl.searchParams.set("verify_email", email.trim());
+    if (next) {
+      redirectUrl.searchParams.set("next", next);
+    }
+
     const { data, error } = await supabase.auth.signUp({
       email: email.trim(),
       password,
       options: {
         data: { full_name: fullName },
-        emailRedirectTo: `${window.location.origin}/auth/callback?verify_email=${encodeURIComponent(email.trim())}`,
+        emailRedirectTo: redirectUrl.toString(),
       },
     });
     
@@ -399,12 +427,18 @@ export function AuthProvider({ children }) {
     if (error) throw error;
   };
 
-  const resendVerificationEmail = async (email) => {
+  const resendVerificationEmail = async (email, next = "") => {
+    const redirectUrl = new URL(`${currentOrigin}/auth/callback`);
+    redirectUrl.searchParams.set("verify_email", email.trim());
+    if (next) {
+      redirectUrl.searchParams.set("next", next);
+    }
+
     const { error } = await supabase.auth.resend({
       type: "signup",
       email: email.trim(),
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?verify_email=${encodeURIComponent(email.trim())}`,
+        emailRedirectTo: redirectUrl.toString(),
       },
     });
     if (error) throw error;

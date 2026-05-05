@@ -93,7 +93,9 @@ export default function AuthModal({ isOpen, onClose, config }) {
   const handleGoogleLogin = async () => {
     setError("");
     try {
-      await loginWithGoogle(pathname);
+      const currentPath = pathname || window.location.pathname;
+      console.log("[AuthModal] Google Login with pathname:", currentPath);
+      await loginWithGoogle(currentPath);
     } catch (err) {
       setError(err.message || "Google login failed");
     }
@@ -135,7 +137,7 @@ export default function AuthModal({ isOpen, onClose, config }) {
     setLoading(true);
     setNeedsVerification(false);
     try {
-      const { user } = await signup(email, password, fullName);
+      const { user } = await signup(email, password, fullName, pathname);
       if (user && !user.confirmed_at) {
         setSuccessMsg(
           "Check your email for a confirmation link to complete sign up."
@@ -162,7 +164,7 @@ export default function AuthModal({ isOpen, onClose, config }) {
     setSuccessMsg("");
     setLoading(true);
     try {
-      await resendVerificationEmail(email);
+      await resendVerificationEmail(email, pathname);
       setSuccessMsg("Verification email resent! Check your inbox/spam.");
       setNeedsVerification(false);
     } catch (err) {
