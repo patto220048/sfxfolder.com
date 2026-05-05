@@ -517,14 +517,11 @@ const SoundButton = memo(function SoundButton({
         {isInsidePlugin ? (
           <>
             {downloadStatus === 'downloading' ? (
-              <div className="flex items-center gap-1">
-                <Loader2 size={14} className="animate-spin" />
-                <span style={{ fontSize: '10px' }}>{Math.round(pluginProgress)}%</span>
-              </div>
+              <Loader2 size={14} className="animate-spin" />
             ) : downloadStatus === 'cached' ? (
-              <Plus size={16} color="#4ade80" />
+              <Plus size={16} color="white" />
             ) : (
-              <Download size={16} color="#ffcc00" />
+              <Download size={16} color="white" />
             )}
           </>
         ) : (

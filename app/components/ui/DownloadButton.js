@@ -84,7 +84,7 @@ export default function DownloadButton({ downloadUrl, fileUrl, fileName, fileFor
     
     if (isInsidePlugin) {
       if (downloadStatus === 'downloading') return <Loader2 size={16} className={`${styles.loaderIcon} animate-spin`} />;
-      if (downloadStatus === 'cached') return <Plus size={16} color="#4ade80" />;
+      if (downloadStatus === 'cached') return <Plus size={16} color="white" />;
       
       return <Download size={16} className={styles.downloadIcon} />;
     }

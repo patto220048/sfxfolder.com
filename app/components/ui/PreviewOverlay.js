@@ -346,15 +346,15 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
                           {downloadStatus === 'downloading' ? (
                             <div className="flex items-center gap-2">
                               <Loader2 size={16} className="animate-spin" />
-                              <span>DOWNLOADING {Math.round(pluginProgress)}%</span>
+                              <span>DOWNLOADING...</span>
                             </div>
                           ) : downloadStatus === 'cached' ? (
-                            <div className="flex items-center gap-2" style={{ color: '#4ade80' }}>
+                            <div className="flex items-center gap-2" style={{ color: 'white' }}>
                               <Plus size={18} />
                               <span>ADD TO TIMELINE</span>
                             </div>
                           ) : (
-                            <div className="flex items-center gap-2" style={{ color: '#ffcc00' }}>
+                            <div className="flex items-center gap-2" style={{ color: 'white' }}>
                               <Download size={18} />
                               <span>DOWNLOAD ASSET</span>
                             </div>
