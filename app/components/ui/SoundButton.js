@@ -47,8 +47,6 @@ const SoundButton = memo(function SoundButton({
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   
-  const isInsidePlugin = isPlugin || (typeof window !== 'undefined' && window.location.search.includes('mode=plugin'));
-  
   const { 
     downloadStatus, 
     progress: pluginProgress, 
