@@ -21,7 +21,6 @@ export default function AboutUsClient({ aboutPageSchema, socialLinks = [], conta
   const heroScale = useTransform(scrollYProgress, [0, 0.15], [1, 0.95]);
   const heroY = useTransform(scrollYProgress, [0, 0.15], [0, -50]);
 
-  const creatorY = useTransform(scrollYProgress, [0.1, 0.4], [0, 80]);
 
   const fadeInUp = {
     initial: { opacity: 0, y: 60 },

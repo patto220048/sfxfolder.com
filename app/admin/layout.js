@@ -6,7 +6,7 @@ import { useAuth } from "@/app/lib/auth-context";
 import { usePathname } from "next/navigation";
 
 function AdminContent({ children }) {
-  const { user } = useAuth();
+  useAuth();
   const pathname = usePathname();
   const isLoginPage = pathname === "/admin/login";
 

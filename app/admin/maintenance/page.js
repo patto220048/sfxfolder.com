@@ -61,7 +61,7 @@ export default function MaintenancePage() {
             <Trash2 size={20} color="#ff4d4f" /> Dọn dẹp Storage
           </h2>
           <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)", marginBottom: "var(--space-6)" }}>
-            Quét và xóa các file "mồ côi" (file có trên Storage nhưng không có trong Database) để giải phóng dung lượng.
+            Quét và xóa các file &quot;mồ côi&quot; (file có trên Storage nhưng không có trong Database) để giải phóng dung lượng.
           </p>
           
           <div style={{ display: "flex", gap: "var(--space-3)" }}>
@@ -112,7 +112,7 @@ export default function MaintenancePage() {
 
           {error && (
             <div style={{ marginTop: "var(--space-4)", padding: "var(--space-3)", background: "rgba(255, 77, 79, 0.1)", color: "#ff4d4f", borderRadius: "6px", fontSize: "0.875rem" }}>
-              <AlertTriangle size={16} inline /> Lỗi: {error}
+              <AlertTriangle size={16} /> Lỗi: {error}
             </div>
           )}
 
