@@ -11,7 +11,7 @@ const LenisScroll = dynamic(
 
 // Only enable Lenis on pages that benefit from smooth scroll
 // Category pages (/sound-effects, /bgm, etc.) use position: sticky sidebar — Lenis breaks it
-const SMOOTH_SCROLL_ROUTES = ['/', '/about-us', '/pricing', '/contact', '/terms', '/privacy'];
+const SMOOTH_SCROLL_ROUTES = ['/', '/about-us', '/pricing', '/contact', '/terms', '/privacy', '/faq'];
 
 export default function SmoothScroll({ children }) {
   const pathname = usePathname();

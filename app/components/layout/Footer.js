@@ -95,6 +95,8 @@ function Footer() {
               <ul className={styles.linkList}>
                 <li><Link href="/about-us" className={styles.footerLink}>About Us</Link></li>
                 <li><Link href="/contact" className={styles.footerLink}>Contact</Link></li>
+                <li><Link href="/pricing" className={styles.footerLink}>Pricing</Link></li>
+                <li><Link href="/faq" className={styles.footerLink}>Q&A</Link></li>
                 <li>
                   <Link href="/terms" className={styles.footerLink} target="_blank" rel="noopener noreferrer">
                     Terms of Service
