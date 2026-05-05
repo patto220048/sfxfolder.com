@@ -103,8 +103,9 @@
     <div class="debug-controls" id="debug-toolbar" style="display: none;">
         <button onclick="reloadWeb('https://sfxfolder.com/plugins/premiere')">PROD</button>
         <button onclick="reloadWeb('http://localhost:3000/plugins/premiere')">3000</button>
-        <button onclick="reloadWeb('http://localhost:3001/plugins/premiere')">3001</button>
         <button class="btn-reload" onclick="location.reload()">RELOAD PANEL</button>
+        <button id="btn-clear-cache" style="background: #d40000; color: white; border-color: #d40000;">CLEAR CACHE</button>
+        <div id="path-display" style="font-size: 8px; color: #888; margin-left: auto; align-self: center;"></div>
     </div>
 
     <iframe id="web-container" src="https://sfxfolder.com/plugins/premiere?mode=plugin"></iframe>
@@ -161,8 +162,26 @@
                 var http = require('http');
                 var os = require('os');
 
-                var downloadFolder = path.join(os.tmpdir(), 'RE-SRC-Cache');
-                if (!fs.existsSync(downloadFolder)) { fs.mkdirSync(downloadFolder); }
+                var downloadFolder = path.join(os.homedir(), 'Downloads', 'SFXFolder');
+                if (!fs.existsSync(downloadFolder)) { fs.mkdirSync(downloadFolder, { recursive: true }); }
+
+                // Display path in UI
+                document.getElementById('path-display').innerText = downloadFolder;
+
+                // Handle Clear Cache
+                document.getElementById('btn-clear-cache').onclick = function() {
+                    if (confirm("Are you sure you want to clear plugin cache? All downloaded files will remain on disk, but UI will reset.")) {
+                        localStorage.removeItem('premiere_plugin_cache');
+                        localStorage.removeItem('premiere_plugin_cache_v');
+                        // Notify iframe to clear its local storage too
+                        var iframe = document.getElementById('web-container');
+                        if (iframe && iframe.contentWindow) {
+                            iframe.contentWindow.postMessage({ type: 'CLEAR_PLUGIN_CACHE' }, '*');
+                        }
+                        alert("Cache cleared. Reloading panel...");
+                        location.reload();
+                    }
+                };
 
                 window.addEventListener('message', function (event) {
                     console.log("Panel received message:", event.data);

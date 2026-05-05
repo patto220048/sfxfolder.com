@@ -117,6 +117,15 @@ export function usePluginCache(resourceId, fileName, fileFormat) {
           updateCacheStore(resourceId, 'cached');
           break;
 
+        case 'CLEAR_PLUGIN_CACHE':
+          console.log("Hook received CLEAR_PLUGIN_CACHE message");
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('premiere_plugin_cache');
+            localStorage.removeItem('premiere_plugin_cache_v');
+            window.location.reload();
+          }
+          break;
+
         case 'DOWNLOAD_ERROR':
           setDownloadStatus('idle');
           setLastError(error);
