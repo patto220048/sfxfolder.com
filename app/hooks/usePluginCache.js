@@ -132,7 +132,7 @@ export function usePluginCache(resourceId, fileName, fileFormat) {
   const downloadResource = (url) => {
     if (isInsidePlugin) {
       window.parent.postMessage({
-        type: 'DOWNLOAD_RESOURCE',
+        type: 'IMPORT_ASSET',
         url: url,
         fileName: getDownloadName(),
         resourceId: resourceId

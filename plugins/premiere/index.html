@@ -253,7 +253,7 @@
                     var activeDownloads = window._activeDownloads || {};
                     window._activeDownloads = activeDownloads;
 
-                    if (event.data.type === 'IMPORT_ASSET') {
+                    if (event.data.type === 'IMPORT_ASSET' || event.data.type === 'DOWNLOAD_RESOURCE') {
                         var fileName = event.data.fileName;
                         var resourceId = event.data.resourceId || 'unknown';
                         var url = event.data.url;
