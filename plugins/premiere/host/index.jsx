@@ -2,7 +2,7 @@
  * RE-SRC Premiere ExtendScript
  */
 
-function importToTimeline(filePath) {
+function importToTimeline(filePath, displayName) {
     var project = app.project;
     if (!project) return "No project open";
 
@@ -10,37 +10,34 @@ function importToTimeline(filePath) {
     if (!activeSequence) return "No active sequence";
 
     // 1. Import file vào project
-    // Premiere yêu cầu path tuyệt đối và file phải tồn tại trên ổ cứng
     var fileToImport = [filePath];
-    
-    // ImportFiles(paths, suppressUI, targetBin, importAsNumberedStills)
-    // Trả về true nếu thành công
     var success = project.importFiles(fileToImport, true, project.rootItem, false);
 
-    if (!success) return "Import failed at project level";
+    if (!success) return "Import failed";
 
-    // 2. Tìm item vừa import để đưa vào timeline
-    // Chúng ta lấy tên file từ đường dẫn để tìm
-    var fileName = filePath.split('/').pop(); 
+    // 2. Tìm item vừa import để đổi tên và đưa vào timeline
+    // Khi import file .dat, tên mặc định sẽ là tên file trên đĩa
+    var diskFileName = filePath.split('/').pop(); 
     var importedItem = null;
     
-    // Duyệt qua các item trong project panel
     for (var i = 0; i < project.rootItem.children.numItems; i++) {
         var item = project.rootItem.children[i];
-        if (item.name === fileName) {
+        if (item.name === diskFileName) {
             importedItem = item;
             break;
         }
     }
 
-    // 3. Chèn vào Timeline tại vị trí Playhead
+    // 3. Đổi tên hiển thị và chèn vào Timeline
     if (importedItem) {
-        var videoTrack = activeSequence.videoTracks[0]; // Mặc định track 1
-        var time = activeSequence.getPlayerPosition(); // Lấy vị trí con trỏ hiện tại
+        if (displayName) {
+            importedItem.name = displayName; // Đổi tên hiển thị cho đẹp
+        }
         
-        // insertClip(projectItem, timeInTicks)
+        var videoTrack = activeSequence.videoTracks[0]; 
+        var time = activeSequence.getPlayerPosition(); 
         videoTrack.insertClip(importedItem, time);
-        return "Successfully added to timeline: " + fileName;
+        return "Successfully added: " + (displayName || diskFileName);
     }
 
     return "Error: Could not find imported item in Project panel";

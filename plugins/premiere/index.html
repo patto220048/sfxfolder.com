@@ -162,11 +162,20 @@
                 var http = require('http');
                 var os = require('os');
 
-                var downloadFolder = path.join(os.homedir(), 'Downloads', 'SFXFolder');
-                if (!fs.existsSync(downloadFolder)) { fs.mkdirSync(downloadFolder, { recursive: true }); }
+                var downloadFolder = process.platform === 'win32' 
+                    ? path.join(process.env.APPDATA, 'SFXFolder', 'Library')
+                    : path.join(os.homedir(), 'Library', 'Application Support', 'SFXFolder', 'Library');
+                
+                if (!fs.existsSync(downloadFolder)) { 
+                    try {
+                        fs.mkdirSync(downloadFolder, { recursive: true }); 
+                    } catch (e) {
+                        console.error("Failed to create directory:", e);
+                    }
+                }
 
-                // Display path in UI
-                document.getElementById('path-display').innerText = downloadFolder;
+                // Display path in UI (for debug only)
+                document.getElementById('path-display').innerText = ".../" + path.basename(path.dirname(downloadFolder)) + "/" + path.basename(downloadFolder);
 
                 // Handle Clear Cache
                 document.getElementById('btn-clear-cache').onclick = function() {
@@ -230,8 +239,10 @@
                             return;
                         }
                         
-                        console.log("[CHECK_CACHE] Request for ID:", rid, "File:", fileName);
-                        var cachedPath = path.join(downloadFolder, rid + "_" + fileName);
+                        console.log("[CHECK_CACHE] Request for ID:", rid);
+                        var ext = event.data.fileFormat || "";
+                        if (ext && ext.indexOf(".") !== 0) ext = "." + ext;
+                        var cachedPath = path.join(downloadFolder, rid + (ext || ".dat"));
                         var exists = false;
                         
                         try {
@@ -256,13 +267,16 @@
                     if (event.data.type === 'IMPORT_ASSET' || event.data.type === 'DOWNLOAD_RESOURCE') {
                         var fileName = event.data.fileName;
                         var resourceId = event.data.resourceId || 'unknown';
+                        var displayName = (event.data.displayName || fileName || "").replace(/\.[^/.]+$/, ""); 
+                        var ext = event.data.fileFormat || "";
+                        if (ext && ext.indexOf(".") !== 0) ext = "." + ext;
                         var url = event.data.url;
 
-                        // Check if file already exists in cache
-                        var cachedPath = path.join(downloadFolder, resourceId + "_" + fileName);
+                        // Check if file already exists in cache (Use ID + proper extension)
+                        var cachedPath = path.join(downloadFolder, resourceId + (ext || ".dat"));
                         if (fs.existsSync(cachedPath)) {
                             console.log("Asset already cached, importing directly:", cachedPath);
-                            importAssetToPremiere(cachedPath, resourceId);
+                            importAssetToPremiere(cachedPath, resourceId, displayName);
                             return;
                         }
 
@@ -272,10 +286,10 @@
                         }
 
                         var status = document.getElementById('status');
-                        status.innerText = "Downloading: " + fileName;
+                        status.innerText = "Processing: " + displayName;
 
                         activeDownloads[resourceId] = true;
-                        downloadFile(url, cachedPath, fileName, resourceId);
+                        downloadFile(url, cachedPath, fileName, resourceId, displayName);
                     }
                 });
             } else {
@@ -285,11 +299,12 @@
             showError("System Error: " + e.message);
         }
 
-        function importAssetToPremiere(filePath, resourceId) {
+        function importAssetToPremiere(filePath, resourceId, displayName) {
             var status = document.getElementById('status');
-            status.innerText = "Importing to Timeline...";
+            status.innerText = "Adding to Premiere...";
             var safePath = filePath.replace(/\\/g, '/');
-            csInterface.evalScript('importToTimeline("' + safePath + '")', function (result) {
+            // Gửi cả đường dẫn file và tên hiển thị sạch cho ExtendScript
+            csInterface.evalScript('importToTimeline("' + safePath + '", "' + displayName + '")', function (result) {
                 status.innerText = result || "Done";
                 // Notify iframe that import is complete
                 var iframe = document.getElementById('web-container');
@@ -303,7 +318,7 @@
             });
         }
 
-        function downloadFile(url, dest, originalName, resourceId) {
+        function downloadFile(url, dest, originalName, resourceId, displayName) {
             var status = document.getElementById('status');
             var progressBar = document.getElementById('progress-bar');
             var iframe = document.getElementById('web-container');
@@ -360,7 +375,7 @@
                             }, '*');
                         }
 
-                        importAssetToPremiere(dest, resourceId);
+                        importAssetToPremiere(dest, resourceId, displayName);
                     });
                 });
             });

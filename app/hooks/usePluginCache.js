@@ -64,7 +64,8 @@ export function usePluginCache(resourceId, fileName, fileFormat) {
       window.parent.postMessage({
         type: 'CHECK_RESOURCE_STATUS',
         resourceId: resourceId,
-        fileName: getDownloadName()
+        displayName: fileName || "Untitled",
+        fileFormat: fileFormat
       }, '*');
     }
   }, [isInsidePlugin, resourceId, getDownloadName]);
@@ -134,8 +135,9 @@ export function usePluginCache(resourceId, fileName, fileFormat) {
       window.parent.postMessage({
         type: 'IMPORT_ASSET',
         url: url,
-        fileName: getDownloadName(),
-        resourceId: resourceId
+        displayName: fileName || "Untitled",
+        resourceId: resourceId,
+        fileFormat: fileFormat
       }, '*');
     }
   };
@@ -144,8 +146,9 @@ export function usePluginCache(resourceId, fileName, fileFormat) {
     if (isInsidePlugin) {
       window.parent.postMessage({
         type: 'IMPORT_ASSET',
-        fileName: getDownloadName(),
-        resourceId: resourceId
+        displayName: fileName || "Untitled",
+        resourceId: resourceId,
+        fileFormat: fileFormat
       }, '*');
     }
   };
