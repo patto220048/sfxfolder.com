@@ -18,7 +18,13 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
   const mediaRef = useRef(null);
   const [isHovering, setIsHovering] = useState(false);
   const { user, session, isPremium, isAdmin } = useAuth();
-  const { downloadStatus, progress: pluginProgress } = usePluginCache(resource?.id, resource?.fileName, resource?.fileFormat);
+  const { 
+    downloadStatus, 
+    progress: pluginProgress, 
+    isInsidePlugin, 
+    importAsset,
+    downloadResource 
+  } = usePluginCache(resource?.id, resource?.fileName, resource?.fileFormat);
 
   useEffect(() => {
     console.log("PreviewOverlay mounted:", { 
@@ -275,12 +281,7 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
 
                         // If already cached in plugin, just import immediately
                         if (isInsidePlugin && downloadStatus === 'cached') {
-                          window.parent.postMessage({
-                            type: 'IMPORT_ASSET',
-                            url: resource.url,
-                            fileName: resource.fileName || `${resource.name || 'asset'}.${resource.fileFormat || 'mp3'}`,
-                            resourceId: resource.id
-                          }, '*');
+                          importAsset();
                           return;
                         }
 
@@ -329,12 +330,7 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
                         
                         // 2. Send to Premiere Panel
                         if (window.parent !== window) {
-                          window.parent.postMessage({
-                            type: 'IMPORT_ASSET',
-                            url: signedUrl,
-                            fileName: fullFileName,
-                            resourceId: resource.id
-                          }, '*');
+                          downloadResource(signedUrl);
                         } else {
                           alert("Insert only works inside Adobe Premiere Pro");
                         }

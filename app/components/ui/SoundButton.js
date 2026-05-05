@@ -49,7 +49,13 @@ const SoundButton = memo(function SoundButton({
   
   const isInsidePlugin = isPlugin || (typeof window !== 'undefined' && window.location.search.includes('mode=plugin'));
   
-  const { downloadStatus, progress: pluginProgress } = usePluginCache(id, fileName, fileFormat);
+  const { 
+    downloadStatus, 
+    progress: pluginProgress, 
+    isInsidePlugin, 
+    importAsset, 
+    downloadResource 
+  } = usePluginCache(id, fileName, fileFormat);
   
   const { user, session, isPremium: userIsPremium, isAdmin, loading } = useAuth();
   const router = useRouter();
@@ -333,17 +339,7 @@ const SoundButton = memo(function SoundButton({
     console.log("Starting asset download for Premiere:", id);
     // 0. If already cached in plugin, just import immediately
     if (isInsidePlugin && downloadStatus === 'cached') {
-      const getDownloadName = () => {
-        const baseName = (name || fileName || "download").replace(/\.[^/.]+$/, "");
-        const ext = fileFormat ? `.${fileFormat.replace(/^\./, "").toLowerCase()}` : "";
-        return `${baseName}${ext}`;
-      };
-      window.parent.postMessage({
-        type: 'IMPORT_ASSET',
-        url: downloadUrl,
-        fileName: getDownloadName(),
-        resourceId: id
-      }, '*');
+      importAsset();
       return;
     }
 
@@ -383,21 +379,9 @@ const SoundButton = memo(function SoundButton({
       
       if (!signedUrl) throw new Error("No download URL returned");
 
-      const getDownloadName = () => {
-        const baseName = (name || fileName || "download").replace(/\.[^/.]+$/, "");
-        const ext = fileFormat ? `.${fileFormat.replace(/^\./, "").toLowerCase()}` : "";
-        return `${baseName}${ext}`;
-      };
-
-      if (isPlugin || (typeof window !== 'undefined' && window.self !== window.top)) {
+      if (isInsidePlugin) {
         // 2. Integration with Premiere Plugin: Send URL for the Panel to download and import
-        console.log("POSTING MESSAGE TO PARENT FROM SOUNDBUTTON:", signedUrl);
-        window.parent.postMessage({
-          type: 'IMPORT_ASSET',
-          url: signedUrl,
-          fileName: getDownloadName(),
-          resourceId: id
-        }, '*');
+        downloadResource(signedUrl);
       } else {
         // 2. Trigger Native Browser Download via Hidden Anchor
         const link = document.createElement('a');

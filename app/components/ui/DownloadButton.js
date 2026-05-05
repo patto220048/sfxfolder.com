@@ -18,7 +18,7 @@ export default function DownloadButton({ downloadUrl, fileUrl, fileName, fileFor
   };
 
   // Use our new reusable hook
-  const { downloadStatus, progress, isInsidePlugin, requestImport } = usePluginCache(resourceId, getFullFileName(), fileFormat);
+  const { downloadStatus, progress, isInsidePlugin, downloadResource, importAsset } = usePluginCache(resourceId, getFullFileName(), fileFormat);
 
   const resolvedUrl = downloadUrl || fileUrl;
 
@@ -28,7 +28,7 @@ export default function DownloadButton({ downloadUrl, fileUrl, fileName, fileFor
 
     // If already cached in plugin, just import immediately
     if (isInsidePlugin && downloadStatus === 'cached') {
-      requestImport(resolvedUrl); // This sends IMPORT_ASSET via hook
+      importAsset(); // This sends IMPORT_ASSET via hook
       return;
     }
 
@@ -63,9 +63,8 @@ export default function DownloadButton({ downloadUrl, fileUrl, fileName, fileFor
 
       if (isInsidePlugin) {
         // 2. Delegate to Plugin Shell via Hook
-        requestImport(signedUrl);
-        // We stay in 'downloading' until Shell reports 'IMPORT_COMPLETE' (not implemented in hook yet for 'state', but UI will show progress)
-        // For simple UI feedback, we can set done after a while if not using full sync
+        downloadResource(signedUrl);
+        // We stay in 'downloading' until Shell reports 'DOWNLOAD_COMPLETE'
         setTimeout(() => setState("idle"), 1000); 
       } else {
         // 2. Standard Browser Download
