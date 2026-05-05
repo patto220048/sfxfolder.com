@@ -1,133 +1,146 @@
 /**
- * RE-SRC Premiere ExtendScript - Advanced Import Logic
+ * RE-SRC Premiere ExtendScript - Paranoid Robustness Mode
  */
 
 function getOrCreateBin(binName) {
-    var project = app.project;
-    var root = project.rootItem;
-    var targetBin = null;
-
-    for (var i = 0; i < root.children.numItems; i++) {
-        var item = root.children[i];
-        if (item.type === 2 && item.name === binName) { // 2 = ProjectItemType.BIN
-            targetBin = item;
-            break;
+    try {
+        var root = app.project.rootItem;
+        for (var i = 0; i < root.children.numItems; i++) {
+            var item = root.children[i];
+            if (item && item.type === 2 && item.name === binName) return item;
         }
+        return root.createBin(binName);
+    } catch(e) {
+        return app.project.rootItem;
     }
-
-    if (!targetBin) {
-        targetBin = root.createBin(binName);
-    }
-    return targetBin;
 }
 
-function getSmartTrack(sequence, time, importedItem, isAudio) {
-    var tracks = isAudio ? sequence.audioTracks : sequence.videoTracks;
-    var start = time.seconds;
-    
-    // Tính toán thời lượng của clip để tránh đè lên các clip phía sau
-    var duration = 5; // Mặc định 5s nếu không lấy được
+function getSmartTrack(sequence, time, isAudio) {
     try {
-        if (importedItem) {
-            duration = importedItem.getOutPoint().seconds - importedItem.getInPoint().seconds;
-            if (duration <= 0) duration = 5; 
+        var tracks = isAudio ? sequence.audioTracks : sequence.videoTracks;
+        if (!tracks || tracks.numItems === 0) {
+            // Fallback: Nếu không tìm thấy loại track tương ứng, thử loại kia
+            tracks = isAudio ? sequence.videoTracks : sequence.audioTracks;
         }
-    } catch(e) {}
-    var end = start + duration;
-    
-    for (var i = 0; i < tracks.numItems; i++) {
-        var track = tracks[i];
-        if (track.locked) continue; 
+        if (!tracks || tracks.numItems === 0) return null;
 
-        var hasCollision = false;
-        for (var j = 0; j < track.clips.numItems; j++) {
-            var clip = track.clips[j];
-            var clipStart = clip.start.seconds;
-            var clipEnd = clip.end.seconds;
+        var playhead = time.seconds;
+        var foundTrack = null;
+        
+        for (var i = 0; i < tracks.numItems; i++) {
+            var track = null;
+            try { track = tracks.item(i); } catch(e) { track = tracks[i]; }
             
-            // Kiểm tra va chạm giữa hai khoảng thời gian:
-            // [start, end] giao với [clipStart, clipEnd]
-            if (start < clipEnd && end > clipStart) {
-                hasCollision = true;
+            if (!track || track.locked) continue;
+
+            var isOccupied = false;
+            try {
+                var clips = track.clips;
+                if (clips && clips.numItems > 0) {
+                    for (var j = 0; j < clips.numItems; j++) {
+                        var clip = null;
+                        try { clip = clips.item(j); } catch(e) { clip = clips[j]; }
+                        
+                        if (clip && clip.start && clip.end) {
+                            if (playhead >= (clip.start.seconds - 0.05) && playhead < (clip.end.seconds + 0.05)) {
+                                isOccupied = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            } catch(e) { isOccupied = false; }
+
+            if (!isOccupied) {
+                foundTrack = track;
                 break;
             }
         }
+
+        // Nếu tất cả bận, trả về track cuối cùng
+        if (!foundTrack) {
+            try { foundTrack = tracks.item(tracks.numItems - 1); } catch(e) { foundTrack = tracks[tracks.numItems - 1]; }
+        }
         
-        if (!hasCollision) return track;
+        return foundTrack;
+    } catch(e) {
+        return null;
     }
-    
-    // Nếu tất cả track đều bận, ưu tiên dùng track cao nhất để ít ảnh hưởng nhất
-    return tracks[tracks.numItems - 1] || tracks[0];
 }
 
 function importToTimeline(filePath, displayName, fileFormat) {
-    var project = app.project;
-    if (!project) return "No project open";
+    try {
+        var project = app.project;
+        if (!project) return "Error: No project open";
+        var sequence = project.activeSequence;
+        if (!sequence) return "Error: No active sequence found. Please click on your timeline.";
 
-    var activeSequence = project.activeSequence;
-    if (!activeSequence) return "No active sequence";
+        var targetBin = getOrCreateBin("SFXFolder Assets");
+        var importedItem = null;
 
-    // 1. Manage Folder (Bin)
-    var targetBin = getOrCreateBin("SFXFolder Assets");
-    var importedItem = null;
-
-    // 2. Kiểm tra xem item đã tồn tại trong Project chưa (Tái sử dụng nếu đã import)
-    if (displayName) {
-        for (var i = 0; i < targetBin.children.numItems; i++) {
-            var item = targetBin.children[i];
-            if (item.name === displayName) {
-                importedItem = item;
-                break;
-            }
-        }
-    }
-
-    // 3. Nếu chưa có item trong Project, tiến hành Import file mới
-    if (!importedItem) {
-        var fileToImport = [filePath];
-        var success = project.importFiles(fileToImport, true, targetBin, false);
-
-        if (!success) return "Import failed";
-
-        // Tìm item vừa import để đổi tên
-        var diskFileName = filePath.split('/').pop(); 
-        for (var j = 0; j < targetBin.children.numItems; j++) {
-            var item = targetBin.children[j];
-            if (item.name === diskFileName) {
-                importedItem = item;
-                break;
+        // 1. Tái sử dụng Asset
+        if (displayName) {
+            for (var i = 0; i < targetBin.children.numItems; i++) {
+                var item = targetBin.children[i];
+                if (item && item.name === displayName) {
+                    importedItem = item;
+                    break;
+                }
             }
         }
 
-        if (importedItem && displayName) {
-            importedItem.name = displayName;
-        }
-    }
+        // 2. Import nếu chưa có
+        if (!importedItem) {
+            var success = project.importFiles([filePath], true, targetBin, false);
+            if (!success) return "Error: Failed to import " + filePath;
 
-    if (!importedItem) return "Error: Could not find or import item";
-
-    // 4. Smart Placement
-    var isAudioOnly = false;
-    if (fileFormat) {
-        var fmt = fileFormat.toLowerCase();
-        // Danh sách các định dạng âm thanh phổ biến
-        var audioExts = ['wav', 'mp3', 'm4a', 'aac', 'flac', 'aif', 'aiff'];
-        for (var k = 0; k < audioExts.length; k++) {
-            if (fmt === audioExts[k]) {
-                isAudioOnly = true;
-                break;
+            var diskFileName = filePath.split('/').pop();
+            for (var j = 0; j < targetBin.children.numItems; j++) {
+                var itemAfter = targetBin.children[j];
+                if (itemAfter && itemAfter.name === diskFileName) {
+                    importedItem = itemAfter;
+                    if (displayName) importedItem.name = displayName;
+                    break;
+                }
             }
         }
-    }
 
-    var time = activeSequence.getPlayerPosition();
-    // Truyền thêm importedItem để tính toán collision chính xác
-    var targetTrack = getSmartTrack(activeSequence, time, importedItem, isAudioOnly);
-    
-    if (targetTrack) {
-        targetTrack.overwriteClip(importedItem, time);
-        return "Successfully added to " + (isAudioOnly ? "Audio" : "Video") + " Track: " + (displayName || diskFileName);
-    }
+        if (!importedItem) return "Error: Asset imported but not found in Project Panel";
 
-    return "Error: No suitable track found";
+        // 3. Quyết định loại Track
+        var isAudio = true; // Mặc định là Audio nếu không rõ
+        if (fileFormat) {
+            var fmt = fileFormat.toLowerCase();
+            var videoExts = ['mp4', 'mov', 'avi', 'mkv', 'mxf'];
+            var isVideo = false;
+            for (var v = 0; v < videoExts.length; v++) {
+                if (fmt === videoExts[v]) { isVideo = true; break; }
+            }
+            if (isVideo) isAudio = false;
+        }
+
+        // 4. Chèn vào Timeline
+        var time = sequence.getPlayerPosition();
+        var targetTrack = getSmartTrack(sequence, time, isAudio);
+
+        if (targetTrack) {
+            targetTrack.overwriteClip(importedItem, time);
+            var tName = "Timeline";
+            try { tName = targetTrack.name; } catch(e) {}
+            return "OK: Added to " + tName;
+        }
+
+        // Fallback cuối cùng: Thử track 0 của audio hoặc video bất kỳ
+        try {
+            var finalFallback = isAudio ? sequence.audioTracks[0] : sequence.videoTracks[0];
+            if (finalFallback) {
+                finalFallback.overwriteClip(importedItem, time);
+                return "OK: Added to fallback track";
+            }
+        } catch(e) {}
+
+        return "Error: Could not find any valid track to place the clip";
+    } catch(err) {
+        return "Critical Error: " + err.toString();
+    }
 }
