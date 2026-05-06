@@ -7,6 +7,10 @@ export default function PluginNavbar({ breadcrumbs = [], categoryName = "", onBr
   const router = useRouter();
   
   const handleReload = () => {
+    // Clear API data cache to force a fresh load from server
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('plugin_data_v1');
+    }
     window.location.reload();
   };
 

@@ -46,6 +46,7 @@ export default async function PremierePluginPage({ searchParams }) {
           resources={allResources} 
           categoryTags={categoryTags}
           isPlugin={true}
+          initialCacheHint={true}
         />
       </Suspense>
     </SidebarProvider>

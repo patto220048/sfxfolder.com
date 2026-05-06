@@ -7,6 +7,7 @@ import { useSiteData } from "@/app/context/SiteContext";
 import { Volume2, Music, Camera, Layers, Video, Folder } from "lucide-react";
 import useSWR from "swr";
 import { useDebounce } from "@/app/hooks/useDebounce";
+import { usePluginDataCache } from "@/app/hooks/usePluginDataCache";
 
 import dynamic from "next/dynamic";
 const PreviewOverlay = dynamic(() => import("@/app/components/ui/PreviewOverlay"));
@@ -49,7 +50,7 @@ const getDescendantIds = (node) => {
 
 const LATEST_EXT_VERSION = "1.0.3";
 
-function ClientPageContent({ slug, info, folders, resources: initialResources, categoryTags = [], isPlugin: propIsPlugin = false }) {
+function ClientPageContent({ slug, info, folders, resources: initialResources, categoryTags = [], isPlugin: propIsPlugin = false, initialCacheHint = false }) {
   const [extVersion, setExtVersion] = useState(null);
   const [showUpdateBanner, setShowUpdateBanner] = useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState(null);
@@ -74,6 +75,8 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
 
   const [historyStack, setHistoryStack] = useState([null]);
   const [historyPointer, setHistoryPointer] = useState(0);
+
+  const { getCachedData, setCachedData, prefetchCategory } = usePluginDataCache();
 
   const loadMoreRef = useRef(null);
   const abortControllerRef = useRef(null);
@@ -279,6 +282,49 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
     window.addEventListener("navigate-to-root", handleNavigateToRoot);
     return () => window.removeEventListener("navigate-to-root", handleNavigateToRoot);
   }, [handleSelectFolder]);
+
+  // Plugin Data Cache Logic (Stale-While-Revalidate)
+  useEffect(() => {
+    if (!isPlugin || !isInitialized) return;
+
+    // 1. Initial Cache Hit - Hiển thị ngay từ cache nếu có
+    const cached = getCachedData(slug);
+    if (cached) {
+      setAllLoadedResources(cached.resources || []);
+      setServerOffset(cached.resources?.length || 0);
+      setHasMoreDB((cached.resources?.length || 0) >= PAGE_SIZE_BATCH);
+      setIsInitialLoading(false);
+      console.log(`[Cache] Loaded ${slug} from localStorage`);
+    }
+
+    // 2. Initial Cache Seed - Nếu có hint từ server, lưu vào cache ngay
+    if (initialCacheHint && initialResources?.length > 0) {
+      setCachedData(slug, {
+        resources: initialResources,
+        categoryInfo: info,
+        tags: categoryTags,
+        folders: [] // Folders được build riêng, tạm thời cache resources là chính
+      });
+    }
+
+    // Background Refresh sẽ tự động chạy thông qua refreshData trong useEffect bên dưới
+  }, [isPlugin, isInitialized, slug, initialCacheHint]);
+
+  // Update cache when fresh data is loaded
+  useEffect(() => {
+    if (isPlugin && !isInitialLoading && !isFetchLoading && allLoadedResources.length > 0) {
+      // Chỉ cache khi ở root (không có filter/folder) để làm bundle khởi tạo
+      const noFilters = !debouncedSearch && debouncedTags.length === 0 && debouncedFormats.length === 0 && !selectedFolderId;
+      if (noFilters) {
+        setCachedData(slug, {
+          resources: allLoadedResources,
+          categoryInfo: info,
+          tags: categoryTags,
+          folders: []
+        });
+      }
+    }
+  }, [allLoadedResources, isInitialLoading, isFetchLoading, isPlugin, slug, debouncedSearch, debouncedTags, debouncedFormats, selectedFolderId]);
 
   useEffect(() => {
     if (!isInitialized) return;
@@ -605,6 +651,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
                   router.push(`${pathname}?${params.toString()}`);
                 });
               }}
+              onMouseEnter={() => prefetchCategory(cat.slug)}
             >
               {getCategoryIcon(cat.slug)}
               <span>{cat.name}</span>
