@@ -134,10 +134,25 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
 }
 
+.chipGroup::-webkit-scrollbar {
+  display: block;
+  height: 3px;
+}
+
+.chipGroup::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 10px;
+}
+
+
 .chip {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 6px;
@@ -329,11 +344,25 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  flex-wrap: wrap;
-  padding: 4px 0;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding: 4px 0 8px;
+  -webkit-overflow-scrolling: touch;
 }
 
+.tagsScroll::-webkit-scrollbar {
+  display: block;
+  height: 3px;
+}
+
+.tagsScroll::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 10px;
+}
+
+
 .tagChip {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 6px;

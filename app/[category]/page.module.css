@@ -584,6 +584,7 @@
 
 .pluginCatTab {
   flex: 1;
+  flex-shrink: 0;
   min-width: 80px;
   display: flex;
   align-items: center;
