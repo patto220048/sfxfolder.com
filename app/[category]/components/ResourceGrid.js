@@ -197,7 +197,7 @@ const ResourceGrid = ({
         renderProp={({ height, width }) => {
           // Fallback to prevent hidden content if dimensions are 0
           const finalHeight = height > 0 ? height : (isPlugin ? 500 : 800);
-          const finalWidth = width > 0 ? width : (typeof window !== 'undefined' ? window.innerWidth - 200 : 1000);
+          const finalWidth = width > 0 ? width : 1000;
           
           const columnCount = getColumnCount(finalWidth);
           const baseRowCount = Math.ceil(flatItems.length / columnCount);
