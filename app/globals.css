@@ -93,6 +93,18 @@
 
 .is-plugin {
   --navbar-height: 0px !important;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+.is-plugin input,
+.is-plugin textarea {
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
 }
 
 /* Force monochrome for plugin mode */
