@@ -498,10 +498,13 @@ const SoundButton = memo(function SoundButton({
       )}
 
       {/* Detail Page Link */}
-      {!isInsidePlugin && onPreview && (
+      {!isPlugin && !isInsidePlugin && onPreview && (
         <button
           className={styles.previewBtn}
-          onClick={onPreview}
+          onClick={(e) => {
+            e.stopPropagation();
+            if (onPreview) onPreview(resourceObj);
+          }}
           title="View details"
           aria-label={`View details for ${displayName}`}
         >

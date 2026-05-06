@@ -56,7 +56,14 @@ const Row = memo(({ index, style, columnCount, flatItems, rowCount, category, on
               sound={item}
               downloadUrl={item.downloadUrl || item.fileUrl}
               index={startIndex + i}
-              onPreview={() => (!isPlugin && item.slug) ? router.push(`/${category}/${item.slug}`) : onPreview(item)}
+              onPreview={(itemToPreview) => {
+                const targetItem = itemToPreview || item;
+                if (!isPlugin && targetItem.slug) {
+                  router.push(`/${category}/${targetItem.slug}`);
+                } else {
+                  onPreview(targetItem);
+                }
+              }}
               primaryColor={info.color}
               info={info}
               isPlugin={isPlugin}
@@ -100,7 +107,7 @@ const ResourceGrid = ({
   info = {},
   slug,
   handleSelectFolder,
-  setPreviewResource,
+  onPreview,
   isInitialLoading,
   isFetchLoading,
   isPending,
@@ -200,7 +207,7 @@ const ResourceGrid = ({
                 flatItems, 
                 rowCount, 
                 category: slug, 
-                onPreview: setPreviewResource,
+                onPreview,
                 router,
                 handleSelectFolder,
                 info,

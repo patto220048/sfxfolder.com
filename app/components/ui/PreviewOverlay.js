@@ -18,6 +18,17 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
   const mediaRef = useRef(null);
   const [isHovering, setIsHovering] = useState(false);
   const { user, session, isPremium, isAdmin } = useAuth();
+  const videoUrl = getOptimizedUrl(resource);
+  const isVideo = isVideoFormat(resource);
+  
+  // Explicitly track the src in the ref to avoid React-DOM desync issues
+  useEffect(() => {
+    if (isVideo && mediaRef.current && videoUrl) {
+      if (mediaRef.current.getAttribute('src') !== videoUrl) {
+        mediaRef.current.src = videoUrl;
+      }
+    }
+  }, [videoUrl, isVideo]);
   const { 
     downloadStatus, 
     progress: pluginProgress, 
@@ -27,20 +38,7 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
   } = usePluginCache(resource?.id, resource?.name || resource?.fileName, resource?.fileFormat);
 
   useEffect(() => {
-    console.log("PreviewOverlay mounted:", { 
-      resourceName: resource?.name, 
-      resourceId: resource?.id, 
-      isPlugin 
-    });
-    // Attempt to log to parent
-    try {
-      if (window.parent && window.parent.postMessage) {
-        window.parent.postMessage({ 
-          type: 'DEBUG_LOG', 
-          message: 'PreviewOverlay mounted. isPlugin: ' + isPlugin 
-        }, '*');
-      }
-    } catch (e) {}
+    // Attempt to log to parent if needed for plugin environment monitoring
   }, [resource, isPlugin]);
 
   // Handle ESC key to close
@@ -61,10 +59,12 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
   useEffect(() => {
     if (!resource) return;
     
-    if (isVideoFormat(resource) && mediaRef.current) {
-      mediaManager.play(mediaRef.current, 'video');
-      // Click interaction already happened to open this overlay, so unmuted auto-play should work
-      mediaRef.current.play().catch(err => console.log("Auto-play blocked:", err));
+    if (isVideo && mediaRef.current && videoUrl) {
+      const video = mediaRef.current;
+      mediaManager.play(video, 'video', null, resource.id);
+      
+      // We'll let the onLoadedData event handle the initial play
+      // to ensure the source is ready.
     } else if (isAudioFormat(resource)) {
       const audio = mediaManager.getSharedAudio();
       
@@ -157,7 +157,6 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
     ? resource.category 
     : (resource.category?.slug || resource.category_id || "");
 
-  const isVideo = isVideoFormat(resource);
   const isImage = isImageFormat(resource);
   const isFont = isFontFormat(resource);
   const isAudio = isAudioFormat(resource);
@@ -178,18 +177,43 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
           onMouseEnter={handleMediaEnter}
           onMouseLeave={handleMediaLeave}
         >
-          {isVideo && (
+          {isVideo && videoUrl && (
             <video 
+              key={resource.id}
               ref={mediaRef}
-              src={getOptimizedUrl(resource)} 
+              src={videoUrl} 
               poster={getOptimizedUrl(resource.thumbnailUrl || resource.previewUrl, { width: 1200 })}
               controls 
               autoPlay
               loop
               playsInline 
               preload="auto"
+              onLoadedData={(e) => {
+                const playPromise = e.currentTarget.play();
+                if (playPromise !== undefined) {
+                  playPromise.catch(err => {
+                    e.currentTarget.muted = true;
+                    e.currentTarget.play().catch(() => {});
+                  });
+                }
+              }}
+              onError={(e) => {
+                const video = e.currentTarget;
+                
+                // Only retry if we actually have a valid URL
+                if (videoUrl && video.error?.code === 4 && !video.getAttribute('src')) {
+                  video.src = videoUrl;
+                  video.load();
+                }
+              }}
               className={styles.largePreviewVideo} 
             />
+          )}
+          {isVideo && !videoUrl && (
+            <div className={styles.noPreview}>
+              <Video size={48} />
+              <p>No preview available</p>
+            </div>
           )}
           {isImage && (
             <img 

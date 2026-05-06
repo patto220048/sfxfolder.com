@@ -4,6 +4,7 @@
 import { memo, useState, useRef, useCallback, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Download as DownloadCount, Play, Eye, Volume2, VolumeX } from "lucide-react";
 import DownloadButton from "./DownloadButton";
 import { mediaManager } from "@/app/lib/mediaManager";
@@ -37,6 +38,7 @@ const ResourceCard = memo(function ResourceCard({
   isPlugin = false,
   ...otherProps
 }) {
+  const router = useRouter();
   const resourceObj = { id, name, fileName, fileFormat, downloadUrl, ...otherProps };
   
   // Determine effective card type based on format if not explicitly set to something else
@@ -627,11 +629,10 @@ const ResourceCard = memo(function ResourceCard({
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              if (onPreview) {
+              if (detailUrl) {
+                router.push(detailUrl);
+              } else if (onPreview) {
                 onPreview();
-              } else if (detailUrl) {
-                // If no onPreview, fallback to navigation if detailUrl exists
-                window.location.href = detailUrl;
               }
             }}
             title="View details"

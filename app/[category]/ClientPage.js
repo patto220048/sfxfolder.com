@@ -232,13 +232,22 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
     } else if (previewResource) {
       setPreviewResource(null);
     }
-  }, [resSlug, allLoadedResources, isInitialized, previewResource]);
+  }, [resSlug, isInitialized, allLoadedResources]);
 
   useEffect(() => {
     const handleLocalSearch = (e) => setInPageSearch(e.detail || "");
     window.addEventListener("local-search", handleLocalSearch);
     return () => window.removeEventListener("local-search", handleLocalSearch);
   }, []);
+
+  // Handle preview by updating URL (to trigger useEffect)
+  const handlePreview = useCallback((resource) => {
+    if (resource?.slug) {
+      updateUrl({ res: resource.slug });
+    } else if (resource) {
+      setPreviewResource(resource);
+    }
+  }, [updateUrl]);
 
   // Listen for Extension Version from Host
   useEffect(() => {
@@ -658,7 +667,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
             info={info}
             slug={slug}
             handleSelectFolder={handleSelectFolder}
-            setPreviewResource={setPreviewResource}
+            onPreview={handlePreview}
             router={router}
             inPageSearch={deferredSearch}
             selectedFormats={selectedFormats}
@@ -671,7 +680,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
 
         {previewResource && (
           <PreviewOverlay 
-            previewResource={previewResource}
+            resource={previewResource}
             onClose={() => updateUrl({ res: null })} 
             showDownload={true} 
             showInsert={isPlugin}
@@ -731,7 +740,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
         info={info}
         slug={slug}
         handleSelectFolder={handleSelectFolder}
-        setPreviewResource={setPreviewResource}
+        onPreview={handlePreview}
         router={router}
         inPageSearch={deferredSearch}
         selectedFormats={selectedFormats}
@@ -743,11 +752,11 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
 
       {previewResource && (
         <PreviewOverlay 
-          previewResource={previewResource}
+          resource={previewResource}
           onClose={() => updateUrl({ res: null })} 
           showDownload={true} 
           showInsert={false}
-          isPlugin={false}
+          isPlugin={isPlugin}
         />
       )}
     </div>
