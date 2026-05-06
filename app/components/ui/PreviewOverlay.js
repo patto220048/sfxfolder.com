@@ -41,6 +41,13 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
     // Attempt to log to parent if needed for plugin environment monitoring
   }, [resource, isPlugin]);
 
+  // Stop all media when overlay is closed
+  useEffect(() => {
+    return () => {
+      mediaManager.stopAll();
+    };
+  }, []);
+
   // Handle ESC key to close
   useEffect(() => {
     const handleEsc = (e) => {

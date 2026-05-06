@@ -176,8 +176,6 @@ export default function ContextSearch({ isPlugin = false }) {
     setActiveIndex(-1);
     setActiveFolder(null);
     setFilters(prev => ({ ...prev, type: 'all' }));
-    // Tell ClientPage to navigate to "All Resources" (root)
-    window.dispatchEvent(new CustomEvent("navigate-to-root"));
   }, []);
 
   // Close modal and commit search query (for Enter key)
