@@ -336,15 +336,23 @@
   display: flex;
   gap: 6px;
   overflow-x: auto;
-  padding-bottom: 4px;
-  scrollbar-width: none; /* Hide scrollbar */
+  padding-bottom: 8px;
+  width: 100%;
+  -webkit-overflow-scrolling: touch;
 }
 
 .filterScroll::-webkit-scrollbar {
-  display: none;
+  display: block;
+  height: 3px;
+}
+
+.filterScroll::-webkit-scrollbar-thumb {
+  background: var(--border-default);
+  border-radius: 10px;
 }
 
 .filterChip {
+  flex-shrink: 0;
   padding: 3px 8px;
   border-radius: 4px;
   background: var(--bg-surface);
