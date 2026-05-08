@@ -93,11 +93,14 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
   const resSlug = searchParams.get("res");
   const { setFolderId } = useSidebar();
 
-  const debouncedSearch = useDebounce(deferredSearch, 400);
-  const debouncedTags = useDebounce(selectedTags, 300);
-  const debouncedFormats = useDebounce(selectedFormats, 300);
-  const debouncedFolderId = useDebounce(selectedFolderId, 100);
+  const debouncedSearch = useDebounce(inPageSearch, 300); // Debounce raw input instead of deferred
+  const debouncedTags = useDebounce(selectedTags, 200);
+  const debouncedFormats = useDebounce(selectedFormats, 200);
+  const debouncedFolderId = useDebounce(selectedFolderId, 50); // Faster folder transition
   const debouncedSortBy = useDebounce(sortBy, 100);
+  
+  // Track the folder ID for which data is currently loaded
+  const [loadedFolderId, setLoadedFolderId] = useState(null);
 
   const updateUrl = useCallback((updates) => {
     const params = new URLSearchParams(searchParams);
@@ -393,6 +396,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
 
         if (!controller.signal.aborted) {
           setAllLoadedResources(fresh || []);
+          setLoadedFolderId(debouncedFolderId);
           setServerOffset(fresh?.length || 0);
           setHasMoreDB(fresh?.length === PAGE_SIZE_BATCH);
           setVisibleCount(PAGE_SIZE_DISPLAY);
@@ -442,14 +446,20 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
   }, [slug]);
 
   const filteredResources = useMemo(() => {
-    // Nếu đang ở cấp gốc (không chọn folder) và KHÔNG có bộ lọc nào kích hoạt,
-    // chúng ta sẽ ẩn danh sách Resource để chỉ hiện các Folder con.
-    // Trong plugin mode, luôn hiển thị resources ở root.
+    // Prevent showing items from a previous folder context
+    const folderMismatch = selectedFolderId !== loadedFolderId;
+    
     const isAtRoot = !selectedFolderId;
     const hasSearch = inPageSearch && inPageSearch.trim().length > 0;
     const hasTags = selectedTags && selectedTags.length > 0;
     const hasFormats = selectedFormats && selectedFormats.length > 0;
     const isFiltering = hasSearch || hasTags || hasFormats || resSlug;
+
+    // If we've just changed folders and we're not filtering, 
+    // hide the old items immediately to prevent "jumping"
+    if (folderMismatch && !isFiltering) {
+      return [];
+    }
 
     // Ở trang gốc, chỉ hiện item khi có bộ lọc. Nếu không thì ẩn để hiện Folder.
     if (isAtRoot && !isFiltering) {
@@ -458,7 +468,8 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
 
     let results = [...allLoadedResources];
     
-    // Lọc cục bộ ngay lập tức
+    // Lọc cục bộ ngay lập tức bằng giá trị hiện tại (không chờ debounce)
+    // để UI phản hồi nhanh. Tuy nhiên nếu dataset cực lớn, có thể dùng debouncedSearch ở đây.
     if (hasSearch) {
       const s = inPageSearch.toLowerCase().trim();
       results = results.filter(r => 
@@ -485,7 +496,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
       case "name": results.sort((a, b) => (a.name || "").localeCompare(b.name || "")); break;
     }
     return results;
-  }, [allLoadedResources, sortBy, resSlug, selectedFolderId, inPageSearch, selectedTags, selectedFormats]);
+  }, [allLoadedResources, sortBy, resSlug, selectedFolderId, loadedFolderId, inPageSearch, selectedTags, selectedFormats]);
 
   // 1. Tối ưu: Chỉ tính toán bản đồ tần suất tag khi danh sách tài nguyên thay đổi
   const tagFrequencyMap = useMemo(() => {

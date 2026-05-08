@@ -38,7 +38,7 @@ const FilterSection = memo(function FilterSection({
       if (currentFormatsStr !== newFormatsStr) {
         updateUrl({ format: selectedFormats });
       }
-    }, 500);
+    }, 150);
     return () => clearTimeout(timer);
   }, [selectedFormats, updateUrl, searchParams]);
 
@@ -50,7 +50,7 @@ const FilterSection = memo(function FilterSection({
       if (currentTagsStr !== newTagsStr) {
         updateUrl({ tags: selectedTags });
       }
-    }, 500);
+    }, 150);
     return () => clearTimeout(timer);
   }, [selectedTags, updateUrl, searchParams]);
 

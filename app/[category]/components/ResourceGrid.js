@@ -209,7 +209,7 @@ const ResourceGrid = ({
           
           return (
             <List
-              key={`${columnCount}-${isSoundLayout}-${isFiltering}`}
+              key={`${columnCount}-${isSoundLayout}`}
               rowCount={rowCount}
               rowHeight={(index) => getRowHeight(index, columnCount)}
               rowComponent={Row}
