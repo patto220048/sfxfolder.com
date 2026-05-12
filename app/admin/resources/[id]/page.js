@@ -16,7 +16,7 @@ import Link from "next/link";
 import styles from "./page.module.css";
 import TagInput from "../../../components/ui/TagInput";
 import TreeSelect from "../../../components/ui/TreeSelect";
-import { getResource, updateResource, getFolders, getCategories } from "../../../lib/api";
+import { getResource, updateResource, getFolders, getAdminCategories as getCategories } from "../../../lib/api";
 import { uploadFile, deleteFile, generateStoragePath } from "../../../lib/storage";
 import { revalidateResourceData } from "../../../lib/actions";
 import { isAudioFormat, isVideoFormat, isImageFormat } from "../../../lib/mediaUtils";
@@ -379,9 +379,9 @@ export default function EditResource() {
                     <FileIcon size={24} />
                   </div>
                   <div className={styles.fileDetails}>
-                    <p className={styles.fileName}>{resource.fileName || "Chưa có thông tin tên file"}</p>
+                    <p className={styles.fileName}>{resource?.fileName || "Chưa có thông tin tên file"}</p>
                     <p className={styles.fileMeta}>
-                      {resource.fileFormat} • {(resource.fileSize / 1024 / 1024).toFixed(2)} MB
+                      {resource?.fileFormat} • {(resource?.fileSize / 1024 / 1024).toFixed(2)} MB
                     </p>
                   </div>
                 </div>
@@ -446,37 +446,37 @@ export default function EditResource() {
                   
                   <div className={styles.previewContent}>
                     {/* AUDIO PREVIEW */}
-                    {(newFile ? isAudioFormat({ fileName: newFile.name }) : isAudioFormat(resource)) && (
+                    {(newFile ? isAudioFormat({ fileName: newFile.name }) : (resource && isAudioFormat(resource))) && (
                       <div className={styles.audioPreview}>
                         <audio 
                           controls 
-                          src={newFile ? URL.createObjectURL(newFile) : (resource.downloadUrl || resource.fileUrl)} 
+                          src={newFile ? URL.createObjectURL(newFile) : (resource?.downloadUrl || resource?.fileUrl)} 
                         />
                       </div>
                     )}
-
+                    
                     {/* VIDEO PREVIEW */}
-                    {(newFile ? isVideoFormat({ fileName: newFile.name }) : isVideoFormat(resource)) && (
+                    {(newFile ? isVideoFormat({ fileName: newFile.name }) : (resource && isVideoFormat(resource))) && (
                       <div className={styles.videoPreview}>
                         <video 
                           controls 
-                          src={newFile ? URL.createObjectURL(newFile) : (resource.downloadUrl || resource.fileUrl)} 
+                          src={newFile ? URL.createObjectURL(newFile) : (resource?.downloadUrl || resource?.fileUrl)} 
                         />
                       </div>
                     )}
-
+                    
                     {/* IMAGE PREVIEW */}
-                    {(newFile ? isImageFormat({ fileName: newFile.name }) : isImageFormat(resource)) && (
+                    {(newFile ? isImageFormat({ fileName: newFile.name }) : (resource && isImageFormat(resource))) && (
                       <div className={styles.imagePreview}>
                         <img 
-                          src={newFile ? URL.createObjectURL(newFile) : (resource.downloadUrl || resource.fileUrl)} 
+                          src={newFile ? URL.createObjectURL(newFile) : (resource?.downloadUrl || resource?.fileUrl)} 
                           alt="Preview" 
                         />
                       </div>
                     )}
-
+                    
                     {/* FALLBACK ICON */}
-                    {!(newFile ? (isAudioFormat({ fileName: newFile.name }) || isVideoFormat({ fileName: newFile.name }) || isImageFormat({ fileName: newFile.name })) : (isAudioFormat(resource) || isVideoFormat(resource) || isImageFormat(resource))) && (
+                    {!(newFile ? (isAudioFormat({ fileName: newFile.name }) || isVideoFormat({ fileName: newFile.name }) || isImageFormat({ fileName: newFile.name })) : (resource && (isAudioFormat(resource) || isVideoFormat(resource) || isImageFormat(resource)))) && (
                       <div className={styles.fallbackPreview}>
                         <FileIcon size={48} strokeWidth={1} />
                         <span>Không có bản xem trước cho định dạng này</span>

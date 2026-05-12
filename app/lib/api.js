@@ -640,11 +640,19 @@ async function fetchCategoriesWithCountsInternal() {
  * Public version: Get all categories with resource counts using SQL Joins.
  * Cached for frontend performance.
  */
-export const getCategoriesWithCounts = unstable_cache(
+const getCategoriesWithCountsCached = unstable_cache(
   fetchCategoriesWithCountsInternal,
   ['categories-with-counts'],
   { revalidate: REVALIDATE_TIME, tags: ['categories'] }
 );
+
+export const getCategoriesWithCounts = (...args) => {
+  const isServer = typeof window === 'undefined';
+  if (isServer && REVALIDATE_TIME !== false) {
+    return getCategoriesWithCountsCached(...args);
+  }
+  return fetchCategoriesWithCountsInternal(...args);
+};
 
 /**
  * Admin version: Always fresh, bypasses cache.
@@ -670,11 +678,19 @@ async function fetchCategoriesInternal() {
 /**
  * Public version: Cached for frontend.
  */
-export const getCategories = unstable_cache(
+const getCategoriesCached = unstable_cache(
   fetchCategoriesInternal,
   ['categories-simple'],
   { revalidate: REVALIDATE_TIME, tags: ['categories'] }
 );
+
+export const getCategories = (...args) => {
+  const isServer = typeof window === 'undefined';
+  if (isServer && REVALIDATE_TIME !== false) {
+    return getCategoriesCached(...args);
+  }
+  return fetchCategoriesInternal(...args);
+};
 
 /**
  * Admin version: Always fresh.
@@ -702,11 +718,19 @@ async function fetchCategoryBySlugInternal(slug) {
   };
 }
 
-export const getCategoryBySlug = unstable_cache(
+const getCategoryBySlugCached = unstable_cache(
   fetchCategoryBySlugInternal,
   ['category-by-slug'],
   { revalidate: REVALIDATE_TIME, tags: ['categories'] }
 );
+
+export const getCategoryBySlug = (slug) => {
+  const isServer = typeof window === 'undefined';
+  if (isServer && REVALIDATE_TIME !== false) {
+    return getCategoryBySlugCached(slug);
+  }
+  return fetchCategoryBySlugInternal(slug);
+};
 
 
 /**
@@ -868,11 +892,19 @@ async function fetchTagsInternal() {
 /**
  * Public version: Cached for frontend.
  */
-export const getTags = unstable_cache(
+const getTagsCached = unstable_cache(
   fetchTagsInternal,
   ['tags-list'],
   { revalidate: REVALIDATE_TIME, tags: ['tags'] }
 );
+
+export const getTags = (...args) => {
+  const isServer = typeof window === 'undefined';
+  if (isServer && REVALIDATE_TIME !== false) {
+    return getTagsCached(...args);
+  }
+  return fetchTagsInternal(...args);
+};
 
 /**
  * Admin version: Always fresh.
@@ -1001,11 +1033,19 @@ async function fetchAllAdminFoldersInternal() {
  * Public version: Get all folders (including unpublished/admin)
  * Cached for frontend.
  */
-export const getAllAdminFolders = unstable_cache(
+const getAllAdminFoldersCached = unstable_cache(
   fetchAllAdminFoldersInternal,
   ['admin-folders-list'],
   { revalidate: REVALIDATE_TIME, tags: ['folders'] }
 );
+
+export const getAllAdminFolders = (...args) => {
+  const isServer = typeof window === 'undefined';
+  if (isServer && REVALIDATE_TIME !== false) {
+    return getAllAdminFoldersCached(...args);
+  }
+  return fetchAllAdminFoldersInternal(...args);
+};
 
 /**
  * Admin version: Always fresh.
@@ -1352,23 +1392,32 @@ export async function updateSiteSettings(updateData) {
    ======================================== */
 
 /**
- * Get PayPal configuration from system_settings.
- * Cached for performance.
+ * Internal logic for PayPal config.
  */
-export const getPaypalConfig = unstable_cache(
-  async () => {
-    const { data, error } = await supabase
-      .from('system_settings')
-      .select('setting_value')
-      .eq('setting_key', 'paypal_config')
-      .single();
+async function fetchPaypalConfigInternal() {
+  const { data, error } = await supabase
+    .from('system_settings')
+    .select('setting_value')
+    .eq('setting_key', 'paypal_config')
+    .single();
 
-    if (error) {
-      console.error('Error fetching PayPal config:', error);
-      return null;
-    }
-    return data?.setting_value || null;
-  },
+  if (error) {
+    console.error('Error fetching PayPal config:', error);
+    return null;
+  }
+  return data?.setting_value || null;
+}
+
+const getPaypalConfigCached = unstable_cache(
+  fetchPaypalConfigInternal,
   ['paypal-config'],
   { revalidate: REVALIDATE_TIME, tags: ['settings'] }
 );
+
+export const getPaypalConfig = (...args) => {
+  const isServer = typeof window === 'undefined';
+  if (isServer && REVALIDATE_TIME !== false) {
+    return getPaypalConfigCached(...args);
+  }
+  return fetchPaypalConfigInternal(...args);
+};
