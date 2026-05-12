@@ -28,6 +28,14 @@ export async function GET(request) {
       },
     });
   } catch (error) {
+    // Check if the error is "no rows returned" (PostgREST code PGRST116)
+    if (error.code === 'PGRST116') {
+      return new Response(JSON.stringify({ error: 'Profile not found' }), {
+        status: 404,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
     console.error('Proxy profile error:', error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: 500,
