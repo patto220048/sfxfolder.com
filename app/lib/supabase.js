@@ -27,8 +27,8 @@ export function createClient() {
           autoRefreshToken: true,
           persistSession: true,
           detectSessionInUrl: true,
-          // Explicit storage key to match the project ref and prevent lock interference
-          storageKey: 'sb-oqdqcfllhpbnbyeampjc-auth-token',
+          // Dynamic storage key based on project URL to prevent mismatch
+          storageKey: `sb-${supabaseUrl.split('.')[0].replace('https://', '')}-auth-token`,
         },
       }
     );
