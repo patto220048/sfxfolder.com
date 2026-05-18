@@ -8,6 +8,7 @@ import { ToastProvider } from "@/app/context/ToastContext";
 import { ToastContainer } from "@/app/components/ui/ToastContainer";
 import { SiteProvider } from "@/app/context/SiteContext";
 import { AuthProvider } from "@/app/lib/auth-context";
+import { GoogleAnalytics } from '@next/third-parties/google';
 
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
@@ -143,6 +144,7 @@ export default async function RootLayout({ children }) {
         <link rel="icon" href="/favicon.webp?v=3" type="image/webp" />
         <link rel="apple-touch-icon" href="/favicon.webp?v=3" />
         <link rel="manifest" href="/site.webmanifest" />
+        <GoogleAnalytics gaId="G-LW9D5CH1WQ" />
         <script
           id="schema-website"
           type="application/ld+json"

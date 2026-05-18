@@ -10,6 +10,7 @@
     "test": "jest"
   },
   "dependencies": {
+    "@next/third-parties": "^16.2.6",
     "@paypal/react-paypal-js": "^9.1.1",
     "@supabase/ssr": "^0.10.2",
     "@supabase/supabase-js": "^2.103.2",
