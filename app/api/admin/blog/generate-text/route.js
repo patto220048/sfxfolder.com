@@ -142,6 +142,9 @@ Format your entire response using the exact markers below. Do not wrap the respo
 ===SUMMARY===
 [A short 2-sentence summary introducing the article.]
 
+===IMAGEPROMPT===
+[A highly detailed, gorgeous, and cinematic AI image generation prompt in English (40-60 words) for the cover photo of this article. Describe a modern, high-contrast, visually engaging concept suitable for video editors/creators. Do not include style buzzwords like "photorealistic", instead describe visual elements, colors, depth of field, neon hues, and clean professional workspace details. Exclude quotes.]
+
 ===COVERIMAGE===
 [Leave this line blank, our system will generate the cover image separately]
 
@@ -294,7 +297,13 @@ export async function POST(req) {
     const title = extractSection(aiText, "TITLE", "METATITLE");
     const meta_title = extractSection(aiText, "METATITLE", "METADESCRIPTION");
     const meta_description = extractSection(aiText, "METADESCRIPTION", "SUMMARY");
-    const summary = extractSection(aiText, "SUMMARY", "COVERIMAGE");
+    
+    let summary = extractSection(aiText, "SUMMARY", "IMAGEPROMPT");
+    if (!summary) {
+      summary = extractSection(aiText, "SUMMARY", "COVERIMAGE");
+    }
+    
+    const image_prompt = extractSection(aiText, "IMAGEPROMPT", "COVERIMAGE");
     const content = extractSection(aiText, "CONTENT", null);
 
     // Validate parsed results
@@ -320,6 +329,7 @@ export async function POST(req) {
       meta_description: meta_description || summary || `In-depth guide to ${keyword} for professional video editors and content creators.`,
       summary: summary || `Discover how to master ${keyword} to optimize your video editing workflow and timeline organization.`,
       content,
+      image_prompt: image_prompt || "",
       wordCount: content ? content.split(/\s+/).length : 0,
     });
   } catch (err) {

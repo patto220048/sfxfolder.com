@@ -1,8 +1,8 @@
 # 🔍 Kế Hoạch Tối Ưu SEO Toàn Diện cho SFXFolder.com
 
 > **Trạng thái:** 🚀 Đang triển khai & Cập nhật mới (2026-05-18)
-> - **Hoàn thành:** 90% Phase 2 (Code changes) bao gồm GA4, GSC Verification, Sitemap, Robots.js, OG Image, Title/Meta tags và tối ưu hóa favicon sang WebP.
-> - **Tiếp theo:** Tiến hành cấu hình Search Console/Vercel (Phase 1) và chuẩn bị cho Chiến lược nội dung Blog (Phase 3).
+> - **Hoàn thành:** 100% Phase 2 (Code changes) & 90% Phase 3 (Content Strategy & AI Dashboard). Đã triển khai toàn bộ hệ thống quản trị Blog AI, cổng sinh nội dung tiếng Anh tự động, lưu trữ Supabase, sinh ảnh AI Pollinations miễn phí, và cổng tải ảnh cá nhân trực tiếp lên bucket `site-assets`.
+> - **Tiếp theo:** Tiến hành cấu hình Search Console/Vercel (Phase 1) để Google thu thập sitemap mới, và bắt đầu viết + publish 4 bài blog đầu tiên bằng AI Pipeline.
 
 ---
 
@@ -381,10 +381,12 @@ Mỗi page cần ≥ 5 resources, unique description, FAQs.
 - [x] Ánh xạ thông minh slug 'lut' sang 'preset-lut' và slug 'bgm' sang 'music' giúp hiển thị đầy đủ Hỏi đáp và đồng bộ hóa siêu dữ liệu SEO cho danh mục LUT và BGM ✅
 
 ### 🟢 Tuần 3-6 — Content
-- [ ] Thiết kế cơ sở dữ liệu Supabase (bảng `blog_posts`)
-- [ ] Xây dựng giao diện Blog trên Next.js (`app/blog` và `app/blog/[slug]`)
-- [ ] Đồng bộ hóa blog_posts vào dynamic `sitemap.js`
-- [ ] Thiết lập AI content pipeline (Claude/GPT API tự động viết bài và lưu vào Supabase)
+- [x] Thiết kế cơ sở dữ liệu Supabase (tạo bảng `blog_posts` và cấu hình lưu trữ trong Supabase Storage) ✅
+- [x] Xây dựng giao diện Blog trên Next.js (giao diện danh sách `/v1/blog` và trang chi tiết `/v1/blog/[slug]`) ✅
+- [x] Đồng bộ hóa `blog_posts` vào sitemap động `app/sitemap.js` ✅
+- [x] Thiết lập AI content pipeline (Claude/GPT API sinh nội dung tiếng Anh chuẩn SEO tự động tạo Prompt ảnh bìa khớp với nội dung bài viết và hiển thị trực tiếp lên bảng quản trị) ✅
+- [x] Phát triển tính năng tạo ảnh AI: tích hợp fallback **Pollinations AI** (miễn phí) cùng chức năng cho phép tùy chọn model sinh ảnh AI ✅
+- [x] Tích hợp tính năng tải ảnh cá nhân thủ công: Cho phép editor bấm chọn ảnh trực tiếp từ máy tính, tải lên và ghi đè vào Supabase Storage bucket `site-assets` (thư mục `blog-covers/`), nhận liên kết CDN public ngay lập tức và tự động cập nhật vào ảnh bài viết ✅
 - [ ] Viết + publish 4 bài blog đầu tiên bằng AI Pipeline
 - [ ] Tối ưu hóa internal linking giữa Blog và Category Pages
 
