@@ -1427,3 +1427,103 @@ export const getPaypalConfig = (...args) => {
   }
   return fetchPaypalConfigInternal(...args);
 };
+
+/* ========================================
+   BLOG POSTS
+   ======================================== */
+
+/**
+ * Fetch published blog posts, sorted by newest first.
+ * Supports limit and offset for pagination.
+ */
+async function fetchBlogPostsInternal({ limit = 10, offset = 0 } = {}) {
+  const { data, error } = await supabase
+    .from('blog_posts')
+    .select('id, title, slug, summary, cover_image, created_at')
+    .eq('status', 'published')
+    .order('created_at', { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (error) {
+    console.error('Error fetching blog posts:', error);
+    return [];
+  }
+  return data || [];
+}
+
+const getBlogPostsCached = unstable_cache(
+  fetchBlogPostsInternal,
+  ['blog-posts'],
+  { revalidate: REVALIDATE_TIME, tags: ['blog'] }
+);
+
+export const getBlogPosts = (...args) => {
+  const isServer = typeof window === 'undefined';
+  if (isServer && REVALIDATE_TIME !== false) {
+    return getBlogPostsCached(...args);
+  }
+  return fetchBlogPostsInternal(...args);
+};
+
+/**
+ * Fetch a single blog post by its unique slug.
+ */
+async function fetchBlogPostBySlugInternal(slug) {
+  const { data, error } = await supabase
+    .from('blog_posts')
+    .select('*')
+    .eq('slug', slug)
+    .eq('status', 'published')
+    .maybeSingle();
+
+  if (error) {
+    console.error('Error fetching blog post by slug:', error);
+    return null;
+  }
+  return data || null;
+}
+
+const getBlogPostBySlugCached = unstable_cache(
+  fetchBlogPostBySlugInternal,
+  ['blog-post-by-slug'],
+  { revalidate: REVALIDATE_TIME, tags: ['blog'] }
+);
+
+export const getBlogPostBySlug = (slug) => {
+  const isServer = typeof window === 'undefined';
+  if (isServer && REVALIDATE_TIME !== false) {
+    return getBlogPostBySlugCached(slug);
+  }
+  return fetchBlogPostBySlugInternal(slug);
+};
+
+/**
+ * Fetch all published blog post slugs (used for sitemap generation).
+ */
+async function fetchAllBlogPostSlugsInternal() {
+  const { data, error } = await supabase
+    .from('blog_posts')
+    .select('slug, updated_at')
+    .eq('status', 'published');
+
+  if (error) {
+    console.error('Error fetching all blog post slugs:', error);
+    return [];
+  }
+  return data || [];
+}
+
+const getAllBlogPostSlugsCached = unstable_cache(
+  fetchAllBlogPostSlugsInternal,
+  ['blog-post-slugs-all'],
+  { revalidate: REVALIDATE_TIME, tags: ['blog'] }
+);
+
+export const getAllBlogPostSlugs = (...args) => {
+  const isServer = typeof window === 'undefined';
+  if (isServer && REVALIDATE_TIME !== false) {
+    return getAllBlogPostSlugsCached(...args);
+  }
+  return fetchAllBlogPostSlugsInternal(...args);
+};
+

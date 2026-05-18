@@ -236,51 +236,50 @@ openGraph: {
 
 ---
 
-## 🟢 PHASE 3: Content Strategy — AI-Powered Blog (Tuần 3-6)
+## 🟢 PHASE 3: Content Strategy — Self-Hosted AI Blog (Tuần 3-6)
 
-> Bạn chọn dùng platform riêng cho blog. Đây là chiến lược.
+> Bạn chọn phương án tự xây dựng hệ thống Blog (Self-hosted) trực tiếp trên Next.js và tích hợp với Supabase sẵn có. Đây là chiến lược tối ưu nhất để tập trung 100% Domain Authority về `sfxfolder.com` và kiểm soát chi phí ở mức $0.
 
-### 3.1. Chọn Blog Platform
+### 3.1. Xây dựng Cấu trúc Blog trên Next.js & Supabase
 
-| Platform | Pros | Cons | Khuyến nghị |
-|----------|------|------|-------------|
-| **Hashnode** | Custom domain, SEO-friendly, free | Limited design | ⭐ Tốt nhất |
-| **Ghost** | Headless CMS, tốc độ cao, SEO mạnh | $9/tháng | ⭐⭐ Pro choice |
-| **Medium** | Miễn phí, community sẵn có | Không custom domain miễn phí | ❌ Không nên |
-| **Substack** | Email + Blog combo | Không tối ưu SEO | ❌ Không nên |
-| **WordPress.com** | Miễn phí, SEO plugins | Chậm, phức tạp | ⚠️ OK |
+**Lợi ích vượt trội:**
+- **Sức mạnh SEO tối đa:** Mọi bài viết sẽ nằm dưới đường dẫn `sfxfolder.com/blog/[slug]` thay vì subdomain phụ. Sức mạnh backlinks sẽ bổ trợ trực tiếp cho trang chính.
+- **Tối ưu hóa Chi phí:** $0 chi phí hosting (chạy trực tiếp trên Next.js/Vercel) và $0 chi phí database (tận dụng Supabase miễn phí).
+- **Thiết kế đồng bộ:** Tận dụng 100% hệ thống style glassmorphism hiện có của SFXFolder.
 
-> [!IMPORTANT]
-> **Khuyến nghị: Hashnode** — Hỗ trợ custom domain miễn phí (ví dụ: `blog.sfxfolder.com`), tự động generate sitemap, và có API để AI tự động publish bài.
-
-**Setup:**
-1. Tạo Hashnode blog → set custom domain: `blog.sfxfolder.com`
-2. Thêm CNAME record trên DNS (Vercel hoặc domain provider)
-3. Thêm `blog.sfxfolder.com` link trên navbar website chính
+**Các bước kỹ thuật triển khai:**
+1. **Thiết lập Database (Supabase):** Tạo bảng `blog_posts` với cấu trúc:
+   - `id` (UUID, primary key)
+   - `title` (text, tiêu đề bài viết)
+   - `slug` (text, unique index, URL bài viết)
+   - `content` (text, nội dung dạng Markdown)
+   - `summary` (text, mô tả ngắn gọn)
+   - `cover_image` (text, URL ảnh bìa)
+   - `meta_title` & `meta_description` (text, tối ưu SEO)
+   - `status` (text, default 'draft', values: 'draft' | 'published')
+   - `created_at` (timestamp with timezone)
+2. **Xây dựng các Page trong App Router:**
+   - [NEW] `app/blog/page.js`: Trang danh mục hiển thị lưới các bài viết.
+   - [NEW] `app/blog/[slug]/page.js`: Trang chi tiết bài viết (sử dụng package render nội dung Markdown, tích hợp sẵn Schema `BlogPosting` cho SEO).
+3. **Đồng bộ Sitemap tự động:** Cập nhật `app/sitemap.js` để tự động fetch danh sách các `slug` từ bảng `blog_posts` của Supabase và sinh ra URL sitemap động cho Google.
 
 ---
 
-### 3.2. AI Content Pipeline (Tự động viết + upload)
+### 3.2. AI Content Pipeline tự chủ (Tự động hóa viết & lưu bài)
 
-**Workflow đề xuất:**
+**Workflow tự động hóa:**
 
 ```
-┌────────────┐    ┌───────────────┐    ┌──────────────┐    ┌────────────┐
-│ Keyword    │──▶ │ AI Writer     │──▶ │ Review       │──▶ │ Auto       │
-│ Research   │    │ (GPT/Claude)  │    │ (Manual/AI)  │    │ Publish    │
-└────────────┘    └───────────────┘    └──────────────┘    └────────────┘
+┌────────────────┐      ┌─────────────────────────┐      ┌───────────────────────────┐
+│ AI Generator   │ ──▶  │ Ghi thẳng vào Supabase  │ ──▶  │  Next.js Tự động Render   │
+│ (Claude/GPT)   │      │   bảng `blog_posts`     │      │   & cập nhật Sitemap.js   │
+└────────────────┘      └─────────────────────────┘      └───────────────────────────┘
 ```
 
-**Công cụ đề xuất:**
-
-| Bước | Công cụ | Chi phí |
-|------|---------|---------|
-| Keyword Research | Ubersuggest Free / Google Keyword Planner | Miễn phí |
-| AI Writing | ChatGPT / Claude API | ~$5-20/tháng |
-| Auto Publish | Hashnode API + n8n/Make automation | Miễn phí |
-| Image Generation | Canva AI / DALL-E | ~$10/tháng |
-
-**Lịch đăng bài:** 2-4 bài/tháng, mỗi bài 1500-2500 từ.
+**Giải pháp công cụ tối ưu chi phí:**
+- **Nghiên cứu Từ khóa (Keyword Research):** Tìm kiếm các bộ từ khóa ngách bằng Google Keyword Planner hoặc Ubersuggest (Miễn phí).
+- **AI Writer Engine:** Viết một script Node.js cục bộ (hoặc workflow n8n/Make miễn phí) gọi trực tiếp Anthropic Claude API hoặc OpenAI GPT-4o để sinh bài viết dài 1500-2500 từ dạng Markdown chuẩn SEO dựa trên từ khóa mục tiêu.
+- **Auto-Publish:** Script tự động gửi bài viết và các thẻ Meta Tags tương ứng thẳng vào bảng `blog_posts` trên Supabase với trạng thái `published` (hoặc `draft` để bạn duyệt tay trước khi publish).
 
 ---
 
@@ -382,10 +381,12 @@ Mỗi page cần ≥ 5 resources, unique description, FAQs.
 - [x] Ánh xạ thông minh slug 'lut' sang 'preset-lut' và slug 'bgm' sang 'music' giúp hiển thị đầy đủ Hỏi đáp và đồng bộ hóa siêu dữ liệu SEO cho danh mục LUT và BGM ✅
 
 ### 🟢 Tuần 3-6 — Content
-- [ ] Setup blog platform (Hashnode recommended)
-- [ ] Setup AI content pipeline (ChatGPT/Claude API + automation)
-- [ ] Viết + publish 4 bài blog đầu tiên
-- [ ] Thêm internal links từ blog về sfxfolder.com
+- [ ] Thiết kế cơ sở dữ liệu Supabase (bảng `blog_posts`)
+- [ ] Xây dựng giao diện Blog trên Next.js (`app/blog` và `app/blog/[slug]`)
+- [ ] Đồng bộ hóa blog_posts vào dynamic `sitemap.js`
+- [ ] Thiết lập AI content pipeline (Claude/GPT API tự động viết bài và lưu vào Supabase)
+- [ ] Viết + publish 4 bài blog đầu tiên bằng AI Pipeline
+- [ ] Tối ưu hóa internal linking giữa Blog và Category Pages
 
 ### 🔵 Tuần 6-12 — Authority
 - [ ] Submit Product Hunt

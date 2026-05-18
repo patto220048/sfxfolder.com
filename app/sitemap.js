@@ -1,4 +1,4 @@
-import { getCategories, getResources } from '@/app/lib/api';
+import { getCategories, getResources, getAllBlogPostSlugs } from '@/app/lib/api';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://sfxfolder.com';
 
@@ -53,11 +53,18 @@ export default async function sitemap() {
       changeFrequency: 'monthly',
       priority: 0.6,
     },
+    {
+      url: `${SITE_URL}/v1/blog`,
+      lastModified: new Date(),
+      changeFrequency: 'daily',
+      priority: 0.8,
+    },
   ];
 
   // 2. Dynamic category pages + resource pages
   let categoryPages = [];
   let resourcePages = [];
+  let blogPages = [];
 
   try {
     const categories = await getCategories();
@@ -95,9 +102,23 @@ export default async function sitemap() {
 
     const allResourceArrays = await Promise.all(resourcePromises);
     resourcePages = allResourceArrays.flat();
+
+    // 4. Fetch dynamic blog posts
+    try {
+      const blogPosts = await getAllBlogPostSlugs();
+      blogPages = blogPosts.map((post) => ({
+        url: `${SITE_URL}/v1/blog/${post.slug}`,
+        lastModified: post.updated_at ? new Date(post.updated_at) : new Date(),
+        changeFrequency: 'weekly',
+        priority: 0.6,
+      }));
+    } catch (e) {
+      console.error('Sitemap: Error fetching blog posts:', e.message);
+    }
   } catch (e) {
     console.error('Sitemap: Error fetching categories:', e.message);
   }
 
-  return [...staticPages, ...categoryPages, ...resourcePages];
+  return [...staticPages, ...categoryPages, ...resourcePages, ...blogPages];
 }
+

@@ -16,6 +16,11 @@ if (!supabaseUrl || !supabaseKey) {
   process.exit(1);
 }
 
+// Hạn chế lỗi Node.js < 22 thiếu WebSocket cho Supabase Realtime (chúng ta không dùng Realtime ở đây)
+if (typeof global.WebSocket === 'undefined') {
+  global.WebSocket = class {};
+}
+
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 async function checkUrl(url) {

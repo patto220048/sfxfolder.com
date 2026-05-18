@@ -1,0 +1,311 @@
+.blogLayout {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  gap: var(--space-5);
+}
+
+.page {
+  flex: 1;
+  min-height: 100vh;
+  max-width: 1200px;
+  width: 100%;
+  padding-bottom: var(--space-20);
+}
+
+/* ---------- Hero Section ---------- */
+.hero {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 100px var(--space-6) 60px;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.heroGlow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 50% 0%,
+      rgba(255, 255, 255, 0.03) 0%,
+      transparent 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+[data-theme='light'] .heroGlow {
+  background: radial-gradient(circle at 50% 0%,
+      rgba(0, 0, 0, 0.02) 0%,
+      transparent 70%);
+}
+
+.title {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-heading);
+  font-size: 3.5rem;
+  font-weight: 800;
+  margin-bottom: var(--space-2);
+  letter-spacing: -1.5px;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.subtitle {
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-6);
+  z-index: 1;
+  text-transform: uppercase;
+  letter-spacing: 4px;
+}
+
+.description {
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  max-width: 650px;
+  line-height: 1.6;
+  margin: 0 auto;
+  z-index: 1;
+}
+
+/* ---------- Posts Section ---------- */
+.postsSection {
+  padding: 60px var(--space-6);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-6);
+}
+
+/* ---------- Post Card ---------- */
+.postCard {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: transform var(--transition-base), border-color var(--transition-base), box-shadow var(--transition-base);
+  display: flex;
+  flex-direction: column;
+}
+
+.postCard:hover {
+  transform: translateY(-4px);
+  border-color: var(--border-active);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme='light'] .postCard:hover {
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+}
+
+.cardLink {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  color: inherit;
+}
+
+.cardLink:hover {
+  opacity: 1; /* override layout defaults */
+}
+
+.imageWrap {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  overflow: hidden;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.coverImage {
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.postCard:hover .coverImage {
+  transform: scale(1.05);
+}
+
+.cardContent {
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.metaItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.metaIcon {
+  color: var(--text-muted);
+}
+
+.postTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.3;
+  margin-bottom: var(--space-3);
+  color: var(--text-primary);
+  text-transform: none; /* Let titles be mixed case for readable flow */
+  letter-spacing: -0.5px;
+}
+
+.postSummary {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-5);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  flex-grow: 1;
+}
+
+.readMore {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: auto;
+}
+
+.arrowIcon {
+  transition: transform var(--transition-fast);
+}
+
+.postCard:hover .arrowIcon {
+  transform: translateX(4px);
+}
+
+/* ---------- Empty State ---------- */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 80px var(--space-6);
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  max-width: 700px;
+  margin: 40px auto 0;
+}
+
+.emptyIconWrap {
+  width: 96px;
+  height: 96px;
+  border-radius: var(--radius-full);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-6);
+}
+
+.emptyIcon {
+  color: var(--text-secondary);
+}
+
+.emptyTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: var(--space-3);
+  letter-spacing: -0.5px;
+  color: var(--text-primary);
+}
+
+.emptyText {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 500px;
+  margin-bottom: var(--space-8);
+}
+
+.ctaWrap {
+  display: flex;
+  justify-content: center;
+}
+
+.backHomeBtn {
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  border: 1px solid var(--border-active);
+  padding: var(--space-3) var(--space-6);
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.backHomeBtn:hover {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  opacity: 1;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .title {
+    font-size: 2.8rem;
+  }
+  
+  .hero {
+    padding: 80px var(--space-4) 40px;
+  }
+  
+  .postsSection {
+    padding: 40px var(--space-4);
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-5);
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 2.2rem;
+  }
+}
