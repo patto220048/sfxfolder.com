@@ -1527,3 +1527,62 @@ export const getAllBlogPostSlugs = (...args) => {
   return fetchAllBlogPostSlugsInternal(...args);
 };
 
+/**
+ * Fetch all blog posts (both drafts and published) for Admin list.
+ */
+export async function getAdminBlogPosts() {
+  const response = await fetch('/api/admin/blog');
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error || 'Failed to fetch admin blog posts');
+  }
+  return response.json();
+}
+
+/**
+ * Add a new blog post.
+ */
+export async function addBlogPost(blogData) {
+  const response = await fetch('/api/admin/blog', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(blogData)
+  });
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error || 'Failed to add blog post');
+  }
+  return response.json();
+}
+
+/**
+ * Update an existing blog post.
+ */
+export async function updateBlogPost(id, blogData) {
+  const response = await fetch(`/api/admin/blog/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(blogData)
+  });
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error || 'Failed to update blog post');
+  }
+  return response.json();
+}
+
+/**
+ * Delete a blog post.
+ */
+export async function deleteBlogPost(id) {
+  const response = await fetch(`/api/admin/blog/${id}`, {
+    method: 'DELETE'
+  });
+  if (!response.ok) {
+    const err = await response.json();
+    throw new Error(err.error || 'Failed to delete blog post');
+  }
+  return response.json();
+}
+
+
