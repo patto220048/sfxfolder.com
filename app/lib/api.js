@@ -1353,7 +1353,8 @@ export async function getSiteSettings() {
         project_version: 'v 0.1.16.4',
         status_text: 'System Online',
         contact_email: '',
-        social_links: []
+        social_links: [],
+        ads_config: {}
       };
     }
     return data;

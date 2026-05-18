@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { Download, Check, Loader2 } from "lucide-react";
 import { useAuth } from "@/app/lib/auth-context";
+import { useSiteData } from "@/app/context/SiteContext";
+import AdSlot from "@/app/components/ads/AdSlot";
 import styles from "./gateway.module.css";
 
 function formatSize(bytes) {
@@ -17,6 +19,8 @@ export default function ClientGateway({ resource }) {
   const [status, setStatus] = useState("waiting"); // waiting | downloading | done | error
   const [errorMessage, setErrorMessage] = useState("");
   const { session } = useAuth();
+  const { settings } = useSiteData();
+  const ads = settings?.ads_config || {};
 
   const handleDownload = async () => {
     setStatus("downloading");
@@ -75,7 +79,7 @@ export default function ClientGateway({ resource }) {
         <div className={styles.mainWrapper}>
           {/* Left Ad */}
           <div className={styles.sideAd}>
-            Advertisement<br />(160x600)
+            {ads.gateway_left ? <AdSlot htmlContent={ads.gateway_left} /> : <>Advertisement<br />(160x600)</>}
           </div>
 
           <div className={styles.content}>
@@ -130,15 +134,15 @@ export default function ClientGateway({ resource }) {
 
           {/* Right Ad */}
           <div className={styles.sideAd}>
-            Advertisement<br />(160x600)
+            {ads.gateway_right ? <AdSlot htmlContent={ads.gateway_right} /> : <>Advertisement<br />(160x600)</>}
           </div>
         </div>
       </div>
 
       {/* Sticky Bottom Ad */}
       <div className={styles.bottomAd}>
-        <div className={styles.adPlaceholder}>
-          Advertisement - Placeholder (728x90 or 320x50)
+        <div className={styles.adWrapper}>
+          {ads.category_sticky ? <AdSlot htmlContent={ads.category_sticky} /> : "Advertisement - Placeholder (728x90 or 320x50)"}
         </div>
       </div>
     </>

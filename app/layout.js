@@ -150,6 +150,9 @@ export default async function RootLayout({ children }) {
         />
       </head>
       <body suppressHydrationWarning>
+        {settings?.ads_config?.head_script && (
+          <div dangerouslySetInnerHTML={{ __html: settings.ads_config.head_script }} style={{ display: 'none' }} />
+        )}
         <ThemeProvider
           attribute="data-theme"
           defaultTheme="dark"

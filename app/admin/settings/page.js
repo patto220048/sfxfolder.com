@@ -13,7 +13,13 @@ export default function AdminSettings() {
     project_version: "",
     contact_email: "",
     status_text: "",
-    social_links: []
+    social_links: [],
+    ads_config: {
+      head_script: "",
+      category_sticky: "",
+      gateway_left: "",
+      gateway_right: ""
+    }
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -26,7 +32,13 @@ export default function AdminSettings() {
         if (data) {
           setSettings({
             ...data,
-            social_links: data.social_links || []
+            social_links: data.social_links || [],
+            ads_config: data.ads_config || {
+              head_script: "",
+              category_sticky: "",
+              gateway_left: "",
+              gateway_right: ""
+            }
           });
         }
       } catch (err) {
@@ -54,6 +66,17 @@ export default function AdminSettings() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setSettings(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleAdsChange = (e) => {
+    const { name, value } = e.target;
+    setSettings(prev => ({
+      ...prev,
+      ads_config: {
+        ...prev.ads_config,
+        [name]: value
+      }
+    }));
   };
 
   const handleAddSocial = () => {
@@ -219,6 +242,55 @@ export default function AdminSettings() {
             >
               + Add New Social Link
             </button>
+          </div>
+        </section>
+
+        {/* Ad Management */}
+        <section>
+          <h2 style={{ fontSize: "1.25rem", marginBottom: "var(--space-4)", display: "flex", alignItems: "center", gap: "var(--space-2)" }}>
+            <span style={{ width: 8, height: 8, background: "var(--neon-green, #00ff00)" }}></span>
+            Ad Management
+          </h2>
+          <div style={{
+            padding: "var(--space-6)", background: "var(--bg-card)", border: "1px solid var(--border-default)",
+            display: "flex", flexDirection: "column", gap: "var(--space-6)"
+          }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+              <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Toàn trang (Head Script - Google Auto Ads, etc.)</label>
+              <textarea 
+                name="head_script" value={settings.ads_config?.head_script || ""} onChange={handleAdsChange}
+                placeholder="<script>...</script>" rows={3}
+                style={{ padding: "var(--space-2)", background: "black", border: "1px solid var(--border-default)", color: "var(--neon-green, #00ff00)", fontFamily: "monospace", width: "100%", resize: "vertical" }}
+              />
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+              <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Dưới cùng bám đuổi (Sticky Bottom - Category & Gateway)</label>
+              <textarea 
+                name="category_sticky" value={settings.ads_config?.category_sticky || ""} onChange={handleAdsChange}
+                placeholder="<script>...</script><ins>...</ins>" rows={3}
+                style={{ padding: "var(--space-2)", background: "black", border: "1px solid var(--border-default)", color: "var(--neon-green, #00ff00)", fontFamily: "monospace", width: "100%", resize: "vertical" }}
+              />
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-4)" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Gateway - Cột Trái (160x600)</label>
+                <textarea 
+                  name="gateway_left" value={settings.ads_config?.gateway_left || ""} onChange={handleAdsChange}
+                  placeholder="Mã quảng cáo dọc trái..." rows={4}
+                  style={{ padding: "var(--space-2)", background: "black", border: "1px solid var(--border-default)", color: "var(--neon-green, #00ff00)", fontFamily: "monospace", width: "100%", resize: "vertical" }}
+                />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Gateway - Cột Phải (160x600)</label>
+                <textarea 
+                  name="gateway_right" value={settings.ads_config?.gateway_right || ""} onChange={handleAdsChange}
+                  placeholder="Mã quảng cáo dọc phải..." rows={4}
+                  style={{ padding: "var(--space-2)", background: "black", border: "1px solid var(--border-default)", color: "var(--neon-green, #00ff00)", fontFamily: "monospace", width: "100%", resize: "vertical" }}
+                />
+              </div>
+            </div>
           </div>
         </section>
 

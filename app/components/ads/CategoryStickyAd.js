@@ -3,9 +3,13 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import styles from "./CategoryStickyAd.module.css";
-import { useSearchParams } from "next/navigation";
+import { useSiteData } from "@/app/context/SiteContext";
+import AdSlot from "./AdSlot";
 
 export default function CategoryStickyAd() {
+  const { settings } = useSiteData();
+  const adHtml = settings?.ads_config?.category_sticky;
+
   const [countdown, setCountdown] = useState(5);
   const [isVisible, setIsVisible] = useState(true);
   const searchParams = useSearchParams();
@@ -18,14 +22,14 @@ export default function CategoryStickyAd() {
     }
   }, [countdown]);
 
-  // Don't show in plugin
-  if (!isVisible || isPlugin) return null;
+  // Don't show in plugin or if no ad script is configured
+  if (!isVisible || isPlugin || !adHtml || adHtml.trim() === '') return null;
 
   return (
     <div className={styles.adContainer}>
       <div className={styles.adContent}>
-        <div className={styles.adPlaceholder}>
-          Advertisement - Placeholder (728x90 or 320x50)
+        <div className={styles.adWrapper}>
+          <AdSlot htmlContent={adHtml} />
         </div>
         {countdown === 0 ? (
           <button className={styles.closeBtn} onClick={() => setIsVisible(false)} aria-label="Close Ad">
