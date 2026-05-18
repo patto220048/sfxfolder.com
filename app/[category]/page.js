@@ -176,7 +176,8 @@ export async function generateMetadata({ params }) {
   }
 
   const categoryName = info?.name || slug.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-  const seo = CATEGORY_SEO[slug];
+  const lookupSlug = slug === "lut" ? "preset-lut" : slug;
+  const seo = CATEGORY_SEO[lookupSlug];
   
   const title = seo 
     ? `${seo.titlePrefix} — Download Free ${categoryName} | SFXFolder`
@@ -330,7 +331,8 @@ export default async function CategoryPage({ params, searchParams }) {
   };
 
   // FAQPage Schema
-  const categoryFaqs = CATEGORY_FAQS[slug] || [];
+  const lookupSlug = slug === "lut" ? "preset-lut" : slug;
+  const categoryFaqs = CATEGORY_FAQS[lookupSlug] || [];
   const faqSchema = categoryFaqs.length > 0 ? {
     "@context": "https://schema.org",
     "@type": "FAQPage",
