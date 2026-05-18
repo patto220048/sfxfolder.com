@@ -94,7 +94,7 @@ function getRenewalEmailTemplate(subscriptionId: string, nextBillingTime: string
     <body>
       <div class="wrapper">
         <div class="header">
-          <img src="https://sfxfolder.com/favicon.png" alt="Sfxfolder" width="140" style="display: block; margin: 0 auto;">
+          <img src="https://sfxfolder.com/favicon.webp" alt="Sfxfolder" width="140" style="display: block; margin: 0 auto;">
         </div>
         <table class="main">
           <tr>
@@ -150,7 +150,7 @@ function getWelcomeEmailTemplate(subscriptionId: string) {
     <body>
       <div class="wrapper">
         <div class="header">
-          <img src="https://sfxfolder.com/favicon.png" alt="Sfxfolder" width="140" style="display: block; margin: 0 auto;">
+          <img src="https://sfxfolder.com/favicon.webp" alt="Sfxfolder" width="140" style="display: block; margin: 0 auto;">
         </div>
         <table class="main">
           <tr>
@@ -208,7 +208,7 @@ function getUpgradeEmailTemplate(subscriptionId: string) {
     <body>
       <div class="wrapper">
         <div class="header">
-          <img src="https://sfxfolder.com/favicon.png" alt="Sfxfolder" width="140" style="display: block; margin: 0 auto;">
+          <img src="https://sfxfolder.com/favicon.webp" alt="Sfxfolder" width="140" style="display: block; margin: 0 auto;">
         </div>
         <table class="main">
           <tr>
@@ -265,7 +265,7 @@ function getPaymentFailedEmailTemplate(subscriptionId: string) {
     <body>
       <div class="wrapper">
         <div class="header">
-          <img src="https://sfxfolder.com/favicon.png" alt="Sfxfolder" width="140" style="display: block; margin: 0 auto;">
+          <img src="https://sfxfolder.com/favicon.webp" alt="Sfxfolder" width="140" style="display: block; margin: 0 auto;">
         </div>
         <table class="main">
           <tr>
@@ -323,7 +323,7 @@ function getExpiryReminderEmailTemplate(subscriptionId: string) {
     <body>
       <div class="wrapper">
         <div class="header">
-          <img src="https://sfxfolder.com/favicon.png" alt="Sfxfolder" width="140" style="display: block; margin: 0 auto;">
+          <img src="https://sfxfolder.com/favicon.webp" alt="Sfxfolder" width="140" style="display: block; margin: 0 auto;">
         </div>
         <table class="main">
           <tr>

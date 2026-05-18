@@ -31,11 +31,11 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://sfxfolder.com';
 export const metadata = {
   metadataBase: new URL(SITE_URL),
   title: {
-    default: "SFXFolder — Free Resource Folder for Video Editors",
+    default: "Free Sound Effects & Video Assets Download — SFXFolder",
     template: "%s | SFXFolder",
   },
   description:
-    "Curated collection of free sound effects, music, and assets for video editors based on professional experience.",
+    "Download free sound effects, music, LUTs, green screen & more for video editing. 500+ curated assets — instant download, no copyright issues.",
   keywords: [
     "free sound effects",
     "sfx free",
@@ -52,25 +52,34 @@ export const metadata = {
   ],
   icons: {
     icon: [
-      { url: "/favicon.png?v=2" },
+      { url: "/favicon.webp?v=3" },
     ],
-    apple: "/favicon.png?v=2",
+    apple: "/favicon.webp?v=3",
   },
   manifest: "/site.webmanifest",
   openGraph: {
-    title: "SFXFolder — Free Resource Folder",
+    title: "Free Sound Effects & Video Assets — SFXFolder",
     description:
-      "Curated collection of free sound effects and assets based on professional experience.",
+      "Download free sound effects, music, LUTs & more for video editing. Curated assets with instant download.",
     type: "website",
     url: SITE_URL,
     siteName: "SFXFolder",
     locale: "en_US",
+    images: [
+      {
+        url: `${SITE_URL}/og-default.jpg`,
+        width: 1200,
+        height: 630,
+        alt: "SFXFolder — Free Sound Effects & Video Assets",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "SFXFolder — Free Resource Folder",
+    title: "Free Sound Effects & Video Assets — SFXFolder",
     description:
-      "Curated free sound effects and video editing assets hand-picked from professional experience.",
+      "Download free sound effects, music, LUTs & more. Curated video editing assets — instant download, no copyright.",
+    images: [`${SITE_URL}/og-default.jpg`],
   },
   alternates: {
     canonical: SITE_URL,
@@ -88,7 +97,7 @@ export const metadata = {
   },
   verification: {
     // Add your Google Search Console verification code here
-    // google: 'your-verification-code',
+    google: 'MWXJYU1hhGxSbzmdw4X1ylzd8KbLU4I8jL1HJQR-N20',
   },
 };
 
@@ -116,22 +125,23 @@ export default async function RootLayout({ children }) {
     },
   };
 
-  // JSON-LD: Organization schema
+  // JSON-LD: Organization schema with dynamic social links
+  const socialUrls = (settings?.social_links || []).map(s => s.url).filter(Boolean);
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "Organization",
     name: "SFXFolder",
     url: SITE_URL,
-    logo: `${SITE_URL}/favicon.png?v=2`,
-    sameAs: [],
+    logo: `${SITE_URL}/favicon.webp?v=3`,
+    sameAs: socialUrls,
   };
 
   return (
     <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`} data-scroll-behavior="smooth" suppressHydrationWarning>
       <head>
-        <link rel="icon" href="/favicon.ico?v=2" sizes="any" />
-        <link rel="icon" href="/favicon.png?v=2" type="image/png" />
-        <link rel="apple-touch-icon" href="/favicon.png?v=2" />
+        <link rel="icon" href="/favicon.ico?v=3" sizes="any" />
+        <link rel="icon" href="/favicon.webp?v=3" type="image/webp" />
+        <link rel="apple-touch-icon" href="/favicon.webp?v=3" />
         <link rel="manifest" href="/site.webmanifest" />
         <script
           id="schema-website"
