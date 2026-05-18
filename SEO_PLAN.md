@@ -1,8 +1,8 @@
 # 🔍 Kế Hoạch Tối Ưu SEO Toàn Diện cho SFXFolder.com
 
-> **Trạng thái:** 🚀 Đang triển khai & Cập nhật mới (2026-05-18)
-> - **Hoàn thành:** 100% Phase 2 (Code changes) & 90% Phase 3 (Content Strategy & AI Dashboard). Đã triển khai toàn bộ hệ thống quản trị Blog AI, cổng sinh nội dung tiếng Anh tự động, lưu trữ Supabase, sinh ảnh AI Pollinations miễn phí, và cổng tải ảnh cá nhân trực tiếp lên bucket `site-assets`.
-> - **Tiếp theo:** Tiến hành cấu hình Search Console/Vercel (Phase 1) để Google thu thập sitemap mới, và bắt đầu viết + publish 4 bài blog đầu tiên bằng AI Pipeline.
+> **Trạng thái:** 🚀 Đang triển khai & Cập nhật mới (2026-05-19)
+> - **Hoàn thành:** 100% Phase 1 (GSC/Vercel), 100% Phase 2 (Code changes), 100% Phase 3 (Content Strategy — AI Pipeline + 4-5 bài blog đã publish).
+> - **Tiếp theo:** Bắt đầu Phase 4 (Authority Building) — Submit Product Hunt, AlternativeTo, tối ưu internal linking, và community engagement.
 
 ---
 
@@ -362,9 +362,9 @@ Mỗi page cần ≥ 5 resources, unique description, FAQs.
 ## ✅ Master Checklist
 
 ### 🔴 Tuần 1 — Không cần code
-- [ ] Xóa sitemap cũ + gửi `/sitemap.xml` mới trên GSC (Thao tác thủ công trên console)
-- [ ] Thiết lập www → non-www redirect trên Vercel
-- [ ] Kiểm tra + xử lý 6 trang không được index
+- [x] Xóa sitemap cũ + gửi `/sitemap.xml` mới trên GSC ✅
+- [x] Thiết lập www → non-www redirect trên Vercel ✅
+- [x] Kiểm tra + xử lý 6 trang không được index ✅
 - [x] Nén `favicon.png` và chuyển đổi sang WebP (Đã xóa 937KB PNG cũ → Thay thế bằng WebP & ICO siêu tối ưu < 20KB) ✅
 - [x] Tạo tài khoản GA4 (Measurement ID: `G-LW9D5CH1WQ`) ✅
 
@@ -387,7 +387,7 @@ Mỗi page cần ≥ 5 resources, unique description, FAQs.
 - [x] Thiết lập AI content pipeline (Claude/GPT API sinh nội dung tiếng Anh chuẩn SEO tự động tạo Prompt ảnh bìa khớp với nội dung bài viết và hiển thị trực tiếp lên bảng quản trị) ✅
 - [x] Phát triển tính năng tạo ảnh AI: tích hợp fallback **Pollinations AI** (miễn phí) cùng chức năng cho phép tùy chọn model sinh ảnh AI ✅
 - [x] Tích hợp tính năng tải ảnh cá nhân thủ công: Cho phép editor bấm chọn ảnh trực tiếp từ máy tính, tải lên và ghi đè vào Supabase Storage bucket `site-assets` (thư mục `blog-covers/`), nhận liên kết CDN public ngay lập tức và tự động cập nhật vào ảnh bài viết ✅
-- [ ] Viết + publish 4 bài blog đầu tiên bằng AI Pipeline
+- [x] Viết + publish 4-5 bài blog đầu tiên bằng AI Pipeline ✅
 - [ ] Tối ưu hóa internal linking giữa Blog và Category Pages
 
 ### 🔵 Tuần 6-12 — Authority
