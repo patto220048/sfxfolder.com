@@ -50,7 +50,7 @@ const getDescendantIds = (node) => {
 
 const LATEST_EXT_VERSION = "1.0.3";
 
-function ClientPageContent({ slug, info, folders, resources: initialResources, categoryTags = [], isPlugin: propIsPlugin = false, initialCacheHint = false }) {
+function ClientPageContent({ slug, info, folders, resources: initialResources, categoryTags = [], isPlugin: propIsPlugin = false, initialCacheHint = false, faqs = [] }) {
   const [extVersion, setExtVersion] = useState(null);
   const [showUpdateBanner, setShowUpdateBanner] = useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState(null);
@@ -808,6 +808,25 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
         onLoadMore={handleLoadMore}
         isPlugin={isPlugin}
       />
+
+      {faqs && faqs.length > 0 && (
+        <section className={styles.faqSection} aria-label="Frequently Asked Questions">
+          <h2 className={styles.faqTitle}>Frequently Asked Questions</h2>
+          <div className={styles.faqAccordion}>
+            {faqs.map((faq, idx) => (
+              <details key={idx} className={styles.faqItem}>
+                <summary className={styles.faqQuestion}>
+                  <span>{faq.q}</span>
+                  <span className={styles.faqIcon}>+</span>
+                </summary>
+                <div className={styles.faqAnswer}>
+                  <p>{faq.a}</p>
+                </div>
+              </details>
+            ))}
+          </div>
+        </section>
+      )}
 
       {previewResource && (
         <PreviewOverlay 

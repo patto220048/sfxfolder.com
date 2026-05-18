@@ -64,6 +64,104 @@ const CATEGORY_SEO = {
 };
 
 /**
+ * FAQ list per category slug for targeted FAQ section and FAQPage schema.
+ */
+const CATEGORY_FAQS = {
+  "sound-effects": [
+    {
+      q: "Are these sound effects completely free to use?",
+      a: "Yes, all sound effects on SFXFolder are 100% free to download and use in both personal and commercial projects, including YouTube videos, TikToks, films, and game development."
+    },
+    {
+      q: "What format are the sound effects downloaded in?",
+      a: "Our sound effects are typically provided in high-quality professional audio formats like WAV (24-bit/48kHz or 16-bit/44.1kHz) or MP3 to ensure compatibility and maximum fidelity for video editing."
+    },
+    {
+      q: "Will I get copyright strikes on YouTube for using these?",
+      a: "No. All sound effects in our catalog are royalty-free and copyright-safe. You will not get copyright claims or strikes on YouTube or any other social platforms."
+    },
+    {
+      q: "Do I need to give attribution or credit to SFXFolder?",
+      a: "While attribution is not legally required, it is highly appreciated! Sharing our link 'sfxfolder.com' in your video description helps us keep providing free assets for the community."
+    }
+  ],
+  "music": [
+    {
+      q: "Is this background music copyright-safe?",
+      a: "Yes, all music tracks on SFXFolder are royalty-free and copyright-safe for content creators. You can use them in YouTube videos, Twitch streams, podcasts, and social media without worrying about claims."
+    },
+    {
+      q: "Can I use these tracks in monetized YouTube videos?",
+      a: "Absolutely! You are fully allowed to monetize your videos on YouTube, Facebook, and TikTok using our royalty-free background music tracks."
+    },
+    {
+      q: "Do I need a license key to clear claims?",
+      a: "No license key is needed. Our tracks are pre-cleared for use, allowing you to edit and publish with peace of mind."
+    }
+  ],
+  "video-meme": [
+    {
+      q: "Are these meme video clips free to download?",
+      a: "Yes! All trending video memes and green screen meme clips are completely free to download in high definition MP4 format for direct import into your video editor."
+    },
+    {
+      q: "Can I use these meme clips in YouTube videos?",
+      a: "Yes, meme video templates are widely used under fair use for commentary, parody, and entertainment. Our curated clips are fully optimized and safe for creators."
+    }
+  ],
+  "green-screen": [
+    {
+      q: "How do I use these green screen effects in my editor?",
+      a: "Simply download the MP4 file, import it into your editor (Premiere Pro, CapCut, DaVinci Resolve, or After Effects), apply the 'Ultra Key' or 'Chroma Key' effect, and select the green background color to make it transparent."
+    },
+    {
+      q: "Are all VFX green screen assets royalty-free?",
+      a: "Yes, all chroma key overlays, explosions, anime sparks, fire, and transitions on SFXFolder are 100% royalty-free and commercial-safe."
+    }
+  ],
+  "animation": [
+    {
+      q: "What software can I use these motion graphic animations with?",
+      a: "Our animations are exported as high-quality video files (mostly MP4 or transparent WebM/MOV) that work seamlessly with any editing software including Premiere Pro, CapCut, DaVinci, After Effects, and Final Cut."
+    },
+    {
+      q: "Are these animated templates free for commercial projects?",
+      a: "Yes, they are free for both commercial client projects and personal social media channels without any licensing fees."
+    }
+  ],
+  "image-overlay": [
+    {
+      q: "What are image overlays and how do I apply them?",
+      a: "Image overlays are visual layers (like dust, scratches, borders, or light leaks) that you place on top of your main video track. You can set their blending mode to 'Screen', 'Multiply', or 'Overlay' in your video editor to create stylish visual effects."
+    },
+    {
+      q: "Are these overlay images transparent?",
+      a: "Yes! Most overlays are provided either as transparent PNG files or high-contrast JPGs designed for blending modes."
+    }
+  ],
+  "font": [
+    {
+      q: "Are these fonts free for commercial use?",
+      a: "Yes, we curate professional fonts that are licensed for commercial use, so you can safely use them in client videos, advertisements, logos, and YouTube thumbnails."
+    },
+    {
+      q: "How do I install these fonts in my video editing software?",
+      a: "Download the font ZIP file, extract it, and install the .OTF or .TTF file on your Windows or Mac system. Your video editors (like Premiere Pro, Photoshop, or CapCut) will automatically detect the new font."
+    }
+  ],
+  "preset-lut": [
+    {
+      q: "What is a LUT and how does it help color grading?",
+      a: "A LUT (Look-Up Table) is a file containing color values that instantly transforms the colors of your video footage. It allows you to achieve cinematic color grading looks in one click."
+    },
+    {
+      q: "Do these LUTs work in CapCut and Premiere Pro?",
+      a: "Yes, our LUTs are provided in the universal `.cube` format, which is fully compatible with Adobe Premiere Pro, CapCut, DaVinci Resolve, After Effects, and Final Cut Pro."
+    }
+  ]
+};
+
+/**
  * Dynamic metadata generation for SEO-optimized category pages.
  */
 export async function generateMetadata({ params }) {
@@ -231,6 +329,21 @@ export default async function CategoryPage({ params, searchParams }) {
     ],
   };
 
+  // FAQPage Schema
+  const categoryFaqs = CATEGORY_FAQS[slug] || [];
+  const faqSchema = categoryFaqs.length > 0 ? {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": categoryFaqs.map(faq => ({
+      "@type": "Question",
+      "name": faq.q,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.a
+      }
+    }))
+  } : null;
+
   return (
     <Suspense fallback={<div>Loading category...</div>}>
       <script
@@ -245,12 +358,21 @@ export default async function CategoryPage({ params, searchParams }) {
           __html: JSON.stringify(breadcrumbSchema),
         }}
       />
+      {faqSchema && (
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(faqSchema),
+          }}
+        />
+      )}
       <ClientPage 
         slug={slug} 
         info={info} 
         folders={folderTree} 
         resources={allResources} 
         categoryTags={categoryTags}
+        faqs={categoryFaqs}
       />
     </Suspense>
   );

@@ -377,7 +377,7 @@ Mỗi page cần ≥ 5 resources, unique description, FAQs.
 - [x] Cải thiện homepage title tag và meta descriptions chất lượng cao ✅
 - [x] Thêm AI bot rules vào robots.js (Cho phép `GPTBot`, `Claude-Web`, `PerplexityBot`) ✅
 - [x] Tạo + thêm OG image mặc định (`public/og-default.jpg`) ✅
-- [ ] Thêm FAQ sections + FAQPage schema trên category pages
+- [x] Thêm FAQ sections + FAQPage schema trên category pages ✅
 
 ### 🟢 Tuần 3-6 — Content
 - [ ] Setup blog platform (Hashnode recommended)
