@@ -1,11 +1,8 @@
 # 🔍 Kế Hoạch Tối Ưu SEO Toàn Diện cho SFXFolder.com
 
-> **Trạng thái:** ✅ Đã cập nhật theo phản hồi user (2026-05-18)
-> - Domain chính: `sfxfolder.com` (không www)
-> - Blog: Dùng platform riêng (không tích hợp Next.js)
-> - Content: AI tự động viết + upload
-> - Social: Đã có trong admin settings → lấy dynamic
-> - GA4: Chưa cài → cần cài
+> **Trạng thái:** 🚀 Đang triển khai & Cập nhật mới (2026-05-18)
+> - **Hoàn thành:** 90% Phase 2 (Code changes) bao gồm GA4, GSC Verification, Sitemap, Robots.js, OG Image, Title/Meta tags và tối ưu hóa favicon sang WebP.
+> - **Tiếp theo:** Tiến hành cấu hình Search Console/Vercel (Phase 1) và chuẩn bị cho Chiến lược nội dung Blog (Phase 3).
 
 ---
 
@@ -366,20 +363,20 @@ Mỗi page cần ≥ 5 resources, unique description, FAQs.
 ## ✅ Master Checklist
 
 ### 🔴 Tuần 1 — Không cần code
-- [ ] Xóa sitemap cũ + gửi `/sitemap.xml` mới trên GSC
+- [ ] Xóa sitemap cũ + gửi `/sitemap.xml` mới trên GSC (Thao tác thủ công trên console)
 - [ ] Thiết lập www → non-www redirect trên Vercel
 - [ ] Kiểm tra + xử lý 6 trang không được index
-- [ ] Nén `favicon.png` (937KB → <50KB)
-- [ ] Tạo tài khoản GA4
+- [x] Nén `favicon.png` và chuyển đổi sang WebP (Đã xóa 937KB PNG cũ → Thay thế bằng WebP & ICO siêu tối ưu < 20KB) ✅
+- [x] Tạo tài khoản GA4 (Measurement ID: `G-LW9D5CH1WQ`) ✅
 
 ### 🟡 Tuần 2-3 — Code changes
-- [ ] Thêm GA4 Measurement ID vào layout.js
-- [ ] Uncomment + thêm GSC verification code
-- [ ] Thêm `/about-us`, `/contact`, `/faq` vào sitemap.js
-- [ ] Thêm dynamic social links vào Organization schema `sameAs`
-- [ ] Cải thiện homepage title tag
-- [ ] Thêm AI bot rules vào robots.js
-- [ ] Tạo + thêm OG image mặc định
+- [x] Thêm GA4 Measurement ID vào layout.js (Đã import và sử dụng `@next/third-parties/google`) ✅
+- [x] Uncomment + thêm GSC verification code (`google: 'MWXJYU1hhGxSbzmdw4X1ylzd8KbLU4I8jL1HJQR-N20'`) ✅
+- [x] Thêm `/about-us`, `/contact`, `/faq` vào sitemap.js ✅
+- [x] Thêm dynamic social links vào Organization schema `sameAs` ✅
+- [x] Cải thiện homepage title tag và meta descriptions chất lượng cao ✅
+- [x] Thêm AI bot rules vào robots.js (Cho phép `GPTBot`, `Claude-Web`, `PerplexityBot`) ✅
+- [x] Tạo + thêm OG image mặc định (`public/og-default.jpg`) ✅
 - [ ] Thêm FAQ sections + FAQPage schema trên category pages
 
 ### 🟢 Tuần 3-6 — Content
