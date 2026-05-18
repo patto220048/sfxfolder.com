@@ -2,7 +2,7 @@
 
 import React, { memo } from "react";
 import Link from "next/link";
-import { Activity } from "lucide-react";
+
 import { useSiteData } from "@/app/context/SiteContext";
 import styles from "./Footer.module.css";
 
@@ -122,7 +122,6 @@ function Footer() {
             <div className={styles.statusIndicator}>
               <span className={styles.pulseDot}></span>
             </div>
-            <Activity size={14} className={styles.versionIcon} />
             <span>Version {settings.project_version}</span>
             <span className={styles.statusText}>{settings.status_text}</span>
           </div>

@@ -3,7 +3,7 @@
   justify-content: center;
   align-items: flex-start;
   width: 100%;
-  max-width: 1400px;
+  max-width: 1600px;
   margin: 0 auto;
   gap: 20px;
 }
@@ -218,6 +218,13 @@
 }
 
 /* ---------- Responsive ---------- */
+@media (min-width: 1300px) and (max-width: 1560px) {
+  /* Side ads are active, but the page container width is squeezed */
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 @media (max-width: 1200px) {
   .grid {
     grid-template-columns: repeat(3, 1fr);
