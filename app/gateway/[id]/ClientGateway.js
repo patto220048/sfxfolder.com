@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Download, Check, Loader2 } from "lucide-react";
 import { useAuth } from "@/app/lib/auth-context";
 import { useSiteData } from "@/app/context/SiteContext";
@@ -134,7 +135,7 @@ export default function ClientGateway({ resource }) {
             <div className={styles.premiumUpgrade}>
               <div className={styles.premiumTitle}>Tired of waiting?</div>
               <div className={styles.premiumText}>Upgrade to Premium for instant downloads, no ads, and access to all plugins.</div>
-              <a href="/pricing" className={styles.premiumBtn}>Upgrade Now</a>
+              <Link href="/pricing" className={styles.premiumBtn}>Upgrade Now</Link>
             </div>
           </div>
 
