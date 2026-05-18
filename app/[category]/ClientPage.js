@@ -55,6 +55,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
   const [showUpdateBanner, setShowUpdateBanner] = useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState(null);
   const [selectedFolderName, setSelectedFolderName] = useState(null);
+  const [isOpenFAQ, setIsOpenFAQ] = useState(false);
   const [selectedFormats, setSelectedFormats] = useState([]);
   const [selectedTags, setSelectedTags] = useState([]);
   const [sortBy, setSortBy] = useState("newest");
@@ -85,6 +86,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
   const hasLoadedInitialStateRef = useRef(false);
   const historyStackRef = useRef([null]);
   const prevSlugRef = useRef(slug);
+  const faqRef = useRef(null);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -215,6 +217,26 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
       setSortBy(sort);
     }
   }, [searchParams, isInitialized, folders]);
+
+  useEffect(() => {
+    if (!isOpenFAQ) return;
+    const handleClickOutside = (e) => {
+      if (faqRef.current && !faqRef.current.contains(e.target)) {
+        setIsOpenFAQ(false);
+      }
+    };
+    const handleKeyDown = (e) => {
+      if (e.key === "Escape") {
+        setIsOpenFAQ(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isOpenFAQ]);
 
   useEffect(() => {
     if (!isInitialized) return;
@@ -809,23 +831,45 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
         isPlugin={isPlugin}
       />
 
-      {faqs && faqs.length > 0 && (
-        <section className={styles.faqSection} aria-label="Frequently Asked Questions">
-          <h2 className={styles.faqTitle}>Frequently Asked Questions</h2>
-          <div className={styles.faqAccordion}>
-            {faqs.map((faq, idx) => (
-              <details key={idx} className={styles.faqItem}>
-                <summary className={styles.faqQuestion}>
-                  <span>{faq.q}</span>
-                  <span className={styles.faqIcon}>+</span>
-                </summary>
-                <div className={styles.faqAnswer}>
-                  <p>{faq.a}</p>
-                </div>
-              </details>
-            ))}
-          </div>
-        </section>
+      {!isPlugin && faqs && faqs.length > 0 && (
+        <div ref={faqRef} className={styles.faqFloatingContainer}>
+          <button 
+            className={`${styles.faqFab} ${isOpenFAQ ? styles.faqFabActive : ""}`}
+            onClick={() => setIsOpenFAQ(!isOpenFAQ)}
+            aria-label="Frequently Asked Questions"
+            aria-expanded={isOpenFAQ}
+          >
+            {isOpenFAQ ? "✕" : "?"}
+          </button>
+
+          {isOpenFAQ && (
+            <div className={styles.faqDropdown}>
+              <div className={styles.faqDropdownHeader}>
+                <h3>Frequently Asked Questions</h3>
+                <button 
+                  onClick={() => setIsOpenFAQ(false)} 
+                  className={styles.faqCloseBtn}
+                  aria-label="Close FAQs"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className={styles.faqDropdownContent}>
+                {faqs.map((faq, idx) => (
+                  <details key={idx} className={styles.faqDropdownItem}>
+                    <summary className={styles.faqDropdownQuestion}>
+                      <span>{faq.q}</span>
+                      <span className={styles.faqDropdownIcon}>+</span>
+                    </summary>
+                    <div className={styles.faqDropdownAnswer}>
+                      <p>{faq.a}</p>
+                    </div>
+                  </details>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
       {previewResource && (
