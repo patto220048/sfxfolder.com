@@ -78,7 +78,7 @@ const CATEGORY_FAQS = {
     },
     {
       q: "Will I get copyright strikes on YouTube for using these?",
-      a: "No. All sound effects in our catalog are royalty-free and copyright-safe. You will not get copyright claims or strikes on YouTube or any other social platforms."
+      a: "You should not get any copyright strikes or claims on YouTube for using these sound effects, as they are royalty-free and copyright-safe. However, to be 100% sure, we recommend using a copyright claim service to check your videos before publishing."
     },
     {
       q: "Do I need to give attribution or credit to SFXFolder?",
@@ -88,15 +88,11 @@ const CATEGORY_FAQS = {
   "music": [
     {
       q: "Is this background music copyright-safe?",
-      a: "Yes, all music tracks on SFXFolder are royalty-free and copyright-safe for content creators. You can use them in YouTube videos, Twitch streams, podcasts, and social media without worrying about claims."
+      a: "No, it is not. While we curate the best copyright-safe background music for creators, we cannot guarantee 100% copyright-free status for all tracks. We recommend using a copyright claim service to check your videos before publishing."
     },
     {
       q: "Can I use these tracks in monetized YouTube videos?",
-      a: "Absolutely! You are fully allowed to monetize your videos on YouTube, Facebook, and TikTok using our royalty-free background music tracks."
-    },
-    {
-      q: "Do I need a license key to clear claims?",
-      a: "No license key is needed. Our tracks are pre-cleared for use, allowing you to edit and publish with peace of mind."
+      a: "We cannot provide legal advice or guarantees for any third-party content. Users are responsible for ensuring compliance with all applicable laws and platform policies."
     }
   ],
   "video-meme": [
