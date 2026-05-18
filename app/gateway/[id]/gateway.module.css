@@ -1,0 +1,209 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  position: relative;
+  padding-bottom: 120px; /* Space for the bottom ad */
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.mainWrapper {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  gap: 20px;
+}
+
+.sideAd {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .sideAd {
+    display: flex;
+    width: 160px;
+    height: 600px;
+    background-color: var(--bg-hover);
+    border: 2px dashed var(--border-default);
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    border-radius: 4px;
+    text-align: center;
+    padding: 10px;
+    position: sticky;
+    top: 20px;
+  }
+}
+
+.content {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: var(--shadow-neo);
+}
+
+.premiumUpgrade {
+  margin-top: 20px;
+  padding: 15px;
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  border-radius: 8px;
+  color: white;
+  text-align: center;
+}
+
+.premiumTitle {
+  font-weight: bold;
+  margin-bottom: 5px;
+  font-size: 1.1rem;
+}
+
+.premiumText {
+  font-size: 0.9rem;
+  margin-bottom: 10px;
+  opacity: 0.9;
+}
+
+.premiumBtn {
+  display: inline-block;
+  background-color: white;
+  color: #1e3a8a;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: bold;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: opacity 0.2s;
+}
+
+.premiumBtn:hover {
+  opacity: 0.9;
+}
+
+.title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: var(--text-primary);
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-bottom: 30px;
+}
+
+.countdownCircle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  border: 4px solid var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 3rem;
+  font-weight: bold;
+  color: var(--text-primary);
+  margin: 0 auto 30px;
+}
+
+.fileInfo {
+  background: var(--bg-hover);
+  padding: 15px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  text-align: left;
+  border: 1px solid var(--border-default);
+}
+
+.fileName {
+  font-weight: 600;
+  margin-bottom: 5px;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fileMeta {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.fallbackBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background-color: var(--text-primary);
+  color: var(--bg-primary);
+  border: none;
+  border-radius: 6px;
+  padding: 12px 24px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  text-decoration: none;
+}
+
+.fallbackBtn:hover {
+  opacity: 0.9;
+}
+
+.fallbackBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Sticky Bottom Ad */
+.bottomAd {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: var(--bg-primary);
+  border-top: 1px solid var(--border-default);
+  padding: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+}
+
+.adPlaceholder {
+  width: 100%;
+  max-width: 728px;
+  height: 90px;
+  background-color: var(--bg-hover);
+  border: 2px dashed var(--border-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  border-radius: 4px;
+}
+
+/* Mobile responsive for ad */
+@media (max-width: 768px) {
+  .adPlaceholder {
+    height: 50px;
+    max-width: 320px;
+  }
+  .content {
+    padding: 20px;
+  }
+}

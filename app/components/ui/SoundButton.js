@@ -323,15 +323,17 @@ const SoundButton = memo(function SoundButton({
       return;
     }
 
-    // Premium check - All resources now require Premium
+    // Premium check
     if (!isAdmin && !userIsPremium) {
       if (isInsidePlugin) {
         alert("Please login with a Premium account to add assets to Premiere.");
+        window.dispatchEvent(new CustomEvent("need-premium"));
+        return;
       } else {
-        alert("Please upgrade to a Premium account to download this asset.");
+        // Redirect free users to the 5s Gateway
+        window.open(`/gateway/${id}`, "_blank");
+        return;
       }
-      window.dispatchEvent(new CustomEvent("need-premium"));
-      return;
     }
 
     console.log("Starting asset download for Premiere:", id);

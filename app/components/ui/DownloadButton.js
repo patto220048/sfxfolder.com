@@ -36,8 +36,16 @@ export default function DownloadButton({ downloadUrl, fileUrl, fileName, fileFor
 
     // Premium Check
     if (!isAdmin && !isPremium) {
-      window.dispatchEvent(new CustomEvent("need-premium"));
-      return;
+      if (isInsidePlugin) {
+        // Plugin requires Premium to use
+        alert("Please login with a Premium account to add assets to Premiere.");
+        window.dispatchEvent(new CustomEvent("need-premium"));
+        return;
+      } else {
+        // Web users get redirected to the 5s Gateway
+        window.open(`/gateway/${resourceId}`, "_blank");
+        return;
+      }
     }
 
     if (state !== "idle" || (isInsidePlugin && downloadStatus === 'downloading')) return;

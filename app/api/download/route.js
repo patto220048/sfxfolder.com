@@ -33,13 +33,6 @@ export async function POST(request) {
       }
     }
 
-    if (!user) {
-      return NextResponse.json(
-        { error: "Authentication required. Please sign in to download." },
-        { status: 401 }
-      );
-    }
-
     // 2. Check if the resource exists
     const { data: resource } = await supabaseAdmin
       .from("resources")
@@ -54,30 +47,18 @@ export async function POST(request) {
       );
     }
 
-    // 3. User must have premium/admin role for ALL resources
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("role, subscription_status, subscription_expires_at")
-      .eq("id", user.id)
-      .single();
-
-    const hasAccess =
-      profile?.role === "admin" ||
-      (["active", "suspended", "cancelled"].includes(profile?.subscription_status) && 
-       profile?.subscription_expires_at && 
-       new Date(profile.subscription_expires_at) > new Date());
-
-    if (!hasAccess) {
-      return NextResponse.json(
-        {
-          error: "Premium subscription required to download resources.",
-          requiresPremium: true,
-        },
-        { status: 403 }
-      );
+    // 3. Get user profile if authenticated
+    let profile = null;
+    if (user) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("role, daily_download_count, last_download_date")
+        .eq("id", user.id)
+        .single();
+      profile = data;
     }
 
-    // --- RATE LIMITING LOGIC ---
+    // --- RATE LIMITING LOGIC (For logged-in users only) ---
     const MAX_DAILY_DOWNLOADS = 200;
     const today = new Date().toISOString().split('T')[0]; // Định dạng YYYY-MM-DD
     
@@ -90,7 +71,7 @@ export async function POST(request) {
     }
 
     // Admin không bị giới hạn
-    if (profile?.role !== "admin" && currentCount >= MAX_DAILY_DOWNLOADS) {
+    if (user && profile?.role !== "admin" && currentCount >= MAX_DAILY_DOWNLOADS) {
       return NextResponse.json(
         { error: `Bạn đã đạt giới hạn tải xuống ${MAX_DAILY_DOWNLOADS} file/ngày. Vui lòng quay lại vào ngày mai.` },
         { status: 429 }
@@ -103,15 +84,16 @@ export async function POST(request) {
       // Tăng số lượt tải của tài nguyên
       await incrementDownloadCount(resourceId);
       
-      // Cập nhật số lượt tải trong ngày của User
-      await supabaseAdmin
-        .from("profiles")
-        .update({
-          daily_download_count: currentCount + 1,
-          last_download_date: today
-        })
-        .eq("id", user.id);
-
+      // Cập nhật số lượt tải trong ngày của User (nếu có đăng nhập)
+      if (user) {
+        await supabaseAdmin
+          .from("profiles")
+          .update({
+            daily_download_count: currentCount + 1,
+            last_download_date: today
+          })
+          .eq("id", user.id);
+      }
     } catch (e) {
       console.warn("Failed to update download stats:", e);
     }

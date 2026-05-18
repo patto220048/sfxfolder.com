@@ -5,6 +5,8 @@ import styles from "./layout.module.css";
 import { SidebarProvider } from "@/app/context/SidebarContext";
 
 
+import CategoryStickyAd from "@/app/components/ads/CategoryStickyAd";
+
 export default async function CategoryLayout({ children, params }) {
   const { category } = await params;
   
@@ -28,7 +30,7 @@ export default async function CategoryLayout({ children, params }) {
         />
         {children}
       </div>
-
+      <CategoryStickyAd />
     </SidebarProvider>
   );
 }
