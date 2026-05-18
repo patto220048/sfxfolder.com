@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { revalidateTag } from "next/cache";
-import { supabaseAdmin } from "@/app/lib/supabase-admin";
+import { supabaseAdmin, ensureSupabaseImage } from "@/app/lib/supabase-admin";
 import { getServerUser } from "@/app/lib/supabase-server";
 
 export const dynamic = 'force-dynamic';
@@ -60,10 +60,17 @@ export async function POST(req) {
     }
 
     const body = await req.json();
-    const { title, slug, content, summary, cover_image, status, meta_title, meta_description } = body;
+    let { title, slug, content, summary, cover_image, status, meta_title, meta_description } = body;
 
     if (!title || !slug || !content) {
       return NextResponse.json({ error: "Title, slug, and content are required" }, { status: 400 });
+    }
+
+    // Đảm bảo ảnh bìa được lưu trữ trên CDN riêng Supabase (site-assets)
+    try {
+      cover_image = await ensureSupabaseImage(cover_image, slug);
+    } catch (imgErr) {
+      console.error("[Admin Blog POST] Failed to store cover image on Supabase:", imgErr);
     }
 
     // Insert blog post

@@ -88,6 +88,7 @@ export default function BlogAdminPage() {
   const [generating, setGenerating] = useState(false);
   const [generatingImage, setGeneratingImage] = useState(false);
   const [imagePrompt, setImagePrompt] = useState("");
+  const [imageModel, setImageModel] = useState("pollinations");
 
   // Custom Keys management states
   const [keysOpen, setKeysOpen] = useState(false);
@@ -287,7 +288,7 @@ export default function BlogAdminPage() {
     }
   };
 
-  // Trigger Cover Image Generation via Imagen 3
+  // Trigger Cover Image Generation via AI Models
   const handleAIGenerateImage = async () => {
     if (!imagePrompt.trim()) {
       alert("Vui lòng nhập Prompt mô tả ảnh cần sinh!");
@@ -300,6 +301,7 @@ export default function BlogAdminPage() {
     try {
       const headers = { "Content-Type": "application/json" };
       if (apiKeys.gemini) headers["x-custom-gemini-key"] = apiKeys.gemini;
+      if (apiKeys.openai) headers["x-custom-openai-key"] = apiKeys.openai;
 
       const res = await fetch("/api/admin/blog/generate-image", {
         method: "POST",
@@ -307,6 +309,7 @@ export default function BlogAdminPage() {
         body: JSON.stringify({
           prompt: imagePrompt,
           slug: formData.slug || `sfx-blog-${Date.now()}`,
+          model: imageModel,
         }),
       });
 
@@ -318,7 +321,7 @@ export default function BlogAdminPage() {
         cover_image: data.cover_image,
       }));
 
-      setSuccess("Đã tạo ảnh bìa chất lượng cao bằng Imagen 3 và lưu trữ thành công!");
+      setSuccess("Đã tạo ảnh bìa bằng AI và lưu trữ thành công!");
       setTimeout(() => setSuccess(""), 4000);
     } catch (err) {
       setError(err.message);
@@ -346,7 +349,7 @@ export default function BlogAdminPage() {
         <div style={{ flex: 1 }}>
           <h1 className={styles.title}>Quản trị Blog AI</h1>
           <p className={styles.subtitle}>
-            Tạo bài viết tự động chuẩn SEO 1500-2000 từ, quản lý danh sách bài viết & sinh ảnh bìa Imagen 3.
+            Tạo bài viết tự động chuẩn SEO 1500-2000 từ, quản lý danh sách bài viết & sinh ảnh bìa Imagen 4.
           </p>
         </div>
         <div className={styles.headerActions}>
@@ -814,14 +817,29 @@ export default function BlogAdminPage() {
                         </div>
                       )}
 
-                      {/* Imagen 3 Generator Action */}
+                      {/* AI Cover Image Generator Action */}
                       <div className={styles.imageGeneratorBox}>
-                        <label>Sinh ảnh bìa tự động (Gemini Imagen 3)</label>
+                        <div className={styles.inputGroup} style={{ marginBottom: "12px" }}>
+                          <label>Mô hình sinh ảnh AI</label>
+                          <select
+                            value={imageModel}
+                            onChange={(e) => setImageModel(e.target.value)}
+                            className={styles.select}
+                          >
+                            <option value="pollinations">Mô hình AI Miễn phí (Flux - Khuyên dùng)</option>
+                            <option value="imagen-4.0-generate-001">Imagen 4 Standard (Google - Cần Key Paid)</option>
+                            <option value="imagen-4.0-ultra-generate-001">Imagen 4 Ultra (Google - Cần Key Paid)</option>
+                            <option value="imagen-4.0-fast-generate-001">Imagen 4 Fast (Google - Cần Key Paid)</option>
+                            <option value="dall-e-3">DALL-E 3 (OpenAI - Cần Key)</option>
+                            <option value="dall-e-2">DALL-E 2 (OpenAI - Cần Key)</option>
+                          </select>
+                        </div>
+                        <label>Mô tả ảnh cần vẽ (AI Image Prompt)</label>
                         <textarea
                           value={imagePrompt}
                           onChange={(e) => setImagePrompt(e.target.value)}
                           rows={3}
-                          placeholder="Mô tả bức ảnh bạn muốn sinh ra..."
+                          placeholder="Mô tả bức ảnh bạn muốn vẽ (Khuyên dùng tiếng Anh để AI vẽ đẹp nhất)..."
                         />
                         <button
                           type="button"
@@ -837,7 +855,7 @@ export default function BlogAdminPage() {
                           ) : (
                             <>
                               <ImageIcon size={15} />
-                              <span>Sinh ảnh bằng Imagen 3</span>
+                              <span>Sinh ảnh bằng AI</span>
                             </>
                           )}
                         </button>

@@ -34,7 +34,7 @@ function buildStylePrompt(keyword, categoryName, style) {
   switch (style) {
     case "tutorial":
       structureGuidelines = `
-STYLE: Actionable Practical Tutorial (Hướng dẫn thực hành từng bước)
+STYLE: Actionable Practical Tutorial (Step-by-Step Guide)
 REQUIRED STRUCTURE:
 1. Hook & Problem Scenario: Describe a frustrating problem video editors face regarding "${keyword}" and the instant value of solving it.
 2. The Anatomy / Prerequisites: What do creators need before starting (software version, assets, system specs).
@@ -49,7 +49,7 @@ REQUIRED STRUCTURE:
 
     case "listicle":
       structureGuidelines = `
-STYLE: Ultimate Curated Listicle & Round-up (Danh sách tổng hợp & So sánh chuyên sâu)
+STYLE: Ultimate Curated Listicle & Round-up (Deep-Dive Comparison)
 REQUIRED STRUCTURE:
 1. Introduction: The state of the industry, why lists online are generic, and why this curated list is different.
 2. High-level Comparison Matrix: A neat markdown table comparing the top 5-7 tools/methods for "${keyword}" (rating, best for, price, learning curve).
@@ -63,7 +63,7 @@ REQUIRED STRUCTURE:
 
     case "case_study":
       structureGuidelines = `
-STYLE: Real-world Case Study & Analytical Breakdown (Phân tích Quy trình & Kết quả thực tế)
+STYLE: Real-world Case Study & Analytical Breakdown (Workflow & Results Analysis)
 REQUIRED STRUCTURE:
 1. Executive Summary & The Challenge: A creative background story of a project that struggled with sound design/video editing, specifically targeting "${keyword}".
 2. The Strategy & Hypothesis: The planned approach to solve this challenge using advanced techniques.
@@ -79,7 +79,7 @@ REQUIRED STRUCTURE:
 
     case "myth_busting":
       structureGuidelines = `
-STYLE: Myth-Busting & In-Depth Technical Review (Giải mã lầm tưởng & Phân tích kỹ thuật)
+STYLE: Myth-Busting & In-Depth Technical Review (Debunking Misconceptions)
 REQUIRED STRUCTURE:
 1. Introduction: The common misconceptions floating around the video editing community regarding "${keyword}".
 2. Myth #1 to Myth #4:
@@ -95,7 +95,7 @@ REQUIRED STRUCTURE:
     case "guide":
     default:
       structureGuidelines = `
-STYLE: Ultimate Deep-Dive Cẩm nang / Ultimate Guide
+STYLE: Definitive Deep-Dive Ultimate Guide
 REQUIRED STRUCTURE:
 1. Intriguing Hook & Introduction: Why this topic is critical to the survival of a modern digital creator.
 2. The Core Philosophy / Fundamentals: Detailed explanation of the baseline principles of "${keyword}".
@@ -125,19 +125,19 @@ SEO WRITING REQUIREMENTS (MUST FOLLOW):
   * For presets/LUTs: "/preset-lut" (Presets & LUTs)
   * For sound effects: "/sound-effects" (Sound Effects / SFX)
   * For music: "/music" (Royalty-Free Music)
-- Language: Write the entire article in Vietnamese (Tiếng Việt) with excellent grammar, natural flow, and standard Vietnamese translation of technical video editing jargon.
+- Language: Write the entire article in English (US) with excellent grammar, natural flow, and standard professional video editing terminology.
 
 RESPONSE FORMAT (CRITICAL):
 Format your entire response using the exact markers below. Do not wrap the response in markdown blocks or JSON. Start directly with the markers:
 
 ===TITLE===
-[A highly clickable, high-CTR Vietnamese title under 65 characters. Exclude quotes.]
+[A highly clickable, high-CTR English title under 65 characters. Exclude quotes.]
 
 ===METATITLE===
 [SEO meta title containing the target keyword. Under 60 characters.]
 
 ===METADESCRIPTION===
-[Compelling SEO meta description (140-155 characters) in Vietnamese to drive search clicks.]
+[Compelling SEO meta description (140-155 characters) in English to drive search clicks.]
 
 ===SUMMARY===
 [A short 2-sentence summary introducing the article.]
@@ -309,7 +309,7 @@ export async function POST(req) {
         }
       } catch (jsonErr) {
         // Fallback: If both fail, return raw text or throw error
-        throw new Error("Không thể trích xuất cấu trúc bài viết của AI. Hãy thử lại hoặc thay đổi từ khóa.");
+        throw new Error("Failed to extract structured AI article. Please try again or modify your keyword.");
       }
     }
 
@@ -317,8 +317,8 @@ export async function POST(req) {
     return NextResponse.json({
       title,
       meta_title: meta_title || `${title} — SFXFolder`,
-      meta_description: meta_description || summary || `Hướng dẫn chi tiết về ${keyword} dành cho dựng phim chuyên nghiệp.`,
-      summary: summary || `Tìm hiểu cẩm nang chi tiết về ${keyword} để tối ưu hóa quy trình làm việc và chất lượng dựng phim.`,
+      meta_description: meta_description || summary || `In-depth guide to ${keyword} for professional video editors and content creators.`,
+      summary: summary || `Discover how to master ${keyword} to optimize your video editing workflow and timeline organization.`,
       content,
       wordCount: content ? content.split(/\s+/).length : 0,
     });
