@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import styles from "./CategoryStickyAd.module.css";
 import { useSiteData } from "@/app/context/SiteContext";
@@ -22,14 +23,22 @@ export default function CategoryStickyAd() {
     }
   }, [countdown]);
 
-  // Don't show in plugin or if no ad script is configured
-  if (!isVisible || isPlugin || !adHtml || adHtml.trim() === '') return null;
+  const hasAd = adHtml && adHtml.trim() !== '';
+
+  // Don't show in plugin
+  if (!isVisible || isPlugin) return null;
 
   return (
     <div className={styles.adContainer}>
       <div className={styles.adContent}>
         <div className={styles.adWrapper}>
-          <AdSlot htmlContent={adHtml} />
+          {hasAd ? (
+            <AdSlot htmlContent={adHtml} />
+          ) : (
+            <div style={{ padding: '15px', background: 'var(--bg-card)', border: '1px dashed var(--border-color)', color: 'var(--text-muted)', textAlign: 'center', width: '100%', minHeight: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              Advertisement - Placeholder (728x90)
+            </div>
+          )}
         </div>
         {countdown === 0 ? (
           <button className={styles.closeBtn} onClick={() => setIsVisible(false)} aria-label="Close Ad">

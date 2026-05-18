@@ -78,9 +78,15 @@ export default function ClientGateway({ resource }) {
       <div className={styles.container}>
         <div className={styles.mainWrapper}>
           {/* Left Ad */}
-          <div className={styles.sideAd}>
-            {ads.gateway_left ? <AdSlot htmlContent={ads.gateway_left} /> : <>Advertisement<br />(160x600)</>}
-          </div>
+          {ads.gateway_left && ads.gateway_left.trim() !== '' ? (
+            <div className={styles.sideAdContainer}>
+              <AdSlot htmlContent={ads.gateway_left} />
+            </div>
+          ) : (
+            <div className={styles.sideAdPlaceholder}>
+              Advertisement<br />(160x600)
+            </div>
+          )}
 
           <div className={styles.content}>
             <h1 className={styles.title}>Preparing your download...</h1>
@@ -133,17 +139,27 @@ export default function ClientGateway({ resource }) {
           </div>
 
           {/* Right Ad */}
-          <div className={styles.sideAd}>
-            {ads.gateway_right ? <AdSlot htmlContent={ads.gateway_right} /> : <>Advertisement<br />(160x600)</>}
-          </div>
+          {ads.gateway_right && ads.gateway_right.trim() !== '' ? (
+            <div className={styles.sideAdContainer}>
+              <AdSlot htmlContent={ads.gateway_right} />
+            </div>
+          ) : (
+            <div className={styles.sideAdPlaceholder}>
+              Advertisement<br />(160x600)
+            </div>
+          )}
         </div>
       </div>
 
       {/* Sticky Bottom Ad */}
       <div className={styles.bottomAd}>
-        <div className={styles.adWrapper}>
-          {ads.category_sticky ? <AdSlot htmlContent={ads.category_sticky} /> : "Advertisement - Placeholder (728x90 or 320x50)"}
-        </div>
+        {ads.category_sticky && ads.category_sticky.trim() !== '' ? (
+          <AdSlot htmlContent={ads.category_sticky} />
+        ) : (
+          <div className={styles.adPlaceholder}>
+            Advertisement - Placeholder (728x90 or 320x50)
+          </div>
+        )}
       </div>
     </>
   );
