@@ -2,6 +2,7 @@
 
 import { useAuth } from "@/app/lib/auth-context";
 import { useSiteData } from "@/app/context/SiteContext";
+import AdSlot from "./AdSlot";
 
 export default function ClientGlobalAds() {
   const { isPremium } = useAuth();
@@ -11,6 +12,8 @@ export default function ClientGlobalAds() {
   if (isPremium || !headScript || headScript.trim() === '') return null;
 
   return (
-    <div dangerouslySetInnerHTML={{ __html: headScript }} style={{ display: 'none' }} />
+    <div style={{ display: 'none' }}>
+      <AdSlot htmlContent={headScript} />
+    </div>
   );
 }
