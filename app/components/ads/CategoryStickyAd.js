@@ -35,7 +35,7 @@ export default function CategoryStickyAd() {
           {hasAd ? (
             <AdSlot htmlContent={adHtml} />
           ) : (
-            <div style={{ padding: '15px', background: 'var(--bg-card)', border: '1px dashed var(--border-color)', color: 'var(--text-muted)', textAlign: 'center', width: '100%', minHeight: '90px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className={styles.adPlaceholder}>
               Advertisement - Placeholder (728x90)
             </div>
           )}
