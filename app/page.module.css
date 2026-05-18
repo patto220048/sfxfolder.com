@@ -1,5 +1,49 @@
+.homeLayout {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  gap: 20px;
+}
+
 .page {
+  flex: 1;
   min-height: 100vh;
+  max-width: 1200px;
+  width: 100%;
+}
+
+.sideAdPlaceholder, .sideAdContainer {
+  display: none;
+}
+
+@media (min-width: 1300px) {
+  .sideAdPlaceholder {
+    display: flex;
+    width: 160px;
+    height: 600px;
+    background-color: var(--bg-hover);
+    border: 2px dashed var(--border-default);
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    border-radius: 4px;
+    text-align: center;
+    padding: 10px;
+    position: sticky;
+    top: 80px; /* offset for header if any */
+  }
+  
+  .sideAdContainer {
+    display: block;
+    width: 160px;
+    height: 600px;
+    position: sticky;
+    top: 80px;
+  }
 }
 
 /* ---------- Hero ---------- */

@@ -6,6 +6,8 @@ import styles from "./page.module.css";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://sfxfolder.com';
 
+import ClientHomeAds from "@/app/components/ads/ClientHomeAds";
+
 export default async function Home() {
   let categories = [];
   try {
@@ -39,8 +41,10 @@ export default async function Home() {
   };
 
   return (
-    <div className={styles.page}>
-      {/* Structured Data */}
+    <div className={styles.homeLayout}>
+      <ClientHomeAds side="left" />
+      <div className={styles.page}>
+        {/* Structured Data */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{
@@ -112,6 +116,8 @@ export default async function Home() {
           <span className={styles.statLabel}>Open Access</span>
         </div>
       </section>
+      </div>
+      <ClientHomeAds side="right" />
     </div>
   );
 }

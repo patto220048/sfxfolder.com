@@ -18,7 +18,9 @@ export default function AdminSettings() {
       head_script: "",
       category_sticky: "",
       gateway_left: "",
-      gateway_right: ""
+      gateway_right: "",
+      home_left: "",
+      home_right: ""
     }
   });
   const [loading, setLoading] = useState(true);
@@ -275,10 +277,29 @@ export default function AdminSettings() {
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-4)" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Trang Chủ - Cột Trái (160x600)</label>
+                <textarea 
+                  name="home_left" value={settings.ads_config?.home_left || ""} onChange={handleAdsChange}
+                  placeholder="Mã quảng cáo dọc trái trang chủ..." rows={4}
+                  style={{ padding: "var(--space-2)", background: "black", border: "1px solid var(--border-default)", color: "var(--neon-green, #00ff00)", fontFamily: "monospace", width: "100%", resize: "vertical" }}
+                />
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+                <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Trang Chủ - Cột Phải (160x600)</label>
+                <textarea 
+                  name="home_right" value={settings.ads_config?.home_right || ""} onChange={handleAdsChange}
+                  placeholder="Mã quảng cáo dọc phải trang chủ..." rows={4}
+                  style={{ padding: "var(--space-2)", background: "black", border: "1px solid var(--border-default)", color: "var(--neon-green, #00ff00)", fontFamily: "monospace", width: "100%", resize: "vertical" }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-4)" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
                 <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Gateway - Cột Trái (160x600)</label>
                 <textarea 
                   name="gateway_left" value={settings.ads_config?.gateway_left || ""} onChange={handleAdsChange}
-                  placeholder="Mã quảng cáo dọc trái..." rows={4}
+                  placeholder="Mã quảng cáo dọc trái gateway..." rows={4}
                   style={{ padding: "var(--space-2)", background: "black", border: "1px solid var(--border-default)", color: "var(--neon-green, #00ff00)", fontFamily: "monospace", width: "100%", resize: "vertical" }}
                 />
               </div>
@@ -286,7 +307,7 @@ export default function AdminSettings() {
                 <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Gateway - Cột Phải (160x600)</label>
                 <textarea 
                   name="gateway_right" value={settings.ads_config?.gateway_right || ""} onChange={handleAdsChange}
-                  placeholder="Mã quảng cáo dọc phải..." rows={4}
+                  placeholder="Mã quảng cáo dọc phải gateway..." rows={4}
                   style={{ padding: "var(--space-2)", background: "black", border: "1px solid var(--border-default)", color: "var(--neon-green, #00ff00)", fontFamily: "monospace", width: "100%", resize: "vertical" }}
                 />
               </div>
