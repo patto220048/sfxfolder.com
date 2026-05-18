@@ -379,7 +379,7 @@ Mỗi page cần ≥ 5 resources, unique description, FAQs.
 - [x] Tạo + thêm OG image mặc định (`public/og-default.jpg`) ✅
 - [x] Thêm FAQ sections + FAQPage schema trên category pages ✅
 - [x] Thiết kế & tích hợp FAQ dưới dạng Floating FAB Widget thanh lịch ở góc phải màn hình (hỗ trợ nhấn bên ngoài để đóng, phím Escape, ẩn trên Premiere Pro Plugin và điều chỉnh kích thước siêu nhỏ gọn trên cả Desktop và Mobile) ✅
-- [x] Ánh xạ thông minh slug 'lut' sang 'preset-lut' giúp hiển thị đầy đủ Hỏi đáp và đồng bộ hóa siêu dữ liệu SEO cho danh mục LUT ✅
+- [x] Ánh xạ thông minh slug 'lut' sang 'preset-lut' và slug 'bgm' sang 'music' giúp hiển thị đầy đủ Hỏi đáp và đồng bộ hóa siêu dữ liệu SEO cho danh mục LUT và BGM ✅
 
 ### 🟢 Tuần 3-6 — Content
 - [ ] Setup blog platform (Hashnode recommended)
