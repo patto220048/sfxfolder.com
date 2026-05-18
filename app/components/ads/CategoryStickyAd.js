@@ -4,11 +4,13 @@ import { useState, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
 import styles from "./CategoryStickyAd.module.css";
+import { useAuth } from "@/app/lib/auth-context";
 import { useSiteData } from "@/app/context/SiteContext";
 import AdSlot from "./AdSlot";
 
 export default function CategoryStickyAd() {
   const { settings } = useSiteData();
+  const { isPremium } = useAuth();
   const adHtml = settings?.ads_config?.category_sticky;
 
   const [countdown, setCountdown] = useState(5);
@@ -25,8 +27,8 @@ export default function CategoryStickyAd() {
 
   const hasAd = adHtml && adHtml.trim() !== '';
 
-  // Don't show in plugin
-  if (!isVisible || isPlugin) return null;
+  // Don't show in plugin or if premium
+  if (!isVisible || isPlugin || isPremium) return null;
 
   return (
     <div className={styles.adContainer}>

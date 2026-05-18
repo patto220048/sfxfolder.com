@@ -12,6 +12,7 @@ import { AuthProvider } from "@/app/lib/auth-context";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import SmoothScroll from "@/app/components/layout/SmoothScroll";
+import ClientGlobalAds from "@/app/components/ads/ClientGlobalAds";
 
 const inter = Inter({
   subsets: ['latin'],
@@ -150,9 +151,6 @@ export default async function RootLayout({ children }) {
         />
       </head>
       <body suppressHydrationWarning>
-        {settings?.ads_config?.head_script && (
-          <div dangerouslySetInnerHTML={{ __html: settings.ads_config.head_script }} style={{ display: 'none' }} />
-        )}
         <ThemeProvider
           attribute="data-theme"
           defaultTheme="dark"
@@ -162,6 +160,7 @@ export default async function RootLayout({ children }) {
           <ToastProvider>
             <AuthProvider>
               <SiteProvider initialSettings={settings} initialCategories={categories}>
+                <ClientGlobalAds />
                 <SmoothScroll>
                   <LayoutShell initialCategories={categories}>{children}</LayoutShell>
                 </SmoothScroll>

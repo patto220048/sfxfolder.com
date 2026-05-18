@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useSiteData } from "@/app/context/SiteContext";
+import { useAuth } from "@/app/lib/auth-context";
 import AdSlot from "./AdSlot";
 import styles from "@/app/page.module.css";
 
 export default function ClientHomeAds({ side }) {
   const { settings } = useSiteData();
+  const { isPremium } = useAuth();
   const adsConfig = settings?.ads_config || {};
   const [showCloseButton, setShowCloseButton] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
@@ -33,7 +35,7 @@ export default function ClientHomeAds({ side }) {
   const adContent = side === 'left' ? adsConfig.home_left : adsConfig.home_right;
   const label = side === 'left' ? 'Trang Chủ - Trái (160x600)' : 'Trang Chủ - Phải (160x600)';
 
-  if (!isVisible) return null;
+  if (!isVisible || isPremium) return null;
 
   return (
     <div className={adContent ? styles.sideAdContainer : styles.sideAdPlaceholder}>
