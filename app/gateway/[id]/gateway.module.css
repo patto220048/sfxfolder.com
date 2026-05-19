@@ -205,11 +205,24 @@
   border-radius: 4px;
 }
 
+.adWrapper {
+  width: 100%;
+  max-width: 728px;
+  height: 90px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
 /* Mobile responsive for ad */
 @media (max-width: 768px) {
   .adPlaceholder {
     height: 50px;
     max-width: 320px;
+  }
+  .adWrapper {
+    max-width: 320px;
+    height: 100px;
   }
   .content {
     padding: 20px;

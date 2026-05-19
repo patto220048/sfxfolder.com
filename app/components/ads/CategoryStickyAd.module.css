@@ -33,6 +33,21 @@
   border-radius: 4px;
 }
 
+.adWrapper {
+  width: 728px;
+  height: 90px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .adWrapper {
+    width: 320px;
+    height: 100px;
+  }
+}
+
 .closeBtn {
   position: absolute;
   top: -10px;

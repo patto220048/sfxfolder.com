@@ -155,7 +155,9 @@ export default function ClientGateway({ resource }) {
       {/* Sticky Bottom Ad */}
       <div className={styles.bottomAd}>
         {ads.category_sticky && ads.category_sticky.trim() !== '' ? (
-          <AdSlot htmlContent={ads.category_sticky} />
+          <div className={styles.adWrapper}>
+            <AdSlot htmlContent={ads.category_sticky} />
+          </div>
         ) : (
           <div className={styles.adPlaceholder}>
             Advertisement - Placeholder (728x90 or 320x50)
