@@ -14,7 +14,7 @@ export const REVALIDATE_TIME = ENABLE_CACHE ? CACHE_24H : false; // Use env vari
 /**
  * Essential columns for listing/grid view to minimize database egress and JSON payload size.
  */
-export const RESOURCE_SUMMARY_COLUMNS = 'id, name, slug, category_id, folder_id, file_format, file_size, file_name, tags, download_count, preview_url, thumbnail_url, download_url, is_premium, created_at, categories!inner(slug, name), folders(name)';
+export const RESOURCE_SUMMARY_COLUMNS = 'id, name, slug, category_id, folder_id, file_format, file_size, file_name, tags, download_count, preview_url, thumbnail_url, download_url, is_premium, created_at, custom_samples, categories!inner(slug, name), folders(name)';
 
 /**
  * Full details for single resource page or edit mode.
@@ -39,6 +39,7 @@ export function mapResource(res) {
     downloadUrl: res.download_url,
     previewUrl: res.preview_url,
     thumbnailUrl: res.thumbnail_url,
+    customSamples: res.custom_samples || [],
     createdAt: res.created_at,
     updatedAt: res.updated_at,
     // Handle joined category and folder
@@ -109,7 +110,7 @@ export async function getProfile(userId) {
 export async function getResource(id) {
   const { data, error } = await supabase
     .from('resources')
-    .select('id, name, description, slug, category_id, folder_id, file_format, file_size, file_name, file_type, tags, download_url, preview_url, thumbnail_url, storage_path, download_count, is_published, created_at, updated_at, categories(slug, name), folders(name)')
+    .select('id, name, description, slug, category_id, folder_id, file_format, file_size, file_name, file_type, tags, download_url, preview_url, thumbnail_url, storage_path, download_count, is_published, custom_samples, created_at, updated_at, categories(slug, name), folders(name)')
     .eq('id', id)
     .single();
 
@@ -467,6 +468,7 @@ function mapToDB(data) {
   if ('fileName' in data) { result.file_name = data.fileName; delete result.fileName; }
   if ('fileType' in data) { result.file_type = data.fileType; delete result.fileType; }
   if ('storagePath' in data) { result.storage_path = data.storagePath; delete result.storagePath; }
+  if ('customSamples' in data) { result.custom_samples = data.customSamples; delete result.customSamples; }
   if ('parentId' in data) { result.parent_id = data.parentId; delete result.parentId; }
   if ('categorySlug' in data) { result.category_id = data.categorySlug; delete result.categorySlug; }
   if ('category' in data) { result.category_id = data.category; delete result.category; }

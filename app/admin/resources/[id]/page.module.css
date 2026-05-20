@@ -447,3 +447,134 @@
   font-size: 0.8rem;
   font-weight: 500;
 }
+
+/* Custom Preview Samples CSS */
+.customSamplesSection {
+  margin-top: 32px;
+  border-top: 1px solid var(--border-default);
+  padding-top: 24px;
+}
+
+.customSamplesHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.addSampleBtn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border: 1px solid var(--text-primary);
+  padding: 10px 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.addSampleBtn:hover {
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.customSamplesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.sampleCard {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  padding: 16px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sampleCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sampleCardHeader h4 {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.removeSampleCardBtn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  transition: color 0.2s;
+}
+
+.removeSampleCardBtn:hover {
+  color: #ef4444;
+}
+
+.sampleImageArea {
+  width: 100%;
+  aspect-ratio: 16/9;
+  border: 1px dashed var(--border-default);
+  background: var(--bg-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.sampleImageArea img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.sampleUploadPlaceholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.sampleImageActions {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 6px;
+  display: flex;
+  justify-content: center;
+}
+
+.sampleUploadBtn {
+  background: white;
+  color: black;
+  border: none;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+

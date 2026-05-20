@@ -523,6 +523,7 @@ export default function ResourceDetail({
                 resourceName={resource.name}
                 referenceImageUrl={resource.previewUrl}
                 thumbnailUrl={resource.thumbnailUrl}
+                customSamples={resource.customSamples || []}
                 categorySlug={categorySlug}
                 height="100%"
               />

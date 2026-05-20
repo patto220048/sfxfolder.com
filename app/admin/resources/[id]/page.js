@@ -10,7 +10,8 @@ import {
   Upload, 
   X, 
   Trash2,
-  AlertCircle
+  AlertCircle,
+  Plus
 } from "lucide-react";
 import Link from "next/link";
 import styles from "./page.module.css";
@@ -47,6 +48,7 @@ export default function EditResource() {
   const [allCategories, setAllCategories] = useState([]);
   const [folderId, setFolderId] = useState("");
   const [tags, setTags] = useState([]);
+  const [customSamples, setCustomSamples] = useState([]);
   
   // New file upload state
   const [newFile, setNewFile] = useState(null);
@@ -79,6 +81,7 @@ export default function EditResource() {
         setCategory(resData.categoryId || "");
         setFolderId(resData.folderId || "");
         setTags(resData.tags || []);
+        setCustomSamples(resData.customSamples || []);
         
         // Load all folders for this category to build hierarchy
         // resData.categoryId contains the slug string in this system
@@ -173,6 +176,27 @@ export default function EditResource() {
         const previewUrl = await uploadFile(previewFile, previewPath);
         updateData.previewUrl = previewUrl;
       }
+
+      // 3.5 Handle Custom Samples upload
+      const uploadedSamples = [];
+      for (const sample of customSamples) {
+        if (sample.file) {
+          const samplePath = generateStoragePath(category, `sample-${sample.id}-${sample.file.name}`);
+          const url = await uploadFile(sample.file, samplePath);
+          uploadedSamples.push({
+            id: sample.id,
+            name: sample.name || 'Sample',
+            url: url
+          });
+        } else if (sample.url) {
+          uploadedSamples.push({
+            id: sample.id,
+            name: sample.name,
+            url: sample.url
+          });
+        }
+      }
+      updateData.customSamples = uploadedSamples;
 
       // 4. If a new main file is uploaded
       if (newFile) {
@@ -365,6 +389,101 @@ export default function EditResource() {
                 />
               </div>
             </div>
+
+            {category === "preset-lut" && (
+              <div className={styles.customSamplesSection}>
+                <div className={styles.customSamplesHeader}>
+                  <label>Custom Preview Samples (Multiple)</label>
+                  <button
+                    type="button"
+                    className={styles.addSampleBtn}
+                    onClick={() => {
+                      setCustomSamples([
+                        ...customSamples,
+                        { id: `new-${Date.now()}-${Math.random()}`, name: "", url: "", file: null }
+                      ]);
+                    }}
+                  >
+                    <Plus size={16} /> Add Sample
+                  </button>
+                </div>
+
+                <div className={styles.customSamplesGrid}>
+                  {customSamples.map((sample, idx) => (
+                    <div key={sample.id} className={styles.sampleCard}>
+                      <div className={styles.sampleCardHeader}>
+                        <h4>Sample #{idx + 1}</h4>
+                        <button
+                          type="button"
+                          className={styles.removeSampleCardBtn}
+                          onClick={() => {
+                            setCustomSamples(customSamples.filter(s => s.id !== sample.id));
+                          }}
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+
+                      <div className={styles.inputGroup}>
+                        <label>Sample Name</label>
+                        <input
+                          type="text"
+                          value={sample.name}
+                          placeholder="e.g., Forest, Warm Light..."
+                          onChange={(e) => {
+                            setCustomSamples(customSamples.map(s => 
+                              s.id === sample.id ? { ...s, name: e.target.value } : s
+                            ));
+                          }}
+                        />
+                      </div>
+
+                      <div className={styles.sampleImageArea}>
+                        {sample.file ? (
+                          <img src={URL.createObjectURL(sample.file)} alt="New Sample Preview" />
+                        ) : sample.url ? (
+                          <img src={sample.url} alt="Current Sample Preview" />
+                        ) : (
+                          <div 
+                            className={styles.sampleUploadPlaceholder}
+                            onClick={() => document.getElementById(`sample-file-input-${sample.id}`).click()}
+                          >
+                            <Upload size={24} />
+                            <span>Click to upload image</span>
+                          </div>
+                        )}
+                        {(sample.file || sample.url) && (
+                          <div className={styles.sampleImageActions}>
+                            <button
+                              type="button"
+                              className={styles.sampleUploadBtn}
+                              onClick={() => document.getElementById(`sample-file-input-${sample.id}`).click()}
+                            >
+                              Change Image
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      <input
+                        type="file"
+                        id={`sample-file-input-${sample.id}`}
+                        accept="image/*"
+                        style={{ display: "none" }}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setCustomSamples(customSamples.map(s => 
+                              s.id === sample.id ? { ...s, file, url: URL.createObjectURL(file) } : s
+                            ));
+                          }
+                        }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* File Section */}

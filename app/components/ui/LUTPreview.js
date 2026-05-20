@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import styles from "./LUTPreview.module.css";
 
 const getOptimizedUrl = (url, { width, quality }) => {
@@ -18,6 +18,7 @@ export default function LUTPreview({
   lutUrl, 
   referenceImageUrl, 
   thumbnailUrl, 
+  customSamples = [],
   name, 
   resourceName, 
   variant = 'full' 
@@ -29,11 +30,42 @@ export default function LUTPreview({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const hasCustomImage = !!(referenceImageUrl || thumbnailUrl);
-  const [currentSampleId, setCurrentSampleId] = useState(hasCustomImage ? 'custom' : SAMPLE_IMAGES[0].id);
 
-  const activeImageUrl = currentSampleId === 'custom' && hasCustomImage
-    ? (referenceImageUrl || thumbnailUrl)
-    : (SAMPLE_IMAGES.find(s => s.id === currentSampleId)?.url || SAMPLE_IMAGES[0].url);
+  const samples = useMemo(() => {
+    const customList = (customSamples || []).map(s => ({
+      id: `custom-${s.id}`,
+      name: s.name || 'Custom',
+      url: s.url,
+      isCustom: true
+    }));
+    
+    if (customList.length > 0) {
+      return [...customList, ...SAMPLE_IMAGES];
+    } else if (hasCustomImage) {
+      return [
+        { id: 'custom', name: 'Custom Preview', url: referenceImageUrl || thumbnailUrl, isCustom: true },
+        ...SAMPLE_IMAGES
+      ];
+    }
+    return SAMPLE_IMAGES;
+  }, [customSamples, hasCustomImage, referenceImageUrl, thumbnailUrl]);
+
+  const [currentSampleId, setCurrentSampleId] = useState(() => {
+    return samples[0]?.id || SAMPLE_IMAGES[0].id;
+  });
+
+  useEffect(() => {
+    if (samples.length > 0) {
+      // If currently selected sample is not in the new samples list, reset it
+      if (!samples.some(s => s.id === currentSampleId)) {
+        setCurrentSampleId(samples[0].id);
+      }
+    }
+  }, [samples, currentSampleId]);
+
+  const activeImageUrl = useMemo(() => {
+    return samples.find(s => s.id === currentSampleId)?.url || SAMPLE_IMAGES[0].url;
+  }, [samples, currentSampleId]);
 
   const [activeRefImg, setActiveRefImg] = useState(() => {
     return activeImageUrl.startsWith('http') 
@@ -294,18 +326,7 @@ void main() {
           
           <div className={styles.sampleSwitcher}>
             <span className={styles.switcherLabel}>Samples:</span>
-            {hasCustomImage && (
-              <button
-                className={`${styles.sampleButton} ${currentSampleId === 'custom' ? styles.sampleActive : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentSampleId('custom');
-                }}
-              >
-                Custom Preview
-              </button>
-            )}
-            {SAMPLE_IMAGES.map((sample) => (
+            {samples.map((sample) => (
               <button
                 key={sample.id}
                 className={`${styles.sampleButton} ${currentSampleId === sample.id ? styles.sampleActive : ''}`}

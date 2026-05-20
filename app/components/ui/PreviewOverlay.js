@@ -277,6 +277,7 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
                 lutUrl={resource.downloadUrl || resource.fileUrl} 
                 referenceImageUrl={resource.previewUrl}
                 thumbnailUrl={resource.thumbnailUrl || resource.category?.reference_image_url} 
+                customSamples={resource.customSamples || []}
                 name={resource.name}
                 variant="overlay"
               />
