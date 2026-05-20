@@ -272,11 +272,15 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
           )}
           
           {isLUT && (
-            <LUTPreview 
-              lutUrl={resource.downloadUrl || resource.fileUrl} 
-              referenceImageUrl={resource.thumbnailUrl || resource.category?.reference_image_url} 
-              name={resource.name}
-            />
+            <div className={styles.lutPreviewWrapper}>
+              <LUTPreview 
+                lutUrl={resource.downloadUrl || resource.fileUrl} 
+                referenceImageUrl={resource.previewUrl}
+                thumbnailUrl={resource.thumbnailUrl || resource.category?.reference_image_url} 
+                name={resource.name}
+                variant="overlay"
+              />
+            </div>
           )}
           
           {/* Default fallback if format not supported */}

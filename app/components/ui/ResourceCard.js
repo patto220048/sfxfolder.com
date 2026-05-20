@@ -443,7 +443,7 @@ const ResourceCard = memo(function ResourceCard({
             
             <div className={styles.staticLutThumbnail} style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
               <Image
-                src={getOptimizedUrl(thumbnailUrl || "/images/samples/portrait.png", { width: 1200, quality: 90 })}
+                src={getOptimizedUrl(previewUrl || thumbnailUrl || "/images/samples/portrait.png", { width: 1200, quality: 90 })}
                 alt={displayName}
                 fill
                 className={styles.cardImage}

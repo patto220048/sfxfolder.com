@@ -521,6 +521,7 @@ export default function ResourceDetail({
               <LUTPreview 
                 lutUrl={resolvedUrl}
                 resourceName={resource.name}
+                referenceImageUrl={resource.previewUrl}
                 thumbnailUrl={resource.thumbnailUrl}
                 categorySlug={categorySlug}
                 height="100%"

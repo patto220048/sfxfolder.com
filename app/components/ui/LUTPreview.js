@@ -28,10 +28,12 @@ export default function LUTPreview({
   const [isResizing, setIsResizing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [currentSampleId, setCurrentSampleId] = useState(SAMPLE_IMAGES[0].id);
+  const hasCustomImage = !!(referenceImageUrl || thumbnailUrl);
+  const [currentSampleId, setCurrentSampleId] = useState(hasCustomImage ? 'custom' : SAMPLE_IMAGES[0].id);
 
-  const activeImageUrl = (referenceImageUrl || thumbnailUrl) ? (referenceImageUrl || thumbnailUrl) : 
-    (SAMPLE_IMAGES.find(s => s.id === currentSampleId)?.url || SAMPLE_IMAGES[0].url);
+  const activeImageUrl = currentSampleId === 'custom' && hasCustomImage
+    ? (referenceImageUrl || thumbnailUrl)
+    : (SAMPLE_IMAGES.find(s => s.id === currentSampleId)?.url || SAMPLE_IMAGES[0].url);
 
   const [activeRefImg, setActiveRefImg] = useState(() => {
     return activeImageUrl.startsWith('http') 
@@ -41,11 +43,9 @@ export default function LUTPreview({
 
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
-  const sliderPosRef = useRef(50);
-
-  useEffect(() => {
-    sliderPosRef.current = sliderPos;
-  }, [sliderPos]);
+  const shaderSliderPosRef = useRef(0.5);
+  const [imageDims, setImageDims] = useState(null);
+  const [canvasBounds, setCanvasBounds] = useState({ left: 0, width: 0 });
 
   useEffect(() => {
     const finalUrl = activeImageUrl.startsWith('http')
@@ -54,13 +54,73 @@ export default function LUTPreview({
     setActiveRefImg(finalUrl);
   }, [activeImageUrl]);
 
+  useEffect(() => {
+    setSliderPos(50);
+    shaderSliderPosRef.current = 0.5;
+  }, [activeRefImg, lutUrl]);
+
+  const updateCanvasBounds = useCallback(() => {
+    if (!containerRef.current || !imageDims) return null;
+    const wrapper = containerRef.current.querySelector(`.${styles.comparisonWrapper}`);
+    if (!wrapper) return null;
+    
+    const rect = wrapper.getBoundingClientRect();
+    const wrapperWidth = rect.width;
+    const wrapperHeight = rect.height;
+    const { width: imageWidth, height: imageHeight } = imageDims;
+    
+    const wrapperRatio = wrapperWidth / wrapperHeight;
+    const imageRatio = imageWidth / imageHeight;
+    
+    let renderedWidth, leftOffset;
+    if (imageRatio > wrapperRatio) {
+      renderedWidth = wrapperWidth;
+      leftOffset = 0;
+    } else {
+      renderedWidth = wrapperHeight * imageRatio;
+      leftOffset = (wrapperWidth - renderedWidth) / 2;
+    }
+    
+    return { left: leftOffset, width: renderedWidth, wrapperWidth };
+  }, [imageDims]);
+
+  useEffect(() => {
+    if (!imageDims) return;
+    
+    const handleResize = () => {
+      const bounds = updateCanvasBounds();
+      if (bounds) {
+        setCanvasBounds({ left: bounds.left, width: bounds.width });
+      }
+    };
+    
+    handleResize();
+    
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [imageDims, updateCanvasBounds]);
+
   const handleMove = useCallback((clientX) => {
-    if (!containerRef.current) return;
-    const rect = containerRef.current.getBoundingClientRect();
-    const x = Math.max(0, Math.min(clientX - rect.left, rect.width));
-    const newPos = (x / rect.width) * 100;
+    if (!containerRef.current || !imageDims) return;
+    
+    const bounds = updateCanvasBounds();
+    if (!bounds) return;
+    
+    const { left: leftOffset, width: renderedWidth, wrapperWidth } = bounds;
+    
+    const wrapper = containerRef.current.querySelector(`.${styles.comparisonWrapper}`);
+    if (!wrapper) return;
+    const rect = wrapper.getBoundingClientRect();
+    
+    const relativeX = clientX - rect.left;
+    const clampedX = Math.max(leftOffset, Math.min(relativeX, leftOffset + renderedWidth));
+    
+    const newPos = (clampedX / wrapperWidth) * 100;
     setSliderPos(newPos);
-  }, []);
+    
+    const textureX = (clampedX - leftOffset) / (renderedWidth || 1);
+    shaderSliderPosRef.current = textureX;
+  }, [imageDims, updateCanvasBounds]);
 
   const onMouseDown = (e) => {
     setIsResizing(true);
@@ -120,6 +180,8 @@ export default function LUTPreview({
 
         if (!active) return;
         if (!lut || !lut.uint8Data) throw new Error("Invalid LUT data");
+
+        setImageDims({ width: image.width, height: image.height });
 
         const fs30 = `#version 300 es
 precision highp float;
@@ -200,7 +262,7 @@ void main() {
 
         const render = () => {
           if (!active) return;
-          gl.uniform1f(sliderLoc, sliderPosRef.current / 100);
+          gl.uniform1f(sliderLoc, shaderSliderPosRef.current);
           gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
           rafId = requestAnimationFrame(render);
         };
@@ -220,16 +282,29 @@ void main() {
     };
   }, [lutUrl, activeRefImg]);
 
+  const isOverlay = variant === 'overlay';
+
   return (
     <div className={`${styles.container} ${isCard ? styles.cardMode : ''}`} ref={containerRef}>
       {!isCard && (
-        <div className={styles.header}>
+        <div className={`${styles.header} ${isOverlay ? styles.overlayHeader : ''}`}>
           <div className={styles.titleWrapper}>
             <h3 className={styles.previewTitle}>{finalName}</h3>
           </div>
           
           <div className={styles.sampleSwitcher}>
             <span className={styles.switcherLabel}>Samples:</span>
+            {hasCustomImage && (
+              <button
+                className={`${styles.sampleButton} ${currentSampleId === 'custom' ? styles.sampleActive : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCurrentSampleId('custom');
+                }}
+              >
+                Custom Preview
+              </button>
+            )}
             {SAMPLE_IMAGES.map((sample) => (
               <button
                 key={sample.id}
@@ -276,7 +351,13 @@ void main() {
               <div className={styles.sliderHandle} />
             </div>
 
-            <div className={styles.labels}>
+            <div 
+              className={styles.labels}
+              style={canvasBounds.width > 0 ? {
+                left: `${canvasBounds.left}px`,
+                width: `${canvasBounds.width}px`
+              } : undefined}
+            >
               <div 
                 className={styles.labelWrapper}
                 style={{ opacity: Math.max(0, Math.min(1, (sliderPos - 15) / 15)) }}
