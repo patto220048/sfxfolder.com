@@ -157,11 +157,15 @@ export default function EditResource() {
     try {
       let updateData = {
         name,
-        slug: name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
         categoryId: category,
         folderId: folderId || null,
         tags: tags || [],
       };
+
+      // Only update slug if the name was actually modified
+      if (name !== resource?.name) {
+        updateData.slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      }
 
       // 2. Handle Thumbnail upload
       if (thumbnailFile) {
