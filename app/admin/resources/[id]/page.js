@@ -390,7 +390,7 @@ export default function EditResource() {
               </div>
             </div>
 
-            {category === "preset-lut" && (
+            {(category === "preset-lut" || category === "lut") && (
               <div className={styles.customSamplesSection}>
                 <div className={styles.customSamplesHeader}>
                   <label>Custom Preview Samples (Multiple)</label>
