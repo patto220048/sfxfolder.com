@@ -14,6 +14,7 @@ const CATEGORIES = [
   { slug: "fonts", name: "Fonts", extensions: [".otf", ".ttf", ".woff", ".woff2"] },
   { slug: "graphics", name: "Graphics", extensions: [".png", ".jpg", ".jpeg", ".gif", ".svg"] },
   { slug: "transitions", name: "Transitions", extensions: [".mp4", ".mov", ".webm"] },
+  { slug: "preset-lut", name: "Preset LUT", extensions: [".cube"] },
   // Adding placeholders for others found in previous code if they exist in DB
   { slug: "music", name: "Music", extensions: [".mp3", ".wav", ".m4a"] },
   { slug: "green-screen", name: "Green Screen", extensions: [".mp4", ".mov"] },
@@ -132,6 +133,72 @@ export function useAdminUpload() {
           storagePath: path,
           // Removed createdAt as it is handled by the server (serverTimestamp)
         };
+
+        if (item.categoryId === "preset-lut") {
+          // Set default preview and thumbnail URLs
+          resourceData.thumbnailUrl = "/images/samples/portrait.png";
+          resourceData.previewUrl = "/images/samples/portrait.png";
+
+          try {
+            const { renderLUTToBlob, parseLUTText } = await import("../../../lib/lutRenderer");
+            const text = await item.rawFile.text();
+            const lutData = parseLUTText(text);
+
+            const defaultPortraitUrl = "/images/samples/portrait.png";
+
+            // Generate graded thumbnail (width 480)
+            const gradedThumbBlob = await renderLUTToBlob(lutData, defaultPortraitUrl, 480);
+            const thumbName = `graded-thumb-${item.name.replace(/\.cube$/i, '.jpg')}`;
+            const thumbFile = new File([gradedThumbBlob], thumbName, { type: 'image/jpeg' });
+            const thumbPath = generateStoragePath(item.categoryId, thumbName);
+            const gradedThumbnailUrl = await uploadFile(thumbFile, thumbPath);
+            resourceData.gradedThumbnailUrl = gradedThumbnailUrl;
+
+            // Generate graded preview (width 1200)
+            const gradedPrevBlob = await renderLUTToBlob(lutData, defaultPortraitUrl, 1200);
+            const prevName = `graded-prev-${item.name.replace(/\.cube$/i, '.jpg')}`;
+            const prevFile = new File([gradedPrevBlob], prevName, { type: 'image/jpeg' });
+            const prevPath = generateStoragePath(item.categoryId, prevName);
+            const gradedPreviewUrl = await uploadFile(prevFile, prevPath);
+            resourceData.gradedPreviewUrl = gradedPreviewUrl;
+
+            // Generate custom samples (the 3 default samples: Portrait, Cinematic, Nature)
+            const samplesToGrade = [
+              { id: 'portrait', name: 'Portrait', url: '/images/samples/portrait.png' },
+              { id: 'cinematic', name: 'Cinematic', url: '/images/samples/cinematic.png' },
+              { id: 'nature', name: 'Nature', url: '/images/samples/nature.png' },
+            ];
+
+            const uploadedSamples = [];
+            for (const sample of samplesToGrade) {
+              try {
+                const sampleBlob = await renderLUTToBlob(lutData, sample.url, 1200);
+                const sampleFileName = `sample-graded-${sample.id}-${item.name.replace(/\.cube$/i, '.jpg')}`;
+                const sampleFile = new File([sampleBlob], sampleFileName, { type: 'image/jpeg' });
+                const samplePath = generateStoragePath(item.categoryId, sampleFileName);
+                const sampleGradedUrl = await uploadFile(sampleFile, samplePath);
+                uploadedSamples.push({
+                  id: sample.id,
+                  name: sample.name,
+                  url: sample.url,
+                  gradedUrl: sampleGradedUrl
+                });
+              } catch (sampleErr) {
+                console.error(`Failed to grade standard sample ${sample.id} for bulk upload:`, sampleErr);
+                uploadedSamples.push({
+                  id: sample.id,
+                  name: sample.name,
+                  url: sample.url,
+                  gradedUrl: null
+                });
+              }
+            }
+            resourceData.customSamples = uploadedSamples;
+
+          } catch (lutErr) {
+            console.error("Failed to render/grade LUT for bulk upload:", lutErr);
+          }
+        }
 
         await addResource(resourceData);
         updateFileMeta(item.id, "status", "success");

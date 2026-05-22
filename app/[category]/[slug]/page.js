@@ -15,7 +15,7 @@ async function getPublishedResource(categorySlug, resourceSlug) {
   const { data, error } = await supabase
     .from("resources")
     .select(
-      "id, name, description, slug, category_id, folder_id, file_format, file_size, file_name, file_type, tags, download_url, preview_url, thumbnail_url, download_count, is_premium, is_published, custom_samples, created_at, updated_at, categories(slug, name, icon, color), folders(name)"
+      "id, name, description, slug, category_id, folder_id, file_format, file_size, file_name, file_type, tags, download_url, preview_url, thumbnail_url, graded_preview_url, graded_thumbnail_url, download_count, is_premium, is_published, custom_samples, created_at, updated_at, categories(slug, name, icon, color), folders(name)"
     )
     .eq("slug", resourceSlug)
     .eq("category_id", categorySlug)

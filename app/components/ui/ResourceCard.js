@@ -30,6 +30,8 @@ const ResourceCard = memo(function ResourceCard({
   downloadCount = 0,
   previewUrl,
   thumbnailUrl,
+  gradedThumbnailUrl,
+  gradedPreviewUrl,
   cardType = "default",
   index = 0,
   onPreview,
@@ -63,6 +65,22 @@ const ResourceCard = memo(function ResourceCard({
   const rafRef = useRef(null);
   const wasPlayingRef = useRef(false);
   const displayName = (name || fileName || "Untitled").replace(/\.[^/.]+$/, "");
+
+  // LUT Slider comparison state
+  const [sliderPos, setSliderPos] = useState(50);
+  const lutContainerRef = useRef(null);
+
+  const handleLutMouseMove = useCallback((e) => {
+    if (!lutContainerRef.current) return;
+    const rect = lutContainerRef.current.getBoundingClientRect();
+    const offsetX = e.clientX - rect.left;
+    const percentage = Math.max(0, Math.min(100, (offsetX / rect.width) * 100));
+    setSliderPos(percentage);
+  }, []);
+
+  const handleLutMouseLeave = useCallback(() => {
+    setSliderPos(50);
+  }, []);
 
   // Sync with mediaManager after hydration
   useEffect(() => {
@@ -435,98 +453,103 @@ const ResourceCard = memo(function ResourceCard({
         );
 
       case "lut":
+        const hasGraded = !!(gradedThumbnailUrl || gradedPreviewUrl);
+        const originalImg = thumbnailUrl || previewUrl || "/images/samples/portrait.png";
+        const gradedImg = gradedThumbnailUrl || gradedPreviewUrl;
+
         return (
-          <div className={styles.preview}>
+          <div 
+            ref={lutContainerRef}
+            className={`${styles.preview} ${hasGraded ? styles.lutPreviewContainer : ""}`}
+            onMouseMove={hasGraded ? handleLutMouseMove : undefined}
+            onMouseLeave={hasGraded ? handleLutMouseLeave : undefined}
+          >
             <div className={styles.lutCardHeader}>
               <span className={styles.lutTypeBadge}>LUT PRESET</span>
             </div>
-            
-            <div className={styles.staticLutThumbnail} style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
+
+            {hasGraded ? (
+              <div className={styles.lutComparisonWrapper}>
+                {/* Original Image (Base) */}
+                <Image
+                  src={getOptimizedUrl(originalImg, { width: 480 })}
+                  alt={displayName}
+                  fill
+                  className={styles.cardImage}
+                  style={{ objectFit: 'cover', zIndex: 1 }}
+                  priority={index < 4}
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                  onError={(e) => {
+                    e.target.src = originalImg;
+                  }}
+                />
+
+                {/* Graded Image (Overlay) */}
+                <div 
+                  className={styles.lutGradedOverlay}
+                  style={{
+                    inset: 0,
+                    zIndex: 2,
+                    clipPath: `inset(0 0 0 ${sliderPos}%)`,
+                    transition: isHovering ? 'none' : 'clip-path 0.2s ease-out'
+                  }}
+                >
+                  <Image
+                    src={getOptimizedUrl(gradedImg, { width: 480 })}
+                    alt={`${displayName} Graded`}
+                    fill
+                    className={styles.cardImage}
+                    style={{ objectFit: 'cover' }}
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    onError={(e) => {
+                      e.target.src = gradedImg;
+                    }}
+                  />
+                </div>
+
+                {/* Slider bar & handle */}
+                <div 
+                  className={styles.lutSliderLine}
+                  style={{
+                    left: `${sliderPos}%`,
+                    transition: isHovering ? 'none' : 'left 0.2s ease-out'
+                  }}
+                >
+                  <div className={styles.lutSliderHandle}>
+                    <div className={styles.lutSliderHandleBars}>
+                      <div className={styles.lutSliderHandleBar} />
+                      <div className={styles.lutSliderHandleBar} />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Badges for Original / Graded */}
+                <div 
+                  className={styles.lutLabels}
+                  style={{
+                    opacity: isHovering ? 1 : 0
+                  }}
+                >
+                  <span className={styles.lutLabel}>ORIGINAL</span>
+                  <span className={styles.lutLabel}>GRADED</span>
+                </div>
+              </div>
+            ) : (
+              // Fallback for legacy LUT resources without pre-graded outputs
               <Image
-                src={getOptimizedUrl(previewUrl || thumbnailUrl || "/images/samples/portrait.png", { width: 1200, quality: 90 })}
+                src={getOptimizedUrl(originalImg, { width: 480 })}
                 alt={displayName}
                 fill
                 className={styles.cardImage}
                 style={{ objectFit: 'cover', zIndex: 1 }}
                 priority={index < 4}
                 sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                onError={(e) => {
+                  e.target.src = originalImg;
+                }}
               />
-              
-              <div style={{ 
-                position: 'absolute', 
-                inset: 0, 
-                zIndex: 99, 
-                pointerEvents: 'none',
-                display: 'flex',
-                flexDirection: 'column'
-              }}>
-                <div style={{ 
-                  position: 'absolute',
-                  top: 0,
-                  right: 0,
-                  width: '50%',
-                  height: '100%',
-                  borderLeft: '1px solid rgba(255,255,255,0.7)',
-                  backgroundColor: 'rgba(0, 0, 0, 0.02)',
-                  zIndex: 100
-                }}>
-                  <div style={{
-                    position: 'absolute',
-                    top: '50%',
-                    left: '-8px', // Adjust handle position for right side
-                    width: '16px',
-                    height: '16px',
-                    backgroundColor: 'white',
-                    borderRadius: '50%',
-                    transform: 'translateY(-50%)',
-                    boxShadow: '0 0 5px rgba(0,0,0,0.3)',
-                    zIndex: 101
-                  }} />
-                </div>
-                
-                <div style={{ 
-                  position: 'absolute',
-                  bottom: '24px',
-                  left: 0,
-                  right: 0,
-                  display: 'flex',
-                  zIndex: 110,
-                  pointerEvents: 'none'
-                }}>
-                  <div style={{ width: '50%', textAlign: 'center' }}>
-                    <span style={{ 
-                      background: 'rgba(20, 20, 20, 0.85)', 
-                      color: 'white', 
-                      padding: '4px 10px', 
-                      fontSize: '9px', 
-                      fontWeight: 'bold',
-                      borderRadius: '2px',
-                      backdropFilter: 'blur(8px)',
-                      WebkitBackdropFilter: 'blur(8px)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                      letterSpacing: '1px',
-                      boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
-                    }}>ORIGINAL</span>
-                  </div>
-                  <div style={{ width: '50%', textAlign: 'center' }}>
-                    <span style={{ 
-                      background: 'rgba(20, 20, 20, 0.85)', 
-                      color: 'white', 
-                      padding: '4px 10px', 
-                      fontSize: '9px', 
-                      fontWeight: 'bold',
-                      borderRadius: '2px',
-                      backdropFilter: 'blur(8px)',
-                      WebkitBackdropFilter: 'blur(8px)',
-                      border: '1px solid rgba(255, 255, 255, 0.1)',
-                      letterSpacing: '1px',
-                      boxShadow: '0 4px 10px rgba(0,0,0,0.3)'
-                    }}>LUT PREVIEW</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
+            )}
+
             <div className={styles.formatBadge}>{fileFormat?.toUpperCase() || "LUT"}</div>
           </div>
         );

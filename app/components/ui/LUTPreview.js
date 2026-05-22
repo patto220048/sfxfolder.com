@@ -4,20 +4,24 @@ import { useEffect, useRef, useState, useCallback, useMemo } from "react";
 import styles from "./LUTPreview.module.css";
 
 const getOptimizedUrl = (url, { width, quality }) => {
+  if (!url) return "";
+  if (!url.startsWith('http')) return url;
   const baseUrl = url.split('?')[0];
   return `${baseUrl}?q=${quality}&w=${width}&auto=format&fit=crop`;
 };
 
 const SAMPLE_IMAGES = [
-  { id: 'portrait', name: 'Portrait', url: '/images/samples/portrait.png' },
-  { id: 'cinematic', name: 'Cinematic', url: '/images/samples/cinematic.png' },
-  { id: 'nature', name: 'Nature', url: '/images/samples/nature.png' },
+  { id: 'portrait', name: 'Portrait', url: '/images/samples/portrait.png', gradedUrl: null },
+  { id: 'cinematic', name: 'Cinematic', url: '/images/samples/cinematic.png', gradedUrl: null },
+  { id: 'nature', name: 'Nature', url: '/images/samples/nature.png', gradedUrl: null },
 ];
 
 export default function LUTPreview({ 
   lutUrl, 
   referenceImageUrl, 
   thumbnailUrl, 
+  gradedPreviewUrl,
+  gradedThumbnailUrl,
   customSamples = [],
   name, 
   resourceName, 
@@ -29,6 +33,7 @@ export default function LUTPreview({
   const [isResizing, setIsResizing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  
   const hasCustomImage = !!(referenceImageUrl || thumbnailUrl);
 
   const samples = useMemo(() => {
@@ -36,73 +41,98 @@ export default function LUTPreview({
       id: `custom-${s.id}`,
       name: s.name || 'Custom',
       url: s.url,
+      gradedUrl: s.gradedUrl || s.graded_url || null,
       isCustom: true
     }));
     
     if (customList.length > 0) {
-      return [...customList, ...SAMPLE_IMAGES];
+      return customList;
     } else if (hasCustomImage) {
       return [
-        { id: 'custom', name: 'Custom Preview', url: referenceImageUrl || thumbnailUrl, isCustom: true },
-        ...SAMPLE_IMAGES
+        { 
+          id: 'custom', 
+          name: 'Custom Preview', 
+          url: referenceImageUrl || thumbnailUrl, 
+          gradedUrl: gradedPreviewUrl || gradedThumbnailUrl || null,
+          isCustom: true 
+        }
       ];
     }
     return SAMPLE_IMAGES;
-  }, [customSamples, hasCustomImage, referenceImageUrl, thumbnailUrl]);
+  }, [customSamples, hasCustomImage, referenceImageUrl, thumbnailUrl, gradedPreviewUrl, gradedThumbnailUrl]);
 
   const [currentSampleId, setCurrentSampleId] = useState(() => {
-    return samples[0]?.id || SAMPLE_IMAGES[0].id;
+    return samples[0]?.id || 'portrait';
   });
 
   useEffect(() => {
     if (samples.length > 0) {
-      // If currently selected sample is not in the new samples list, reset it
       if (!samples.some(s => s.id === currentSampleId)) {
         setCurrentSampleId(samples[0].id);
       }
     }
   }, [samples, currentSampleId]);
 
-  const activeImageUrl = useMemo(() => {
-    return samples.find(s => s.id === currentSampleId)?.url || SAMPLE_IMAGES[0].url;
+  const activeSample = useMemo(() => {
+    return samples.find(s => s.id === currentSampleId) || samples[0];
   }, [samples, currentSampleId]);
 
-  const [activeRefImg, setActiveRefImg] = useState(() => {
-    return activeImageUrl.startsWith('http') 
-        ? getOptimizedUrl(activeImageUrl, { width: 2560, quality: 95 }) 
-        : activeImageUrl;
-  });
+  const activeImageUrl = useMemo(() => {
+    const url = activeSample?.url || SAMPLE_IMAGES[0].url;
+    return url.startsWith('http') 
+      ? getOptimizedUrl(url, { width: 2000, quality: 90 }) 
+      : url;
+  }, [activeSample]);
 
-  const canvasRef = useRef(null);
+  const activeGradedImageUrl = useMemo(() => {
+    const url = activeSample?.gradedUrl;
+    if (!url) return null;
+    return url.startsWith('http') 
+      ? getOptimizedUrl(url, { width: 2000, quality: 90 }) 
+      : url;
+  }, [activeSample]);
+
   const containerRef = useRef(null);
-  const shaderSliderPosRef = useRef(0.5);
-  const [imageDims, setImageDims] = useState(null);
-  const [canvasBounds, setCanvasBounds] = useState({ left: 0, width: 0 });
-
-  useEffect(() => {
-    const finalUrl = activeImageUrl.startsWith('http')
-      ? getOptimizedUrl(activeImageUrl, { width: 2560, quality: 95 })
-      : activeImageUrl;
-    setActiveRefImg(finalUrl);
-  }, [activeImageUrl]);
+  const [imageRatio, setImageRatio] = useState(null);
+  const [imgBounds, setImgBounds] = useState({ left: 0, width: 0 });
+  const [originalLoaded, setOriginalLoaded] = useState(false);
+  const [gradedLoaded, setGradedLoaded] = useState(false);
 
   useEffect(() => {
     setSliderPos(50);
-    shaderSliderPosRef.current = 0.5;
-  }, [activeRefImg, lutUrl]);
+  }, [activeImageUrl]);
 
-  const updateCanvasBounds = useCallback(() => {
-    if (!containerRef.current || !imageDims) return null;
+  useEffect(() => {
+    setOriginalLoaded(false);
+    setGradedLoaded(false);
+    setIsLoading(true);
+    setError(null);
+  }, [currentSampleId]);
+
+  useEffect(() => {
+    if (!activeGradedImageUrl) {
+      if (originalLoaded) {
+        setIsLoading(false);
+      }
+    } else {
+      if (originalLoaded && gradedLoaded) {
+        setIsLoading(false);
+      }
+    }
+  }, [originalLoaded, gradedLoaded, activeGradedImageUrl]);
+
+  const updateImgBounds = useCallback(() => {
+    if (!containerRef.current || !imageRatio) return;
     const wrapper = containerRef.current.querySelector(`.${styles.comparisonWrapper}`);
-    if (!wrapper) return null;
+    if (!wrapper) return;
     
     const rect = wrapper.getBoundingClientRect();
     const wrapperWidth = rect.width;
     const wrapperHeight = rect.height;
-    const { width: imageWidth, height: imageHeight } = imageDims;
+    
+    if (wrapperWidth === 0 || wrapperHeight === 0) return;
     
     const wrapperRatio = wrapperWidth / wrapperHeight;
-    const imageRatio = imageWidth / imageHeight;
     
     let renderedWidth, leftOffset;
     if (imageRatio > wrapperRatio) {
@@ -113,46 +143,42 @@ export default function LUTPreview({
       leftOffset = (wrapperWidth - renderedWidth) / 2;
     }
     
-    return { left: leftOffset, width: renderedWidth, wrapperWidth };
-  }, [imageDims]);
+    setImgBounds({ left: leftOffset, width: renderedWidth });
+  }, [imageRatio]);
 
   useEffect(() => {
-    if (!imageDims) return;
-    
-    const handleResize = () => {
-      const bounds = updateCanvasBounds();
-      if (bounds) {
-        setCanvasBounds({ left: bounds.left, width: bounds.width });
-      }
-    };
-    
-    handleResize();
-    
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, [imageDims, updateCanvasBounds]);
+    if (!imageRatio) return;
+    updateImgBounds();
+    window.addEventListener("resize", updateImgBounds);
+    return () => window.removeEventListener("resize", updateImgBounds);
+  }, [imageRatio, updateImgBounds]);
 
   const handleMove = useCallback((clientX) => {
-    if (!containerRef.current || !imageDims) return;
-    
-    const bounds = updateCanvasBounds();
-    if (!bounds) return;
-    
-    const { left: leftOffset, width: renderedWidth, wrapperWidth } = bounds;
+    if (!containerRef.current || !imageRatio) return;
     
     const wrapper = containerRef.current.querySelector(`.${styles.comparisonWrapper}`);
     if (!wrapper) return;
     const rect = wrapper.getBoundingClientRect();
     
+    const wrapperWidth = rect.width;
+    const wrapperHeight = rect.height;
+    const wrapperRatio = wrapperWidth / wrapperHeight;
+    
+    let renderedWidth, leftOffset;
+    if (imageRatio > wrapperRatio) {
+      renderedWidth = wrapperWidth;
+      leftOffset = 0;
+    } else {
+      renderedWidth = wrapperHeight * imageRatio;
+      leftOffset = (wrapperWidth - renderedWidth) / 2;
+    }
+
     const relativeX = clientX - rect.left;
     const clampedX = Math.max(leftOffset, Math.min(relativeX, leftOffset + renderedWidth));
     
     const newPos = (clampedX / wrapperWidth) * 100;
     setSliderPos(newPos);
-    
-    const textureX = (clampedX - leftOffset) / (renderedWidth || 1);
-    shaderSliderPosRef.current = textureX;
-  }, [imageDims, updateCanvasBounds]);
+  }, [imageRatio]);
 
   const onMouseDown = (e) => {
     setIsResizing(true);
@@ -180,140 +206,6 @@ export default function LUTPreview({
     };
   }, [isResizing, handleMove]);
 
-  useEffect(() => {
-    let active = true;
-    let rafId = null;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const gl = canvas.getContext("webgl2", { preserveDrawingBuffer: true, antialias: false });
-    if (!gl) {
-      setError("WebGL 2 not supported");
-      return;
-    }
-
-    async function init() {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        const { loadAndParseLUT, createShaderProgram } = await import("@/app/lib/lutRenderer");
-        
-        const [lut, image] = await Promise.all([
-          loadAndParseLUT(lutUrl),
-          new Promise((resolve, reject) => {
-            const img = new Image();
-            img.crossOrigin = "anonymous";
-            img.onload = () => resolve(img);
-            img.onerror = () => reject(new Error("Reference image load failed"));
-            img.src = activeRefImg;
-          })
-        ]);
-
-        if (!active) return;
-        if (!lut || !lut.uint8Data) throw new Error("Invalid LUT data");
-
-        setImageDims({ width: image.width, height: image.height });
-
-        const fs30 = `#version 300 es
-precision highp float;
-precision highp sampler3D;
-in vec2 vTextureCoord;
-out vec4 outColor;
-uniform sampler2D uSampler;
-uniform sampler3D uLutSampler;
-uniform float uSliderPos;
-void main() {
-  vec4 color = texture(uSampler, vTextureCoord);
-  vec3 lookup = clamp(color.rgb, 0.0, 1.0);
-  if (vTextureCoord.x > uSliderPos) {
-    vec3 graded = texture(uLutSampler, lookup).rgb;
-    outColor = vec4(graded, color.a);
-  } else {
-    outColor = color;
-  }
-}`;
-        const vs30 = `#version 300 es
-in vec4 aVertexPosition;
-in vec2 aTextureCoord;
-out vec2 vTextureCoord;
-void main() {
-  gl_Position = aVertexPosition;
-  vTextureCoord = aTextureCoord;
-}`;
-
-        const program = createShaderProgram(gl, vs30, fs30);
-        gl.useProgram(program);
-
-        const positions = new Float32Array([-1, 1, 1, 1, -1, -1, 1, -1]);
-        const posBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
-        const posLoc = gl.getAttribLocation(program, "aVertexPosition");
-        gl.enableVertexAttribArray(posLoc);
-        gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
-
-        const texCoords = new Float32Array([0, 1, 1, 1, 0, 0, 1, 0]);
-        const texBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, texCoords, gl.STATIC_DRAW);
-        const texLoc = gl.getAttribLocation(program, "aTextureCoord");
-        gl.enableVertexAttribArray(texLoc);
-        gl.vertexAttribPointer(texLoc, 2, gl.FLOAT, false, 0, 0);
-
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-        const imageTexture = gl.createTexture();
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, imageTexture);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
-        gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-
-        const lutTexture = gl.createTexture();
-        gl.activeTexture(gl.TEXTURE1);
-        gl.bindTexture(gl.TEXTURE_3D, lutTexture);
-        gl.texImage3D(gl.TEXTURE_3D, 0, gl.RGBA8, lut.size, lut.size, lut.size, 0, gl.RGBA, gl.UNSIGNED_BYTE, lut.uint8Data);
-        gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-        gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE);
-
-        gl.uniform1i(gl.getUniformLocation(program, "uSampler"), 0);
-        gl.uniform1i(gl.getUniformLocation(program, "uLutSampler"), 1);
-        const sliderLoc = gl.getUniformLocation(program, "uSliderPos");
-
-        canvas.width = image.width;
-        canvas.height = image.height;
-        gl.viewport(0, 0, canvas.width, canvas.height);
-
-        const render = () => {
-          if (!active) return;
-          gl.uniform1f(sliderLoc, shaderSliderPosRef.current);
-          gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-          rafId = requestAnimationFrame(render);
-        };
-        
-        rafId = requestAnimationFrame(render);
-        setIsLoading(false);
-      } catch (e) {
-        console.error("LUT Preview Error:", e);
-        if (active) setError(e.message || "Failed to render LUT");
-      }
-    }
-
-    init();
-    return () => { 
-      active = false; 
-      if (rafId) cancelAnimationFrame(rafId);
-    };
-  }, [lutUrl, activeRefImg]);
-
   const isOverlay = variant === 'overlay';
 
   return (
@@ -324,35 +216,70 @@ void main() {
             <h3 className={styles.previewTitle}>{finalName}</h3>
           </div>
           
-          <div className={styles.sampleSwitcher}>
-            <span className={styles.switcherLabel}>Samples:</span>
-            {samples.map((sample) => (
-              <button
-                key={sample.id}
-                className={`${styles.sampleButton} ${currentSampleId === sample.id ? styles.sampleActive : ''}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setCurrentSampleId(sample.id);
-                }}
-              >
-                {sample.name}
-              </button>
-            ))}
-          </div>
+          {samples.length > 1 && (
+            <div className={styles.sampleSwitcher}>
+              <span className={styles.switcherLabel}>Samples:</span>
+              {samples.map((sample) => (
+                <button
+                  key={sample.id}
+                  className={`${styles.sampleButton} ${currentSampleId === sample.id ? styles.sampleActive : ''}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setCurrentSampleId(sample.id);
+                  }}
+                >
+                  {sample.name}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
       <div 
         className={styles.comparisonWrapper} 
-        onMouseDown={onMouseDown}
-        onTouchStart={onTouchStart}
+        onMouseDown={activeGradedImageUrl ? onMouseDown : undefined}
+        onTouchStart={activeGradedImageUrl ? onTouchStart : undefined}
       >
-        <canvas ref={canvasRef} className={styles.canvas} />
+        {/* Original Image */}
+        <img 
+          src={activeImageUrl} 
+          alt="Original" 
+          className={styles.imageOriginal}
+          onLoad={(e) => {
+            const { naturalWidth, naturalHeight } = e.target;
+            if (naturalWidth && naturalHeight) {
+              setImageRatio(naturalWidth / naturalHeight);
+            }
+            setOriginalLoaded(true);
+          }}
+          onError={() => {
+            setOriginalLoaded(true);
+            setError("Failed to load preview image");
+          }}
+        />
+
+        {/* Graded Image */}
+        {activeGradedImageUrl && (
+          <img 
+            src={activeGradedImageUrl} 
+            alt="Graded" 
+            className={styles.imageGraded}
+            style={{ 
+              clipPath: `inset(0 0 0 ${sliderPos}%)`
+            }}
+            onLoad={() => setGradedLoaded(true)}
+            onError={() => {
+              setGradedLoaded(true);
+              console.warn("Failed to load graded preview image");
+            }}
+          />
+        )}
         
         {isLoading && (
           <div className={styles.overlay}>
             <div className={styles.spinner} />
-            <p>Processing LUT...</p>
+            <p>Loading preview...</p>
           </div>
         )}
 
@@ -362,7 +289,7 @@ void main() {
           </div>
         )}
 
-        {!isLoading && !error && (
+        {!isLoading && !error && activeGradedImageUrl && (
           <>
             <div 
               className={styles.slider} 
@@ -374,9 +301,9 @@ void main() {
 
             <div 
               className={styles.labels}
-              style={canvasBounds.width > 0 ? {
-                left: `${canvasBounds.left}px`,
-                width: `${canvasBounds.width}px`
+              style={imgBounds.width > 0 ? {
+                left: `${imgBounds.left}px`,
+                width: `${imgBounds.width}px`
               } : undefined}
             >
               <div 
@@ -392,7 +319,6 @@ void main() {
                 <span className={styles.labelAfter}>LUT PREVIEW</span>
               </div>
             </div>
-
           </>
         )}
       </div>

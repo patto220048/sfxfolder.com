@@ -47,7 +47,7 @@ export async function getOrBuildSearchIndex(forceRebuild = false) {
       // 2. Fetch resources
       const { data: allResources, error: resError } = await supabase
         .from('resources')
-        .select('id, name, description, category_id, folder_id, file_format, tags, slug, download_url, preview_url, thumbnail_url, file_size, download_count')
+        .select('id, name, description, category_id, folder_id, file_format, tags, slug, download_url, preview_url, thumbnail_url, graded_preview_url, graded_thumbnail_url, file_size, download_count')
         .eq('is_published', true);
       
       // 3. Fetch folders
@@ -72,6 +72,8 @@ export async function getOrBuildSearchIndex(forceRebuild = false) {
         downloadUrl: res.download_url || "",
         previewUrl: res.preview_url || "",
         thumbnailUrl: res.thumbnail_url || "",
+        gradedPreviewUrl: res.graded_preview_url || "",
+        gradedThumbnailUrl: res.graded_thumbnail_url || "",
         fileSize: res.file_size || 0,
         downloadCount: res.download_count || 0
       }));

@@ -21,6 +21,8 @@ import { getResource, updateResource, getFolders, getAdminCategories as getCateg
 import { uploadFile, deleteFile, generateStoragePath } from "../../../lib/storage";
 import { revalidateResourceData } from "../../../lib/actions";
 import { isAudioFormat, isVideoFormat, isImageFormat } from "../../../lib/mediaUtils";
+import { renderLUTToBlob, parseLUTText } from "../../../lib/lutRenderer";
+import LUTPreview from "../../../components/ui/LUTPreview";
 
 const CATEGORIES = [
   { slug: "sound-effects", name: "Sound Effects" },
@@ -167,40 +169,148 @@ export default function EditResource() {
         updateData.slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
       }
 
+      // 1.5 Prepare LUT data if this is a LUT preset resource
+      const isLut = category === "preset-lut" || category === "lut";
+      let lutData = null;
+      if (isLut) {
+        if (newFile && newFile.name.endsWith('.cube')) {
+          const text = await newFile.text();
+          lutData = parseLUTText(text);
+        } else if (resource?.downloadUrl) {
+          try {
+            const { loadAndParseLUT } = await import("../../../lib/lutRenderer");
+            lutData = await loadAndParseLUT(resource.downloadUrl);
+          } catch (lutErr) {
+            console.error("Failed to load existing LUT for rendering:", lutErr);
+          }
+        }
+      }
+
       // 2. Handle Thumbnail upload
+      let thumbUrl = resource?.thumbnailUrl;
       if (thumbnailFile) {
         const thumbPath = generateStoragePath(category, `thumb-${thumbnailFile.name}`);
-        const thumbnailUrl = await uploadFile(thumbnailFile, thumbPath);
-        updateData.thumbnailUrl = thumbnailUrl;
+        thumbUrl = await uploadFile(thumbnailFile, thumbPath);
+        updateData.thumbnailUrl = thumbUrl;
+      } else if (isLut && !thumbUrl) {
+        // Default to portrait sample if no thumbnail is set for a LUT
+        thumbUrl = "/images/samples/portrait.png";
+        updateData.thumbnailUrl = thumbUrl;
+      }
+
+      // Generate graded thumbnail if LUT data is available and thumbnail changes or LUT file changes
+      if (isLut && lutData && (thumbnailFile || (newFile && newFile.name.endsWith('.cube')) || !resource?.gradedThumbnailUrl)) {
+        const activeThumbSource = thumbnailFile || thumbUrl;
+        if (activeThumbSource) {
+          try {
+            const gradedBlob = await renderLUTToBlob(lutData, activeThumbSource, 480);
+            const thumbName = thumbnailFile ? thumbnailFile.name : (typeof activeThumbSource === 'string' ? activeThumbSource.split('/').pop().split('?')[0] : "thumb.jpg");
+            const gradedFile = new File([gradedBlob], `graded-${thumbName}`, { type: 'image/jpeg' });
+            const gradedPath = generateStoragePath(category, `graded-thumb-${thumbName}`);
+            const gradedUrl = await uploadFile(gradedFile, gradedPath);
+            updateData.gradedThumbnailUrl = gradedUrl;
+          } catch (err) {
+            console.error("Failed to render graded thumbnail:", err);
+          }
+        }
       }
 
       // 3. Handle Preview upload
+      let prevUrl = resource?.previewUrl;
       if (previewFile) {
         const previewPath = generateStoragePath(category, `preview-${previewFile.name}`);
-        const previewUrl = await uploadFile(previewFile, previewPath);
-        updateData.previewUrl = previewUrl;
+        prevUrl = await uploadFile(previewFile, previewPath);
+        updateData.previewUrl = prevUrl;
+      } else if (isLut && !prevUrl) {
+        // Default to portrait sample if no preview is set for a LUT
+        prevUrl = "/images/samples/portrait.png";
+        updateData.previewUrl = prevUrl;
       }
 
-      // 3.5 Handle Custom Samples upload
+      // Generate graded preview if LUT data is available and preview changes or LUT file changes
+      if (isLut && lutData && (previewFile || (newFile && newFile.name.endsWith('.cube')) || !resource?.gradedPreviewUrl)) {
+        const activePrevSource = previewFile || prevUrl;
+        if (activePrevSource) {
+          try {
+            const gradedBlob = await renderLUTToBlob(lutData, activePrevSource, 1200);
+            const prevName = previewFile ? previewFile.name : (typeof activePrevSource === 'string' ? activePrevSource.split('/').pop().split('?')[0] : "preview.jpg");
+            const gradedFile = new File([gradedBlob], `graded-${prevName}`, { type: 'image/jpeg' });
+            const gradedPath = generateStoragePath(category, `graded-preview-${prevName}`);
+            const gradedUrl = await uploadFile(gradedFile, gradedPath);
+            updateData.gradedPreviewUrl = gradedUrl;
+          } catch (err) {
+            console.error("Failed to render graded preview:", err);
+          }
+        }
+      }
+
+      // 3.5 Handle Custom Samples upload and grading
       const uploadedSamples = [];
-      for (const sample of customSamples) {
-        if (sample.file) {
-          const samplePath = generateStoragePath(category, `sample-${sample.id}-${sample.file.name}`);
-          const url = await uploadFile(sample.file, samplePath);
+      if (isLut && lutData) {
+        let samplesToProcess = [...customSamples];
+        // Auto-populate with the 3 default sample images if custom samples is empty
+        if (samplesToProcess.length === 0) {
+          samplesToProcess = [
+            { id: 'portrait', name: 'Portrait', url: '/images/samples/portrait.png' },
+            { id: 'cinematic', name: 'Cinematic', url: '/images/samples/cinematic.png' },
+            { id: 'nature', name: 'Nature', url: '/images/samples/nature.png' },
+          ];
+        }
+
+        for (const sample of samplesToProcess) {
+          let originalUrl = sample.url;
+          let gradedUrl = sample.gradedUrl;
+          let needsGrading = false;
+
+          if (sample.file) {
+            const samplePath = generateStoragePath(category, `sample-${sample.id}-${sample.file.name}`);
+            originalUrl = await uploadFile(sample.file, samplePath);
+            needsGrading = true;
+          }
+
+          // Grade the sample if new file was uploaded, new .cube was uploaded, or gradedUrl is missing
+          if (needsGrading || (newFile && newFile.name.endsWith('.cube')) || !gradedUrl) {
+            try {
+              const imageSource = sample.file || originalUrl;
+              const gradedBlob = await renderLUTToBlob(lutData, imageSource, 1200);
+              const sampleName = sample.file ? sample.file.name : `sample-${sample.id}.jpg`;
+              const gradedFile = new File([gradedBlob], `graded-${sampleName}`, { type: 'image/jpeg' });
+              const gradedPath = generateStoragePath(category, `sample-graded-${sample.id}-${sampleName}`);
+              gradedUrl = await uploadFile(gradedFile, gradedPath);
+            } catch (err) {
+              console.error(`Failed to render graded custom sample ${sample.id}:`, err);
+            }
+          }
+
           uploadedSamples.push({
             id: sample.id,
             name: sample.name || 'Sample',
-            url: url
-          });
-        } else if (sample.url) {
-          uploadedSamples.push({
-            id: sample.id,
-            name: sample.name,
-            url: sample.url
+            url: originalUrl,
+            gradedUrl: gradedUrl || null
           });
         }
+        updateData.customSamples = uploadedSamples;
+      } else {
+        // Non-LUT custom samples
+        for (const sample of customSamples) {
+          if (sample.file) {
+            const samplePath = generateStoragePath(category, `sample-${sample.id}-${sample.file.name}`);
+            const url = await uploadFile(sample.file, samplePath);
+            uploadedSamples.push({
+              id: sample.id,
+              name: sample.name || 'Sample',
+              url: url
+            });
+          } else if (sample.url) {
+            uploadedSamples.push({
+              id: sample.id,
+              name: sample.name,
+              url: sample.url
+            });
+          }
+        }
+        updateData.customSamples = uploadedSamples;
       }
-      updateData.customSamples = uploadedSamples;
 
       // 4. If a new main file is uploaded
       if (newFile) {
@@ -325,6 +435,12 @@ export default function EditResource() {
                 <div className={styles.mediaPreview}>
                   {thumbnailFile ? (
                     <img src={URL.createObjectURL(thumbnailFile)} alt="New Thumb" />
+                  ) : (category === "preset-lut" || category === "lut") && resource?.gradedThumbnailUrl ? (
+                    <div className={styles.hoverComparison}>
+                      <img src={resource.gradedThumbnailUrl} alt="Current Graded Thumb" className={styles.gradedImage} />
+                      <img src={resource.thumbnailUrl} alt="Current Thumb" className={styles.originalImage} />
+                      <span className={styles.previewBadge}>Graded (Hover for Original)</span>
+                    </div>
                   ) : resource?.thumbnailUrl ? (
                     <img src={resource.thumbnailUrl} alt="Current Thumb" />
                   ) : (
@@ -339,12 +455,12 @@ export default function EditResource() {
                   </button>
                   {thumbnailFile && (
                     <button 
-                      type="button" 
-                      className={styles.removeMediaBtn}
-                      onClick={() => setThumbnailFile(null)}
-                    >
-                      <X size={14} />
-                    </button>
+                    type="button" 
+                    className={styles.removeMediaBtn}
+                    onClick={() => setThumbnailFile(null)}
+                  >
+                    <X size={14} />
+                  </button>
                   )}
                 </div>
                 <input 
@@ -362,6 +478,17 @@ export default function EditResource() {
                 <div className={styles.mediaPreview}>
                   {previewFile ? (
                     <img src={URL.createObjectURL(previewFile)} alt="New Preview" />
+                  ) : (category === "preset-lut" || category === "lut") && resource?.gradedPreviewUrl ? (
+                    <div className={styles.lutPreviewWrapper}>
+                      <LUTPreview 
+                        lutUrl={resource.downloadUrl}
+                        referenceImageUrl={resource.previewUrl}
+                        gradedPreviewUrl={resource.gradedPreviewUrl}
+                        customSamples={[]}
+                        resourceName={name}
+                        variant="card"
+                      />
+                    </div>
                   ) : resource?.previewUrl ? (
                     <img src={resource.previewUrl} alt="Current Preview" />
                   ) : (
@@ -445,6 +572,12 @@ export default function EditResource() {
                       <div className={styles.sampleImageArea}>
                         {sample.file ? (
                           <img src={URL.createObjectURL(sample.file)} alt="New Sample Preview" />
+                        ) : (category === "preset-lut" || category === "lut") && sample.gradedUrl ? (
+                          <div className={styles.hoverComparison}>
+                            <img src={sample.gradedUrl} alt="Graded Sample" className={styles.gradedImage} />
+                            <img src={sample.url} alt="Original Sample" className={styles.originalImage} />
+                            <span className={styles.previewBadge}>Graded (Hover for Original)</span>
+                          </div>
                         ) : sample.url ? (
                           <img src={sample.url} alt="Current Sample Preview" />
                         ) : (

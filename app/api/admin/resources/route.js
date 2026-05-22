@@ -32,8 +32,8 @@ export async function GET(req) {
       .from("resources")
       .select(`
         id, name, slug, category_id, folder_id, file_format, file_size, 
-        tags, download_count, preview_url, thumbnail_url, download_url, 
-        is_premium, created_at, is_published,
+        tags, download_count, preview_url, thumbnail_url, graded_preview_url, graded_thumbnail_url, download_url, 
+        is_premium, created_at, is_published, custom_samples,
         categories ( slug, name ),
         folders ( name )
       `, { count: "exact" })

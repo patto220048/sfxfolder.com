@@ -9,6 +9,10 @@ export async function loadAndParseLUT(url) {
     throw new Error(`Failed to fetch LUT: ${response.statusText}`);
   }
   const text = await response.text();
+  return parseLUTText(text);
+}
+
+export function parseLUTText(text) {
   const lines = text.split('\n');
   
   let size = 0;
@@ -61,6 +65,140 @@ export async function loadAndParseLUT(url) {
   }
   
   return { size, data, uint8Data };
+}
+
+export async function renderLUTToBlob(lutData, imageInput, targetWidth = 1200) {
+  // 1. Load the image
+  let image;
+  if (imageInput instanceof HTMLImageElement) {
+    image = imageInput;
+  } else if (typeof imageInput === 'string') {
+    image = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error("Failed to load image for LUT rendering"));
+      img.src = imageInput;
+    });
+  } else if (imageInput instanceof File || imageInput instanceof Blob) {
+    image = await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        URL.revokeObjectURL(img.src);
+        resolve(img);
+      };
+      img.onerror = () => reject(new Error("Failed to load File/Blob for LUT rendering"));
+      img.src = URL.createObjectURL(imageInput);
+    });
+  } else {
+    throw new Error("Invalid image input for LUT rendering");
+  }
+
+  // 2. Create offscreen canvas
+  const aspect = image.width / image.height;
+  const canvasWidth = Math.min(targetWidth, image.width);
+  const canvasHeight = Math.round(canvasWidth / aspect);
+
+  const canvas = document.createElement("canvas");
+  canvas.width = canvasWidth;
+  canvas.height = canvasHeight;
+
+  // 3. Initialize WebGL 2
+  const gl = canvas.getContext("webgl2", { preserveDrawingBuffer: true, antialias: false });
+  if (!gl) {
+    throw new Error("WebGL 2 context could not be created for offscreen LUT rendering.");
+  }
+
+  // 4. Compile shaders
+  const vsSource = `#version 300 es
+    in vec4 aVertexPosition;
+    in vec2 aTextureCoord;
+    out vec2 vTextureCoord;
+    void main() {
+      gl_Position = aVertexPosition;
+      vTextureCoord = aTextureCoord;
+    }
+  `;
+
+  const fsSource = `#version 300 es
+    precision highp float;
+    precision highp sampler3D;
+    in vec2 vTextureCoord;
+    out vec4 outColor;
+    uniform sampler2D uSampler;
+    uniform sampler3D uLutSampler;
+    void main() {
+      vec4 color = texture(uSampler, vTextureCoord);
+      vec3 lookup = clamp(color.rgb, 0.0, 1.0);
+      vec3 graded = texture(uLutSampler, lookup).rgb;
+      outColor = vec4(graded, color.a);
+    }
+  `;
+
+  const program = createShaderProgram(gl, vsSource, fsSource);
+  gl.useProgram(program);
+
+  // 5. Setup geometry & texture coords
+  const positions = new Float32Array([-1, 1, 1, 1, -1, -1, 1, -1]);
+  const posBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, posBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+  const posLoc = gl.getAttribLocation(program, "aVertexPosition");
+  gl.enableVertexAttribArray(posLoc);
+  gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+  const texCoords = new Float32Array([0, 1, 1, 1, 0, 0, 1, 0]);
+  const texBuffer = gl.createBuffer();
+  gl.bindBuffer(gl.ARRAY_BUFFER, texBuffer);
+  gl.bufferData(gl.ARRAY_BUFFER, texCoords, gl.STATIC_DRAW);
+  const texLoc = gl.getAttribLocation(program, "aTextureCoord");
+  gl.enableVertexAttribArray(texLoc);
+  gl.vertexAttribPointer(texLoc, 2, gl.FLOAT, false, 0, 0);
+
+  // 6. Setup textures
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  const imageTexture = gl.createTexture();
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, imageTexture);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+  gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+  const lutTexture = gl.createTexture();
+  gl.activeTexture(gl.TEXTURE1);
+  gl.bindTexture(gl.TEXTURE_3D, lutTexture);
+  gl.texImage3D(
+    gl.TEXTURE_3D, 0, gl.RGBA8, 
+    lutData.size, lutData.size, lutData.size, 
+    0, gl.RGBA, gl.UNSIGNED_BYTE, lutData.uint8Data
+  );
+  gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_3D, gl.TEXTURE_WRAP_R, gl.CLAMP_TO_EDGE);
+
+  gl.uniform1i(gl.getUniformLocation(program, "uSampler"), 0);
+  gl.uniform1i(gl.getUniformLocation(program, "uLutSampler"), 1);
+
+  // 7. Draw
+  gl.viewport(0, 0, canvasWidth, canvasHeight);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+  // 8. Convert to Blob
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) {
+        resolve(blob);
+      } else {
+        reject(new Error("Failed to convert canvas to blob"));
+      }
+    }, "image/jpeg", 0.9);
+  });
 }
 
 export function createShaderProgram(gl, vsSource, fsSource) {
@@ -121,8 +259,6 @@ export const FS_SOURCE = `
     vec4 color = texture2D(uSampler, vTextureCoord);
     
     if (vTextureCoord.x > uSliderPos) {
-      // Apply LUT (simplified 3D lookup)
-      // WebGL 2 supports texture3D directly
       vec3 lutColor = texture(uLutSampler, color.rgb).rgb;
       gl_FragColor = vec4(lutColor, color.a);
     } else {

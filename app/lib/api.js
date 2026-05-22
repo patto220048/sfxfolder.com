@@ -14,7 +14,7 @@ export const REVALIDATE_TIME = ENABLE_CACHE ? CACHE_24H : false; // Use env vari
 /**
  * Essential columns for listing/grid view to minimize database egress and JSON payload size.
  */
-export const RESOURCE_SUMMARY_COLUMNS = 'id, name, slug, category_id, folder_id, file_format, file_size, file_name, tags, download_count, preview_url, thumbnail_url, download_url, is_premium, created_at, custom_samples, categories!inner(slug, name), folders(name)';
+export const RESOURCE_SUMMARY_COLUMNS = 'id, name, slug, category_id, folder_id, file_format, file_size, file_name, tags, download_count, preview_url, thumbnail_url, graded_preview_url, graded_thumbnail_url, download_url, is_premium, created_at, custom_samples, categories!inner(slug, name), folders(name)';
 
 /**
  * Full details for single resource page or edit mode.
@@ -39,6 +39,8 @@ export function mapResource(res) {
     downloadUrl: res.download_url,
     previewUrl: res.preview_url,
     thumbnailUrl: res.thumbnail_url,
+    gradedPreviewUrl: res.graded_preview_url,
+    gradedThumbnailUrl: res.graded_thumbnail_url,
     customSamples: res.custom_samples || [],
     createdAt: res.created_at,
     updatedAt: res.updated_at,
@@ -110,7 +112,7 @@ export async function getProfile(userId) {
 export async function getResource(id) {
   const { data, error } = await supabase
     .from('resources')
-    .select('id, name, description, slug, category_id, folder_id, file_format, file_size, file_name, file_type, tags, download_url, preview_url, thumbnail_url, storage_path, download_count, is_published, custom_samples, created_at, updated_at, categories(slug, name), folders(name)')
+    .select('id, name, description, slug, category_id, folder_id, file_format, file_size, file_name, file_type, tags, download_url, preview_url, thumbnail_url, graded_preview_url, graded_thumbnail_url, storage_path, download_count, is_published, custom_samples, created_at, updated_at, categories(slug, name), folders(name)')
     .eq('id', id)
     .single();
 
@@ -463,6 +465,8 @@ function mapToDB(data) {
   if ('downloadUrl' in data) { result.download_url = data.downloadUrl; delete result.downloadUrl; }
   if ('previewUrl' in data) { result.preview_url = data.previewUrl; delete result.previewUrl; }
   if ('thumbnailUrl' in data) { result.thumbnail_url = data.thumbnailUrl; delete result.thumbnailUrl; }
+  if ('gradedPreviewUrl' in data) { result.graded_preview_url = data.gradedPreviewUrl; delete result.gradedPreviewUrl; }
+  if ('gradedThumbnailUrl' in data) { result.graded_thumbnail_url = data.gradedThumbnailUrl; delete result.gradedThumbnailUrl; }
   if ('folderId' in data) { result.folder_id = data.folderId; delete result.folderId; }
   if ('fileSize' in data) { result.file_size = data.fileSize; delete result.fileSize; }
   if ('fileName' in data) { result.file_name = data.fileName; delete result.fileName; }
