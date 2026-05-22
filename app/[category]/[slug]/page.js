@@ -31,8 +31,16 @@ const getCachedResource = unstable_cache(
   async (categorySlug, resourceSlug) =>
     getPublishedResource(categorySlug, resourceSlug),
   ["resource-detail"],
-  { revalidate: REVALIDATE_TIME || 3600, tags: ["resources"] }
+  { revalidate: REVALIDATE_TIME === false ? 0 : REVALIDATE_TIME, tags: ["resources"] }
 );
+
+async function getResourceData(categorySlug, resourceSlug) {
+  const isServer = typeof window === 'undefined';
+  if (isServer && REVALIDATE_TIME !== false) {
+    return getCachedResource(categorySlug, resourceSlug);
+  }
+  return getPublishedResource(categorySlug, resourceSlug);
+}
 
 /**
  * Fetch related resources using Vector Similarity.
@@ -46,7 +54,7 @@ async function getRecommendedResources(resourceId) {
  */
 export async function generateMetadata({ params }) {
   const { category, slug } = await params;
-  const resource = await getCachedResource(category, slug);
+  const resource = await getResourceData(category, slug);
 
   if (!resource) {
     return {
@@ -114,7 +122,7 @@ export default async function ResourcePage({ params }) {
   const { category, slug } = await params;
   
   const [resource, rawFolders] = await Promise.all([
-    getCachedResource(category, slug),
+    getResourceData(category, slug),
     getFolders(category)
   ]);
 

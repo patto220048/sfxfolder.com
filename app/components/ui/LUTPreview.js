@@ -37,28 +37,54 @@ export default function LUTPreview({
   const hasCustomImage = !!(referenceImageUrl || thumbnailUrl);
 
   const samples = useMemo(() => {
-    const customList = (customSamples || []).map(s => ({
-      id: `custom-${s.id}`,
-      name: s.name || 'Custom',
-      url: s.url,
-      gradedUrl: s.gradedUrl || s.graded_url || null,
-      isCustom: true
-    }));
+    const list = [];
     
-    if (customList.length > 0) {
-      return customList;
-    } else if (hasCustomImage) {
-      return [
-        { 
-          id: 'custom', 
-          name: 'Custom Preview', 
-          url: referenceImageUrl || thumbnailUrl, 
-          gradedUrl: gradedPreviewUrl || gradedThumbnailUrl || null,
-          isCustom: true 
-        }
-      ];
+    // 1. If there is a custom preview image uploaded for this resource, always include it first
+    if (hasCustomImage) {
+      list.push({
+        id: 'custom',
+        name: 'Custom Preview',
+        url: referenceImageUrl || thumbnailUrl,
+        gradedUrl: gradedPreviewUrl || gradedThumbnailUrl || null,
+        isCustom: true
+      });
     }
-    return SAMPLE_IMAGES;
+    
+    // 2. Add custom samples if they are actually custom (not the auto-populated default samples)
+    const realCustomSamples = (customSamples || []).filter(
+      s => s.id !== 'portrait' && s.id !== 'cinematic' && s.id !== 'nature'
+    );
+    
+    if (realCustomSamples.length > 0) {
+      realCustomSamples.forEach(s => {
+        list.push({
+          id: `custom-${s.id}`,
+          name: s.name || 'Custom',
+          url: s.url,
+          gradedUrl: s.gradedUrl || s.graded_url || null,
+          isCustom: true
+        });
+      });
+    }
+    
+    // 3. If we still have nothing, display the default sample images (from customSamples or SAMPLE_IMAGES)
+    if (list.length === 0) {
+      const systemSamples = (customSamples || []).filter(
+        s => s.id === 'portrait' || s.id === 'cinematic' || s.id === 'nature'
+      );
+      if (systemSamples.length > 0) {
+        return systemSamples.map(s => ({
+          id: `custom-${s.id}`,
+          name: s.name,
+          url: s.url,
+          gradedUrl: s.gradedUrl || s.graded_url || null,
+          isCustom: false
+        }));
+      }
+      return SAMPLE_IMAGES;
+    }
+    
+    return list;
   }, [customSamples, hasCustomImage, referenceImageUrl, thumbnailUrl, gradedPreviewUrl, gradedThumbnailUrl]);
 
   const [currentSampleId, setCurrentSampleId] = useState(() => {

@@ -213,38 +213,45 @@ export async function generateMetadata({ params }) {
 
 
 async function getCachedCategoryData(slug, tags = [], formats = []) {
-  return unstable_cache(
-    async () => {
-      // 1. Fetch category info
-      const info = await getCategoryBySlug(slug);
+  const fetchLogic = async () => {
+    // 1. Fetch category info
+    const info = await getCategoryBySlug(slug);
 
-      // 2. Fetch folders for this category
-      const fetchedFolders = await getFolders(slug);
-      
-      // 3. Fetch resources for this category with filters
-      const fetchedResources = await getResources({ 
-        categorySlug: slug, 
-        selectedTags: tags, 
-        selectedFormats: formats,
-        limit: 50 
-      });
+    // 2. Fetch folders for this category
+    const fetchedFolders = await getFolders(slug);
+    
+    // 3. Fetch resources for this category with filters
+    const fetchedResources = await getResources({ 
+      categorySlug: slug, 
+      selectedTags: tags, 
+      selectedFormats: formats,
+      limit: 50 
+    });
 
-      // 4. Fetch all tags for this category
-      const categoryTags = await getCategoryTags(slug);
+    // 4. Fetch all tags for this category
+    const categoryTags = await getCategoryTags(slug);
 
-      return {
-        categoryInfo: info,
-        flatFolders: fetchedFolders,
-        allResources: fetchedResources,
-        categoryTags
-      };
-    },
-    ['category-data', slug, tags.join(','), formats.join(',')], 
-    { 
-      revalidate: REVALIDATE_TIME, 
-      tags: ['resources', 'categories'] 
-    }
-  )();
+    return {
+      categoryInfo: info,
+      flatFolders: fetchedFolders,
+      allResources: fetchedResources,
+      categoryTags
+    };
+  };
+
+  const isServer = typeof window === 'undefined';
+  if (isServer && REVALIDATE_TIME !== false) {
+    return unstable_cache(
+      fetchLogic,
+      ['category-data', slug, tags.join(','), formats.join(',')], 
+      { 
+        revalidate: REVALIDATE_TIME, 
+        tags: ['resources', 'categories'] 
+      }
+    )();
+  }
+
+  return fetchLogic();
 }
 
 export default async function CategoryPage({ params, searchParams }) {
