@@ -94,6 +94,10 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
   const isPlugin = propIsPlugin || pathname?.startsWith("/plugins/") || searchParams.get("mode") === "plugin" || (typeof window !== 'undefined' && window.location.search.includes('mode=plugin'));
   const resSlug = searchParams.get("res");
   const highlightSlug = searchParams.get("highlight");
+  const highlightSlugRef = useRef(highlightSlug);
+  useEffect(() => {
+    highlightSlugRef.current = highlightSlug;
+  }, [highlightSlug]);
   const { setFolderId } = useSidebar();
 
   const debouncedSearch = useDebounce(inPageSearch, 300); // Debounce raw input instead of deferred
@@ -265,6 +269,22 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
   }, [resSlug, isInitialized, allLoadedResources]);
 
   useEffect(() => {
+    if (!isInitialized || !highlightSlug) return;
+    
+    const existing = allLoadedResources.find(r => r.slug === highlightSlug);
+    if (!existing) {
+      getResourceBySlug(highlightSlug).then(resource => {
+        if (resource) {
+          setAllLoadedResources(prev => {
+            if (prev.find(r => r.id === resource.id)) return prev;
+            return [resource, ...prev];
+          });
+        }
+      });
+    }
+  }, [highlightSlug, isInitialized, allLoadedResources]);
+
+  useEffect(() => {
     const handleLocalSearch = (e) => setInPageSearch(e.detail || "");
     window.addEventListener("local-search", handleLocalSearch);
     return () => window.removeEventListener("local-search", handleLocalSearch);
@@ -418,7 +438,16 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
         });
 
         if (!controller.signal.aborted) {
-          setAllLoadedResources(fresh || []);
+          setAllLoadedResources(prev => {
+            const freshList = fresh || [];
+            if (highlightSlugRef.current) {
+              const highlighted = prev.find(r => r.slug === highlightSlugRef.current);
+              if (highlighted && !freshList.some(r => r.slug === highlightSlugRef.current)) {
+                return [highlighted, ...freshList];
+              }
+            }
+            return freshList;
+          });
           setLoadedFolderId(debouncedFolderId);
           setServerOffset(fresh?.length || 0);
           setHasMoreDB(fresh?.length === PAGE_SIZE_BATCH);
@@ -481,6 +510,10 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
     // If we've just changed folders and we're not filtering, 
     // hide the old items immediately to prevent "jumping"
     if (folderMismatch && !isFiltering) {
+      if (highlightSlug) {
+        const highlighted = allLoadedResources.find(r => r.slug === highlightSlug);
+        return highlighted ? [highlighted] : [];
+      }
       return [];
     }
 
@@ -519,7 +552,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
       case "name": results.sort((a, b) => (a.name || "").localeCompare(b.name || "")); break;
     }
     return results;
-  }, [allLoadedResources, sortBy, resSlug, selectedFolderId, loadedFolderId, inPageSearch, selectedTags, selectedFormats]);
+  }, [allLoadedResources, sortBy, resSlug, selectedFolderId, loadedFolderId, inPageSearch, selectedTags, selectedFormats, highlightSlug]);
 
   // 1. Tối ưu: Chỉ tính toán bản đồ tần suất tag khi danh sách tài nguyên thay đổi
   const tagFrequencyMap = useMemo(() => {

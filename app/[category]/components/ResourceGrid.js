@@ -127,18 +127,20 @@ const ResourceGrid = ({
 }) => {
   const listRef = React.useRef(null);
   const lastScrolledSlugRef = React.useRef(null);
+  const prevFolderIdRef = React.useRef(selectedFolderId);
+  const prevSlugRef = React.useRef(slug);
   
   const [activeHighlightSlug, setActiveHighlightSlug] = React.useState(null);
 
   React.useEffect(() => {
     if (highlightSlug) {
       setActiveHighlightSlug(highlightSlug);
+    } else if (selectedFolderId !== prevFolderIdRef.current || slug !== prevSlugRef.current) {
+      setActiveHighlightSlug(null);
     }
-  }, [highlightSlug]);
-
-  React.useEffect(() => {
-    setActiveHighlightSlug(null);
-  }, [selectedFolderId, slug]);
+    prevFolderIdRef.current = selectedFolderId;
+    prevSlugRef.current = slug;
+  }, [highlightSlug, selectedFolderId, slug]);
   
   const isFiltering = inPageSearch || selectedFormats?.length > 0 || selectedTags?.length > 0 || resSlug;
   const isSoundLayout = info.layout === "audio" || info.layout === "sound";
@@ -195,7 +197,7 @@ const ResourceGrid = ({
         
         // Scroll to the first row (row 0) where the highlighted item is ginned
         setTimeout(() => {
-          listRef.current?.scrollToRow({ index: 0, align: "center" });
+          listRef.current?.scrollToItem(0, "center");
         }, 100);
 
         // Clear highlight parameter from URL after animation completes
