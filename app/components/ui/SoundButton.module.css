@@ -399,6 +399,8 @@
 .importText { font-size: 10px; font-weight: 700; color: #000; }
 
 .highlightFlash {
+  opacity: 1 !important;
+  transform: none !important;
   animation: pulseHighlight 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
   z-index: 10;
 }
