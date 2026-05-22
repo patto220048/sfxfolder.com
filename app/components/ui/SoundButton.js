@@ -383,17 +383,8 @@ const SoundButton = memo(function SoundButton({
         // 2. Integration with Premiere Plugin: Send URL for the Panel to download and import
         downloadResource(signedUrl);
       } else {
-        // 2. Trigger Native Browser Download via Hidden Anchor
-        const link = document.createElement('a');
-        link.href = signedUrl;
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        
-        // Cleanup
-        setTimeout(() => {
-          document.body.removeChild(link);
-        }, 100);
+        // 2. Trigger Native Browser Download
+        window.location.href = signedUrl;
       }
       // 4. Cleanup UI state
       setIsDownloading(false);

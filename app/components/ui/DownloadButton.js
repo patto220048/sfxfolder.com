@@ -76,12 +76,7 @@ export default function DownloadButton({ downloadUrl, fileUrl, fileName, fileFor
         setTimeout(() => setState("idle"), 1000); 
       } else {
         // 2. Standard Browser Download
-        const link = document.createElement('a');
-        link.href = signedUrl;
-        link.style.display = 'none';
-        document.body.appendChild(link);
-        link.click();
-        setTimeout(() => document.body.removeChild(link), 100);
+        window.location.href = signedUrl;
         
         setState("done");
         setTimeout(() => setState("idle"), 2000);

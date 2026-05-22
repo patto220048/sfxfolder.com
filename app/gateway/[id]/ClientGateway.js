@@ -47,12 +47,7 @@ export default function ClientGateway({ resource }) {
       if (!downloadUrl) throw new Error("Could not retrieve download link.");
 
       // Trigger standard browser download
-      const link = document.createElement("a");
-      link.href = downloadUrl;
-      link.style.display = "none";
-      document.body.appendChild(link);
-      link.click();
-      setTimeout(() => document.body.removeChild(link), 100);
+      window.location.href = downloadUrl;
 
       setStatus("done");
     } catch (err) {
