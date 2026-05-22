@@ -122,7 +122,11 @@ export async function POST(request) {
         });
 
       if (!signedError && signedData?.signedUrl) {
-        finalDownloadUrl = signedData.signedUrl;
+        // Thay thế hostname gốc của Supabase thành custom CDN domain chạy qua Cloudflare Worker
+        finalDownloadUrl = signedData.signedUrl.replace(
+          "riorhpppwzbnjaucatjc.supabase.co",
+          "cdn.sfxfolder.com"
+        );
       } else {
         console.error("Storage error:", signedError);
       }
