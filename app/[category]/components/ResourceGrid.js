@@ -127,19 +127,24 @@ const ResourceGrid = ({
 }) => {
   const listRef = React.useRef(null);
   const lastScrolledSlugRef = React.useRef(null);
-  const prevFolderIdRef = React.useRef(selectedFolderId);
-  const prevSlugRef = React.useRef(slug);
+  const highlightFolderIdRef = React.useRef(selectedFolderId);
+  const highlightSlugCategoryRef = React.useRef(slug);
   
   const [activeHighlightSlug, setActiveHighlightSlug] = React.useState(null);
+
+  // Synchronously reset activeHighlightSlug in render phase if folder or category changes
+  if (activeHighlightSlug && (selectedFolderId !== highlightFolderIdRef.current || slug !== highlightSlugCategoryRef.current)) {
+    setActiveHighlightSlug(null);
+  }
 
   React.useEffect(() => {
     if (highlightSlug) {
       setActiveHighlightSlug(highlightSlug);
-    } else if (selectedFolderId !== prevFolderIdRef.current || slug !== prevSlugRef.current) {
+      highlightFolderIdRef.current = selectedFolderId;
+      highlightSlugCategoryRef.current = slug;
+    } else if (selectedFolderId !== highlightFolderIdRef.current || slug !== highlightSlugCategoryRef.current) {
       setActiveHighlightSlug(null);
     }
-    prevFolderIdRef.current = selectedFolderId;
-    prevSlugRef.current = slug;
   }, [highlightSlug, selectedFolderId, slug]);
   
   const isFiltering = inPageSearch || selectedFormats?.length > 0 || selectedTags?.length > 0 || resSlug;

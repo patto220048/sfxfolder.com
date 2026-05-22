@@ -250,6 +250,7 @@ const Sidebar = memo(function Sidebar({
               } else {
                 const params = new URLSearchParams(window.location.search);
                 params.delete("folder");
+                params.delete("highlight");
                 const targetPath = isPluginMode ? "/plugins/premiere" : `/${categorySlug || ""}`;
                 if (typeof window !== "undefined" && window.location.pathname.replace(/\/$/, "") === targetPath.replace(/\/$/, "")) {
                   window.history.pushState(null, "", `${targetPath}?${params.toString()}`);
@@ -285,6 +286,7 @@ const Sidebar = memo(function Sidebar({
                 } else {
                   params.delete("folder");
                 }
+                params.delete("highlight");
                 const targetPath = isPluginMode ? "/plugins/premiere" : `/${categorySlug || ""}`;
                 if (typeof window !== "undefined" && window.location.pathname.replace(/\/$/, "") === targetPath.replace(/\/$/, "")) {
                   window.history.pushState(null, "", `${targetPath}?${params.toString()}`);

@@ -93,11 +93,23 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
   const searchParams = useSearchParams();
   const isPlugin = propIsPlugin || pathname?.startsWith("/plugins/") || searchParams.get("mode") === "plugin" || (typeof window !== 'undefined' && window.location.search.includes('mode=plugin'));
   const resSlug = searchParams.get("res");
-  const highlightSlug = searchParams.get("highlight");
-  const highlightSlugRef = useRef(highlightSlug);
+  const [highlightSlug, setHighlightSlug] = useState(null);
+  useEffect(() => {
+    setHighlightSlug(searchParams.get("highlight") || null);
+  }, [searchParams]);
+  const highlightSlugRef = useRef(null);
   useEffect(() => {
     highlightSlugRef.current = highlightSlug;
   }, [highlightSlug]);
+
+  const [prevFolderId, setPrevFolderId] = useState(selectedFolderId);
+  const [prevSlug, setPrevSlug] = useState(slug);
+  if (selectedFolderId !== prevFolderId || slug !== prevSlug) {
+    setPrevFolderId(selectedFolderId);
+    setPrevSlug(slug);
+    setHighlightSlug(null);
+    highlightSlugRef.current = null;
+  }
   const { setFolderId } = useSidebar();
 
   const debouncedSearch = useDebounce(inPageSearch, 300); // Debounce raw input instead of deferred
@@ -125,6 +137,9 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
       if (key === "format") lastSyncedFormatsRef.current = Array.isArray(value) ? value.join(",") : (value || "");
       if (key === "folder") lastSyncedFolderRef.current = value;
       if (key === "sort") lastSyncedSortRef.current = value;
+      if (key === "highlight") {
+        setHighlightSlug(value || null);
+      }
     });
     const newUrl = `${pathname}?${params.toString()}`;
     window.history.pushState(null, "", newUrl);
@@ -141,7 +156,9 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
     setSelectedFolderName(name);
     setVisibleCount(PAGE_SIZE_DISPLAY);
     setFolderId(id);
-    updateUrl({ folder: id });
+    setHighlightSlug(null);
+    highlightSlugRef.current = null;
+    updateUrl({ folder: id, highlight: null });
 
     if (!isHistoryMove) {
       const newStack = historyStackRef.current.slice(0, historyPointer + 1);
@@ -202,6 +219,8 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
       setSelectedFolderName(result?.current ? (result.current.path || result.current.name) : null);
       setVisibleCount(PAGE_SIZE_DISPLAY);
       setFolderId(folderId);
+      setHighlightSlug(null);
+      highlightSlugRef.current = null;
     }
     
     const formatsStr = searchParams.get("format") || "";
@@ -709,12 +728,15 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
                 params.delete("res");
                 params.delete("tags");
                 params.delete("format");
+                params.delete("highlight");
                 
                 // Reset local state
                 startTransition(() => {
                   setSelectedFolderId(null);
                   setSelectedFolderName(null);
                   setFolderId(null);
+                  setHighlightSlug(null);
+                  highlightSlugRef.current = null;
                   router.push(`${pathname}?${params.toString()}`);
                 });
               }}
