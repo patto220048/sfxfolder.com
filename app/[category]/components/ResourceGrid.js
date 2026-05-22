@@ -133,8 +133,15 @@ const ResourceGrid = ({
   const [activeHighlightSlug, setActiveHighlightSlug] = React.useState(null);
 
   // Synchronously reset activeHighlightSlug in render phase if folder or category changes
-  if (activeHighlightSlug && (selectedFolderId !== highlightFolderIdRef.current || slug !== highlightSlugCategoryRef.current)) {
-    setActiveHighlightSlug(null);
+  if (selectedFolderId !== highlightFolderIdRef.current || slug !== highlightSlugCategoryRef.current) {
+    highlightFolderIdRef.current = selectedFolderId;
+    highlightSlugCategoryRef.current = slug;
+    lastScrolledSlugRef.current = null; // Reset scroll target ref on folder/category change
+    if (highlightSlug) {
+      setActiveHighlightSlug(highlightSlug);
+    } else {
+      setActiveHighlightSlug(null);
+    }
   }
 
   React.useEffect(() => {
@@ -146,6 +153,13 @@ const ResourceGrid = ({
       setActiveHighlightSlug(null);
     }
   }, [highlightSlug, selectedFolderId, slug]);
+
+  // Reset scroll ref when highlightSlug is cleared, allowing clicking same item again
+  React.useEffect(() => {
+    if (!highlightSlug) {
+      lastScrolledSlugRef.current = null;
+    }
+  }, [highlightSlug]);
   
   const isFiltering = inPageSearch || selectedFormats?.length > 0 || selectedTags?.length > 0 || resSlug;
   const isSoundLayout = info.layout === "audio" || info.layout === "sound";
@@ -195,7 +209,8 @@ const ResourceGrid = ({
   }, [isPlugin, isSoundLayout]);
 
   React.useEffect(() => {
-    if (highlightSlug && highlightSlug !== lastScrolledSlugRef.current && flatItems.length > 0) {
+    const isLoading = isInitialLoading || isFetchLoading || isPending;
+    if (highlightSlug && !isLoading && highlightSlug !== lastScrolledSlugRef.current && flatItems.length > 0) {
       const highlightIndex = flatItems.findIndex(item => !item._isFolder && item.slug === highlightSlug);
       if (highlightIndex >= 0) {
         lastScrolledSlugRef.current = highlightSlug;
@@ -220,7 +235,7 @@ const ResourceGrid = ({
         return () => clearTimeout(timer);
       }
     }
-  }, [highlightSlug, flatItems, getColumnCount]);
+  }, [highlightSlug, flatItems, getColumnCount, isInitialLoading, isFetchLoading, isPending]);
 
   const getRowHeight = (index, currentColumnCount) => {
     // Plugin mode needs a bit more height for spacing between rows

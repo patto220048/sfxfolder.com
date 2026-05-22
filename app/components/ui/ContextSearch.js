@@ -275,7 +275,7 @@ export default function ContextSearch({ isPlugin = false }) {
         const currentParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
         const currentCategory = currentParams?.get("category") || "sound-effects";
         if (categorySlug === currentCategory) {
-          window.history.pushState(null, "", url);
+          router.push(url, { scroll: false });
         } else {
           router.push(url);
         }
@@ -286,7 +286,7 @@ export default function ContextSearch({ isPlugin = false }) {
           url += `&folder=${folderId}`;
         }
         if (typeof window !== "undefined" && window.location.pathname.replace(/\/$/, "") === `/${categorySlug}`.replace(/\/$/, "")) {
-          window.history.pushState(null, "", url);
+          router.push(url, { scroll: false });
         } else {
           router.push(url);
         }
@@ -424,14 +424,14 @@ export default function ContextSearch({ isPlugin = false }) {
         const currentParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
         const currentCategory = currentParams?.get("category") || "sound-effects";
         if (categorySlug === currentCategory) {
-          window.history.pushState(null, "", url);
+          router.push(url, { scroll: false });
         } else {
           router.push(url);
         }
       } else {
         const url = `/${categorySlug}?folder=${item.id}`;
         if (typeof window !== "undefined" && window.location.pathname.replace(/\/$/, "") === `/${categorySlug}`.replace(/\/$/, "")) {
-          window.history.pushState(null, "", url);
+          router.push(url, { scroll: false });
         } else {
           router.push(url);
         }
@@ -450,7 +450,7 @@ export default function ContextSearch({ isPlugin = false }) {
         const currentParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
         const currentCategory = currentParams?.get("category") || "sound-effects";
         if (categorySlug === currentCategory) {
-          window.history.pushState(null, "", url);
+          router.push(url, { scroll: false });
         } else {
           router.push(url);
         }

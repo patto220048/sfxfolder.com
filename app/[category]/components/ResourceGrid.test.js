@@ -302,4 +302,48 @@ describe('ResourceGrid Ginned Sorting and Highlight Logic', () => {
     const f1Card = screen.getByTestId('folder-card-f1');
     expect(f1Card.getAttribute('data-index')).toBe('0');
   });
+
+  it('updates to a new highlightSlug and pins it at index 0 when both selectedFolderId and highlightSlug change simultaneously', () => {
+    const { rerender } = render(
+      <ResourceGrid
+        slug="video-effects"
+        info={mockInfo}
+        currentSubfolders={mockFolders}
+        filteredResources={mockResources}
+        isInitialLoading={false}
+        isFetchLoading={false}
+        isPending={false}
+        highlightSlug="resource-2"
+        selectedFolderId="folder-root"
+      />
+    );
+
+    // Initial check: resource-2 is ginned at 0
+    let r2Card = screen.getByTestId('resource-card-r2');
+    expect(r2Card.getAttribute('data-index')).toBe('0');
+
+    // Rerender with a DIFFERENT folder and a DIFFERENT highlightSlug (simulating search item click in another folder)
+    rerender(
+      <ResourceGrid
+        slug="video-effects"
+        info={mockInfo}
+        currentSubfolders={mockFolders}
+        filteredResources={mockResources}
+        isInitialLoading={false}
+        isFetchLoading={false}
+        isPending={false}
+        highlightSlug="resource-1"
+        selectedFolderId="folder-child-1"
+      />
+    );
+
+    // Verify: resource-1 is now ginned at index 0 and highlighted
+    const r1Card = screen.getByTestId('resource-card-r1');
+    expect(r1Card.getAttribute('data-index')).toBe('0');
+    expect(r1Card.getAttribute('data-highlighted')).toBe('true');
+
+    // Verify resource-2 went back to its normal relative index
+    r2Card = screen.getByTestId('resource-card-r2');
+    expect(r2Card.getAttribute('data-index')).not.toBe('0');
+  });
 });

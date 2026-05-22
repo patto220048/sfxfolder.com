@@ -107,8 +107,9 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
   if (selectedFolderId !== prevFolderId || slug !== prevSlug) {
     setPrevFolderId(selectedFolderId);
     setPrevSlug(slug);
-    setHighlightSlug(null);
-    highlightSlugRef.current = null;
+    const urlHighlight = searchParams?.get("highlight") || null;
+    setHighlightSlug(urlHighlight);
+    highlightSlugRef.current = urlHighlight;
   }
   const { setFolderId } = useSidebar();
 
@@ -219,8 +220,9 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
       setSelectedFolderName(result?.current ? (result.current.path || result.current.name) : null);
       setVisibleCount(PAGE_SIZE_DISPLAY);
       setFolderId(folderId);
-      setHighlightSlug(null);
-      highlightSlugRef.current = null;
+      const urlHighlight = searchParams.get("highlight") || null;
+      setHighlightSlug(urlHighlight);
+      highlightSlugRef.current = urlHighlight;
     }
     
     const formatsStr = searchParams.get("format") || "";
