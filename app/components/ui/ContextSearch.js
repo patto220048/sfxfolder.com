@@ -268,7 +268,7 @@ export default function ContextSearch({ isPlugin = false }) {
 
     if (categorySlug && itemSlug) {
       if (isPlugin) {
-        let url = `/plugins/premiere?category=${categorySlug}&res=${itemSlug}&mode=plugin`;
+        let url = `/plugins/premiere?category=${categorySlug}&highlight=${itemSlug}&mode=plugin`;
         if (folderId) {
           url += `&folder=${folderId}`;
         }
@@ -280,8 +280,8 @@ export default function ContextSearch({ isPlugin = false }) {
           router.push(url);
         }
       } else {
-        // Navigate to category page with folder and resource parameters
-        let url = `/${categorySlug}?res=${itemSlug}`;
+        // Navigate to category page with folder and highlight parameters
+        let url = `/${categorySlug}?highlight=${itemSlug}`;
         if (folderId) {
           url += `&folder=${folderId}`;
         }

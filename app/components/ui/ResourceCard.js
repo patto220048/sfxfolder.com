@@ -38,6 +38,7 @@ const ResourceCard = memo(function ResourceCard({
   detailUrl,
   primaryColor = "#FFFFFF",
   isPlugin = false,
+  isHighlighted = false,
   ...otherProps
 }) {
   const router = useRouter();
@@ -611,7 +612,7 @@ const ResourceCard = memo(function ResourceCard({
 
   return (
     <div
-      className={`${styles.card} ${isPlugin ? styles.compact : ""}`}
+      className={`${styles.card} ${isPlugin ? styles.compact : ""} ${isHighlighted ? styles.highlightFlash : ""}`}
       style={{ 
         "--stagger-index": index,
         "--cat-color": primaryColor

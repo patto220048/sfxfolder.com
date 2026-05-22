@@ -659,3 +659,32 @@
   opacity: 1;
 }
 
+.highlightFlash {
+  animation: pulseHighlight 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  z-index: 10;
+}
+
+@keyframes pulseHighlight {
+  0% {
+    border-color: var(--cat-color, var(--text-primary));
+    box-shadow: 0 0 0px var(--cat-color, var(--text-primary));
+  }
+  25% {
+    border-color: var(--cat-color, var(--text-primary));
+    box-shadow: 0 0 15px 2px var(--cat-color, var(--text-primary)), inset 0 0 10px var(--cat-color, var(--text-primary));
+  }
+  50% {
+    border-color: var(--cat-color, var(--text-primary));
+    box-shadow: 0 0 5px 0px var(--cat-color, var(--text-primary));
+  }
+  75% {
+    border-color: var(--cat-color, var(--text-primary));
+    box-shadow: 0 0 15px 2px var(--cat-color, var(--text-primary)), inset 0 0 10px var(--cat-color, var(--text-primary));
+  }
+  100% {
+    border-color: var(--border-default);
+    box-shadow: none;
+  }
+}
+
+

@@ -38,6 +38,7 @@ const SoundButton = memo(function SoundButton({
   isPremium,
   similarity,
   isPlugin = false,
+  isHighlighted = false,
   ...otherProps
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -401,7 +402,7 @@ const SoundButton = memo(function SoundButton({
 
   return (
     <div
-      className={`${styles.item} ${isPlaying ? styles.playing : ""}`}
+      className={`${styles.item} ${isPlaying ? styles.playing : ""} ${isHighlighted ? styles.highlightFlash : ""}`}
       style={{ "--stagger-index": index, "--cat-color": primaryColor }}
       id={`sound-${id}`}
       onMouseEnter={handleMouseEnter}

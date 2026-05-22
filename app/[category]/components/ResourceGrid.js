@@ -9,7 +9,7 @@ import SoundButton from "@/app/components/ui/SoundButton";
 import styles from "../page.module.css";
 
 // Row renderer outside component to prevent re-creation
-const Row = memo(({ index, style, columnCount, flatItems, rowCount, category, onPreview, router, handleSelectFolder, info, hasMoreDB, isLoadingMore, isPlugin, containerWidth }) => {
+const Row = memo(({ index, style, columnCount, flatItems, rowCount, category, onPreview, router, handleSelectFolder, info, hasMoreDB, isLoadingMore, isPlugin, containerWidth, highlightSlug }) => {
   
   if (index === rowCount - 1 && (isLoadingMore || hasMoreDB)) {
     return (
@@ -67,6 +67,7 @@ const Row = memo(({ index, style, columnCount, flatItems, rowCount, category, on
               primaryColor={info.color}
               info={info}
               isPlugin={isPlugin}
+              isHighlighted={item.slug === highlightSlug}
             />
           ) : (
             <ResourceCard
@@ -87,6 +88,7 @@ const Row = memo(({ index, style, columnCount, flatItems, rowCount, category, on
               primaryColor={info.color}
               info={info}
               isPlugin={isPlugin}
+              isHighlighted={item.slug === highlightSlug}
             />
           )
         )
@@ -120,7 +122,11 @@ const ResourceGrid = ({
   hasMoreDB,
   isLoadingMore,
   isPlugin = false,
+  highlightSlug,
 }) => {
+  const listRef = React.useRef(null);
+  const lastScrolledSlugRef = React.useRef(null);
+  
   const isFiltering = inPageSearch || selectedFormats?.length > 0 || selectedTags?.length > 0 || resSlug;
   const isSoundLayout = info.layout === "audio" || info.layout === "sound";
   const isLoading = isInitialLoading || isFetchLoading || isPending;
@@ -134,7 +140,7 @@ const ResourceGrid = ({
     return list;
   }, [currentSubfolders, filteredResources, isFiltering]);
 
-  const getColumnCount = (width) => {
+  const getColumnCount = React.useCallback((width) => {
     if (isPlugin) {
       // Aggressive breakpoints to ensure we drop columns in Premiere Pro panels
       if (width > 850) return 4;
@@ -147,7 +153,41 @@ const ResourceGrid = ({
       return width > 1400 ? 3 : width > 900 ? 2 : 1;
     }
     return width > 1200 ? 4 : width > 900 ? 3 : width > 768 ? 2 : 1;
-  };
+  }, [isPlugin, isSoundLayout]);
+
+  React.useEffect(() => {
+    if (highlightSlug && highlightSlug !== lastScrolledSlugRef.current && flatItems.length > 0) {
+      const highlightIndex = flatItems.findIndex(item => !item._isFolder && item.slug === highlightSlug);
+      if (highlightIndex >= 0) {
+        lastScrolledSlugRef.current = highlightSlug;
+        
+        // Find container width to calculate column count
+        const gridWrapper = document.querySelector('[class*="gridWrapper"]');
+        const width = gridWrapper ? gridWrapper.getBoundingClientRect().width : (typeof window !== "undefined" ? window.innerWidth : 1000);
+        const columnCount = getColumnCount(width > 0 ? width : 1000);
+        const rowIndex = Math.floor(highlightIndex / columnCount);
+        
+        // Scroll to item
+        setTimeout(() => {
+          listRef.current?.scrollToItem(rowIndex, "center");
+        }, 100);
+
+        // Clear highlight parameter from URL after animation completes
+        const timer = setTimeout(() => {
+          if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has("highlight")) {
+              params.delete("highlight");
+              const newUrl = `${window.location.pathname}?${params.toString()}`;
+              window.history.replaceState(null, "", newUrl);
+            }
+          }
+        }, 2500);
+
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [highlightSlug, flatItems, getColumnCount]);
 
   const getRowHeight = (index, currentColumnCount) => {
     // Plugin mode needs a bit more height for spacing between rows
@@ -209,6 +249,7 @@ const ResourceGrid = ({
           
           return (
             <List
+              ref={listRef}
               key={`${columnCount}-${isSoundLayout}`}
               rowCount={rowCount}
               rowHeight={(index) => getRowHeight(index, columnCount)}
@@ -225,7 +266,8 @@ const ResourceGrid = ({
                 hasMoreDB,
                 isLoadingMore,
                 isPlugin,
-                containerWidth: finalWidth
+                containerWidth: finalWidth,
+                highlightSlug
               }}
               onRowsRendered={({ stopIndex }) => {
                 if (stopIndex >= rowCount - 1 && hasMoreDB && !isLoadingMore) {

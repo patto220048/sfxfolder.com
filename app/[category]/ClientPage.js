@@ -93,6 +93,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
   const searchParams = useSearchParams();
   const isPlugin = propIsPlugin || pathname?.startsWith("/plugins/") || searchParams.get("mode") === "plugin" || (typeof window !== 'undefined' && window.location.search.includes('mode=plugin'));
   const resSlug = searchParams.get("res");
+  const highlightSlug = searchParams.get("highlight");
   const { setFolderId } = useSidebar();
 
   const debouncedSearch = useDebounce(inPageSearch, 300); // Debounce raw input instead of deferred
@@ -756,6 +757,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
             resSlug={resSlug}
             onLoadMore={handleLoadMore}
             isPlugin={isPlugin}
+            highlightSlug={highlightSlug}
           />
         </div>
 
@@ -829,6 +831,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
         resSlug={resSlug}
         onLoadMore={handleLoadMore}
         isPlugin={isPlugin}
+        highlightSlug={highlightSlug}
       />
 
       {!isPlugin && faqs && faqs.length > 0 && (
