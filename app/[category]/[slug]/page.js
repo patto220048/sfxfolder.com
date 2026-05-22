@@ -31,7 +31,7 @@ const getCachedResource = unstable_cache(
   async (categorySlug, resourceSlug) =>
     getPublishedResource(categorySlug, resourceSlug),
   ["resource-detail"],
-  { revalidate: REVALIDATE_TIME === false ? 0 : REVALIDATE_TIME, tags: ["resources"] }
+  { revalidate: REVALIDATE_TIME || 3600, tags: ["resources"] }
 );
 
 async function getResourceData(categorySlug, resourceSlug) {
