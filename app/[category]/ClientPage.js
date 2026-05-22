@@ -121,8 +121,9 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
       if (key === "folder") lastSyncedFolderRef.current = value;
       if (key === "sort") lastSyncedSortRef.current = value;
     });
-    router.push(`${pathname}?${params.toString()}`, { scroll: false });
-  }, [pathname, router, searchParams]);
+    const newUrl = `${pathname}?${params.toString()}`;
+    window.history.pushState(null, "", newUrl);
+  }, [pathname, searchParams]);
 
   const handleSelectFolder = useCallback((folder, isHistoryMove = false) => {
     const id = folder?.id || null;
@@ -131,21 +132,19 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
     // Auto-close ContextSearch when navigating via sidebar
     window.dispatchEvent(new CustomEvent("close-context-search"));
 
-    startTransition(() => {
-      setSelectedFolderId(id);
-      setSelectedFolderName(name);
-      setVisibleCount(PAGE_SIZE_DISPLAY);
-      setFolderId(id);
-      updateUrl({ folder: id });
+    setSelectedFolderId(id);
+    setSelectedFolderName(name);
+    setVisibleCount(PAGE_SIZE_DISPLAY);
+    setFolderId(id);
+    updateUrl({ folder: id });
 
-      if (!isHistoryMove) {
-        const newStack = historyStackRef.current.slice(0, historyPointer + 1);
-        newStack.push(id);
-        setHistoryStack(newStack);
-        setHistoryPointer(newStack.length - 1);
-        historyStackRef.current = newStack;
-      }
-    });
+    if (!isHistoryMove) {
+      const newStack = historyStackRef.current.slice(0, historyPointer + 1);
+      newStack.push(id);
+      setHistoryStack(newStack);
+      setHistoryPointer(newStack.length - 1);
+      historyStackRef.current = newStack;
+    }
   }, [historyPointer, setFolderId, updateUrl]);
 
   useEffect(() => {
@@ -197,6 +196,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
       const result = findInTree(folders, folderId);
       setSelectedFolderName(result?.current ? (result.current.path || result.current.name) : null);
       setVisibleCount(PAGE_SIZE_DISPLAY);
+      setFolderId(folderId);
     }
     
     const formatsStr = searchParams.get("format") || "";

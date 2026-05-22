@@ -251,7 +251,11 @@ const Sidebar = memo(function Sidebar({
                 const params = new URLSearchParams(window.location.search);
                 params.delete("folder");
                 const targetPath = isPluginMode ? "/plugins/premiere" : `/${categorySlug || ""}`;
-                router.push(`${targetPath}?${params.toString()}`);
+                if (typeof window !== "undefined" && window.location.pathname.replace(/\/$/, "") === targetPath.replace(/\/$/, "")) {
+                  window.history.pushState(null, "", `${targetPath}?${params.toString()}`);
+                } else {
+                  router.push(`${targetPath}?${params.toString()}`);
+                }
               }
               setMobileOpen(false);
             }}
@@ -282,7 +286,11 @@ const Sidebar = memo(function Sidebar({
                   params.delete("folder");
                 }
                 const targetPath = isPluginMode ? "/plugins/premiere" : `/${categorySlug || ""}`;
-                router.push(`${targetPath}?${params.toString()}`);
+                if (typeof window !== "undefined" && window.location.pathname.replace(/\/$/, "") === targetPath.replace(/\/$/, "")) {
+                  window.history.pushState(null, "", `${targetPath}?${params.toString()}`);
+                } else {
+                  router.push(`${targetPath}?${params.toString()}`);
+                }
               }
               setMobileOpen(false);
             }}
