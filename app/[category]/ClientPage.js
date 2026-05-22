@@ -758,6 +758,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
             onLoadMore={handleLoadMore}
             isPlugin={isPlugin}
             highlightSlug={highlightSlug}
+            selectedFolderId={selectedFolderId}
           />
         </div>
 
@@ -832,6 +833,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
         onLoadMore={handleLoadMore}
         isPlugin={isPlugin}
         highlightSlug={highlightSlug}
+        selectedFolderId={selectedFolderId}
       />
 
       {!isPlugin && faqs && faqs.length > 0 && (

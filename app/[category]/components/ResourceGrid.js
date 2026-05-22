@@ -9,7 +9,7 @@ import SoundButton from "@/app/components/ui/SoundButton";
 import styles from "../page.module.css";
 
 // Row renderer outside component to prevent re-creation
-const Row = memo(({ index, style, columnCount, flatItems, rowCount, category, onPreview, router, handleSelectFolder, info, hasMoreDB, isLoadingMore, isPlugin, containerWidth, highlightSlug }) => {
+const Row = memo(({ index, style, columnCount, flatItems, rowCount, category, onPreview, router, handleSelectFolder, info, hasMoreDB, isLoadingMore, isPlugin, highlightSlug }) => {
   
   if (index === rowCount - 1 && (isLoadingMore || hasMoreDB)) {
     return (
@@ -123,9 +123,22 @@ const ResourceGrid = ({
   isLoadingMore,
   isPlugin = false,
   highlightSlug,
+  selectedFolderId,
 }) => {
   const listRef = React.useRef(null);
   const lastScrolledSlugRef = React.useRef(null);
+  
+  const [activeHighlightSlug, setActiveHighlightSlug] = React.useState(null);
+
+  React.useEffect(() => {
+    if (highlightSlug) {
+      setActiveHighlightSlug(highlightSlug);
+    }
+  }, [highlightSlug]);
+
+  React.useEffect(() => {
+    setActiveHighlightSlug(null);
+  }, [selectedFolderId, slug]);
   
   const isFiltering = inPageSearch || selectedFormats?.length > 0 || selectedTags?.length > 0 || resSlug;
   const isSoundLayout = info.layout === "audio" || info.layout === "sound";
@@ -133,12 +146,31 @@ const ResourceGrid = ({
 
   const flatItems = useMemo(() => {
     const list = [];
+    let highlightedItem = null;
+    const folderList = [];
+    const resourcesList = [];
+
     if (!isFiltering) {
-      currentSubfolders.forEach((f) => list.push({ ...f, _isFolder: true }));
+      currentSubfolders.forEach((f) => folderList.push({ ...f, _isFolder: true }));
     }
-    filteredResources.forEach((i) => list.push({ ...i, _isResource: true }));
+    
+    filteredResources.forEach((i) => {
+      const resourceWithFlag = { ...i, _isResource: true };
+      if (activeHighlightSlug && i.slug === activeHighlightSlug) {
+        highlightedItem = resourceWithFlag;
+      } else {
+        resourcesList.push(resourceWithFlag);
+      }
+    });
+
+    if (highlightedItem) {
+      list.push(highlightedItem);
+    }
+    
+    list.push(...folderList);
+    list.push(...resourcesList);
     return list;
-  }, [currentSubfolders, filteredResources, isFiltering]);
+  }, [currentSubfolders, filteredResources, isFiltering, activeHighlightSlug]);
 
   const getColumnCount = React.useCallback((width) => {
     if (isPlugin) {
@@ -161,15 +193,9 @@ const ResourceGrid = ({
       if (highlightIndex >= 0) {
         lastScrolledSlugRef.current = highlightSlug;
         
-        // Find container width to calculate column count
-        const gridWrapper = document.querySelector('[class*="gridWrapper"]');
-        const width = gridWrapper ? gridWrapper.getBoundingClientRect().width : (typeof window !== "undefined" ? window.innerWidth : 1000);
-        const columnCount = getColumnCount(width > 0 ? width : 1000);
-        const rowIndex = Math.floor(highlightIndex / columnCount);
-        
-        // Scroll to item
+        // Scroll to the first row (row 0) where the highlighted item is ginned
         setTimeout(() => {
-          listRef.current?.scrollToItem(rowIndex, "center");
+          listRef.current?.scrollToRow({ index: 0, align: "center" });
         }, 100);
 
         // Clear highlight parameter from URL after animation completes
