@@ -272,14 +272,24 @@ export default function ContextSearch({ isPlugin = false }) {
         if (folderId) {
           url += `&folder=${folderId}`;
         }
-        router.push(url);
+        const currentParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+        const currentCategory = currentParams?.get("category") || "sound-effects";
+        if (categorySlug === currentCategory) {
+          window.history.pushState(null, "", url);
+        } else {
+          router.push(url);
+        }
       } else {
         // Navigate to category page with folder and resource parameters
         let url = `/${categorySlug}?res=${itemSlug}`;
         if (folderId) {
           url += `&folder=${folderId}`;
         }
-        window.location.href = url;
+        if (typeof window !== "undefined" && window.location.pathname.replace(/\/$/, "") === `/${categorySlug}`.replace(/\/$/, "")) {
+          window.history.pushState(null, "", url);
+        } else {
+          router.push(url);
+        }
       }
       closeSilent();
     }
@@ -410,9 +420,21 @@ export default function ContextSearch({ isPlugin = false }) {
     if (item.type === 'folder') {
       const categorySlug = item.categorySlug || 'all';
       if (isPlugin) {
-        router.push(`/plugins/premiere?category=${categorySlug}&folder=${item.id}`);
+        const url = `/plugins/premiere?category=${categorySlug}&folder=${item.id}`;
+        const currentParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+        const currentCategory = currentParams?.get("category") || "sound-effects";
+        if (categorySlug === currentCategory) {
+          window.history.pushState(null, "", url);
+        } else {
+          router.push(url);
+        }
       } else {
-        window.location.href = `/${categorySlug}?folder=${item.id}`;
+        const url = `/${categorySlug}?folder=${item.id}`;
+        if (typeof window !== "undefined" && window.location.pathname.replace(/\/$/, "") === `/${categorySlug}`.replace(/\/$/, "")) {
+          window.history.pushState(null, "", url);
+        } else {
+          router.push(url);
+        }
       }
       closeSilent();
       return;
@@ -424,9 +446,16 @@ export default function ContextSearch({ isPlugin = false }) {
 
     if (categorySlug && itemSlug) {
       if (isPlugin) {
-        router.push(`/plugins/premiere?category=${categorySlug}&res=${itemSlug}`);
+        const url = `/plugins/premiere?category=${categorySlug}&res=${itemSlug}`;
+        const currentParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+        const currentCategory = currentParams?.get("category") || "sound-effects";
+        if (categorySlug === currentCategory) {
+          window.history.pushState(null, "", url);
+        } else {
+          router.push(url);
+        }
       } else {
-        window.location.href = `/${categorySlug}/${itemSlug}`;
+        router.push(`/${categorySlug}/${itemSlug}`);
       }
       closeSilent();
     }
