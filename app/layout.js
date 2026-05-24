@@ -146,6 +146,8 @@ export default async function RootLayout({ children }) {
         <link rel="icon" href="/favicon.webp?v=3" type="image/webp" />
         <link rel="apple-touch-icon" href="/favicon.webp?v=3" />
         <link rel="manifest" href="/site.webmanifest" />
+      </head>
+      <body suppressHydrationWarning>
         <GoogleAnalytics gaId="G-LW9D5CH1WQ" />
 
         {/* Ezoic & Gatekeeper Consent Scripts */}
@@ -193,8 +195,6 @@ export default async function RootLayout({ children }) {
             __html: JSON.stringify(organizationSchema),
           }}
         />
-      </head>
-      <body suppressHydrationWarning>
         <ThemeProvider
           attribute="data-theme"
           defaultTheme="dark"
