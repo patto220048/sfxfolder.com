@@ -61,11 +61,8 @@ export default function ClientGateway({ resource }) {
     if (countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
       return () => clearTimeout(timer);
-    } else if (countdown === 0 && status === "waiting") {
-      // Auto-trigger download when countdown hits 0
-      handleDownload();
     }
-  }, [countdown, status]);
+  }, [countdown]);
 
   const displayName = (resource.name || resource.file_name || "Untitled").replace(/\.[^/.]+$/, "");
 
@@ -105,7 +102,13 @@ export default function ClientGateway({ resource }) {
               </button>
             )}
 
-            {(status === "downloading" || (countdown === 0 && status === "waiting")) && (
+            {status === "waiting" && countdown === 0 && (
+              <button className={styles.fallbackBtn} onClick={handleDownload}>
+                <Download size={18} /> Download Now
+              </button>
+            )}
+
+            {status === "downloading" && (
               <button className={styles.fallbackBtn} disabled>
                 <Loader2 size={18} className="animate-spin" /> Downloading...
               </button>
