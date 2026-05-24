@@ -34,7 +34,13 @@ export default function AdSlot({ htmlContent, className }) {
       }
       
       // Replace the old script with the new, executable one
-      oldScript.parentNode.replaceChild(newScript, oldScript);
+      try {
+        if (oldScript.parentNode) {
+          oldScript.parentNode.replaceChild(newScript, oldScript);
+        }
+      } catch (err) {
+        console.warn("AdSlot: Script execution failed (possibly due to syntax error in ad code):", err);
+      }
     });
   }, [htmlContent]);
 
