@@ -20,7 +20,8 @@ export default function AdminSettings() {
       gateway_left: "",
       gateway_right: "",
       home_left: "",
-      home_right: ""
+      home_right: "",
+      gateway_popup_link: ""
     }
   });
   const [loading, setLoading] = useState(true);
@@ -42,6 +43,7 @@ export default function AdminSettings() {
               home_right: "",
               gateway_left: "",
               gateway_right: "",
+              gateway_popup_link: "",
               ...(data.ads_config || {})
             }
           });
@@ -314,6 +316,15 @@ export default function AdminSettings() {
                   style={{ padding: "var(--space-2)", background: "black", border: "1px solid var(--border-default)", color: "var(--neon-green, #00ff00)", fontFamily: "monospace", width: "100%", resize: "vertical" }}
                 />
               </div>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+              <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Đường dẫn Popunder khi Click Download (Adsterra Smartlink / Direct Link)</label>
+              <input 
+                type="text" name="gateway_popup_link" value={settings.ads_config?.gateway_popup_link || ""} onChange={handleAdsChange}
+                placeholder="https://your-smartlink-url.com"
+                style={{ padding: "var(--space-2)", background: "black", border: "1px solid var(--border-default)", color: "var(--neon-green, #00ff00)", width: "100%" }}
+              />
             </div>
           </div>
         </section>
