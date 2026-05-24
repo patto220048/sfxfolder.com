@@ -150,6 +150,8 @@ export default function PricingClient({ config }) {
             
             <ul className={styles.features}>
               <li><Check size={20} className={styles.checkIcon}/> Unlimited Downloads</li>
+              <li><Check size={20} className={styles.checkIcon}/> Fast Downloads</li>
+              <li><Check size={20} className={styles.checkIcon}/> No Ads</li>
               <li><Check size={20} className={styles.checkIcon}/> Premium Resources</li>
               <li><Check size={20} className={styles.checkIcon}/> Direct Support</li>
               <li><Check size={20} className={styles.checkIcon}/> Cancel Anytime</li>
@@ -205,6 +207,8 @@ export default function PricingClient({ config }) {
             
             <ul className={styles.features}>
               <li><Check size={20} className={styles.checkIcon}/> Unlimited Downloads</li>
+              <li><Check size={20} className={styles.checkIcon}/> Fast Downloads</li>
+              <li><Check size={20} className={styles.checkIcon}/> No Ads</li>
               <li><Check size={20} className={styles.checkIcon}/> Premium Resources</li>
               <li><Check size={20} className={styles.checkIcon}/> Direct Support</li>
               <li><Check size={20} className={styles.checkIcon}/> Save 25% Annually</li>

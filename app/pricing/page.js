@@ -5,8 +5,8 @@ import { Suspense } from "react";
 export const revalidate = 86400; // Hardcoded to 24 hours to satisfy Next.js static analysis
 
 export const metadata = {
-  title: "Premium Plans — Unlimited Downloads & Exclusive Assets",
-  description: "Unlock unlimited access to all premium sound effects, music, presets, and video editing assets. Affordable monthly and yearly plans for content creators.",
+  title: "Premium Plans — Fast Downloads, Ad-Free & Unlimited Access",
+  description: "Unlock unlimited, ad-free access to all premium sound effects, music, presets, and video editing assets with high-speed downloads. Affordable monthly and yearly plans.",
 };
 
 export default async function PricingPage() {
@@ -68,11 +68,60 @@ export default async function PricingPage() {
     ],
   };
 
+  // Product & Offer schema for recurring subscriptions
+  const productSchema = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": "SFXFolder Premium Subscription",
+    "image": `${SITE_URL}/og-default.jpg`,
+    "description": "Get unlimited access to all premium sound effects, music, presets, and video editing assets with high-speed downloads and ad-free experience.",
+    "offers": [
+      {
+        "@type": "Offer",
+        "name": "Monthly Plan",
+        "price": "2.00",
+        "priceCurrency": "USD",
+        "priceSpecification": {
+          "@type": "UnitPriceSpecification",
+          "price": "2.00",
+          "priceCurrency": "USD",
+          "referenceQuantity": {
+            "@type": "QuantitativeValue",
+            "value": "1",
+            "unitCode": "MON"
+          }
+        },
+        "url": `${SITE_URL}/pricing`
+      },
+      {
+        "@type": "Offer",
+        "name": "Yearly Plan",
+        "price": "18.00",
+        "priceCurrency": "USD",
+        "priceSpecification": {
+          "@type": "UnitPriceSpecification",
+          "price": "18.00",
+          "priceCurrency": "USD",
+          "referenceQuantity": {
+            "@type": "QuantitativeValue",
+            "value": "1",
+            "unitCode": "ANN"
+          }
+        },
+        "url": `${SITE_URL}/pricing`
+      }
+    ]
+  };
+
   return (
     <>
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productSchema) }}
       />
       <Suspense fallback={<div>Loading...</div>}>
         <PricingClient config={finalConfig} />
