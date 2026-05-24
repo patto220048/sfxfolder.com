@@ -6,7 +6,7 @@ import { X } from "lucide-react";
 import styles from "./CategoryStickyAd.module.css";
 import { useAuth } from "@/app/lib/auth-context";
 import { useSiteData } from "@/app/context/SiteContext";
-import AdSlot from "./AdSlot";
+import AdRenderer from "./AdRenderer";
 
 export default function CategoryStickyAd() {
   const { settings } = useSiteData();
@@ -25,8 +25,6 @@ export default function CategoryStickyAd() {
     }
   }, [countdown]);
 
-  const hasAd = adHtml && adHtml.trim() !== '';
-
   // Don't show in plugin or if premium
   if (!isVisible || isPlugin || isPremium) return null;
 
@@ -34,13 +32,14 @@ export default function CategoryStickyAd() {
     <div className={styles.adContainer}>
       <div className={styles.adContent}>
         <div className={styles.adWrapper}>
-          {hasAd ? (
-            <AdSlot htmlContent={adHtml} />
-          ) : (
-            <div className={styles.adPlaceholder}>
-              Advertisement - Placeholder (728x90)
-            </div>
-          )}
+          <AdRenderer 
+            content={adHtml} 
+            placeholder={
+              <div className={styles.adPlaceholder}>
+                Advertisement - Placeholder (728x90)
+              </div>
+            }
+          />
         </div>
         {countdown === 0 ? (
           <button className={styles.closeBtn} onClick={() => setIsVisible(false)} aria-label="Close Ad">

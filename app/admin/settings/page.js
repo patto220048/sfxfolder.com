@@ -35,11 +35,14 @@ export default function AdminSettings() {
           setSettings({
             ...data,
             social_links: data.social_links || [],
-            ads_config: data.ads_config || {
+            ads_config: {
               head_script: "",
               category_sticky: "",
+              home_left: "",
+              home_right: "",
               gateway_left: "",
-              gateway_right: ""
+              gateway_right: "",
+              ...(data.ads_config || {})
             }
           });
         }

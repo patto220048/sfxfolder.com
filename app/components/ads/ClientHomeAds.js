@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSiteData } from "@/app/context/SiteContext";
 import { useAuth } from "@/app/lib/auth-context";
-import AdSlot from "./AdSlot";
+import AdRenderer from "./AdRenderer";
 import styles from "@/app/page.module.css";
 
 export default function ClientHomeAds({ side }) {
@@ -60,7 +60,7 @@ export default function ClientHomeAds({ side }) {
             Close Ads
           </button>
         )}
-        {adContent ? <AdSlot htmlContent={adContent} /> : label}
+        <AdRenderer content={adContent} placeholder={label} />
       </div>
     </div>
   );

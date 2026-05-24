@@ -10,10 +10,12 @@ import { SiteProvider } from "@/app/context/SiteContext";
 import { AuthProvider } from "@/app/lib/auth-context";
 import { GoogleAnalytics } from '@next/third-parties/google';
 
+import Script from "next/script";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
 import SmoothScroll from "@/app/components/layout/SmoothScroll";
 import ClientGlobalAds from "@/app/components/ads/ClientGlobalAds";
+import EzoicRouteHandler from "@/app/components/ads/EzoicRouteHandler";
 
 const inter = Inter({
   subsets: ['latin'],
@@ -145,6 +147,36 @@ export default async function RootLayout({ children }) {
         <link rel="apple-touch-icon" href="/favicon.webp?v=3" />
         <link rel="manifest" href="/site.webmanifest" />
         <GoogleAnalytics gaId="G-LW9D5CH1WQ" />
+
+        {/* Ezoic & Gatekeeper Consent Scripts */}
+        <Script
+          id="ezoic-cmp"
+          src="https://cmp.gatekeeperconsent.com/min.js"
+          strategy="beforeInteractive"
+          data-cfasync="false"
+        />
+        <Script
+          id="ezoic-cmp-2"
+          src="https://the.gatekeeperconsent.com/cmp.min.js"
+          strategy="beforeInteractive"
+          data-cfasync="false"
+        />
+        <Script
+          id="ezoic-sa"
+          src="//www.ezojs.com/ezoic/sa.min.js"
+          strategy="afterInteractive"
+        />
+        <Script id="ezoic-init" strategy="afterInteractive">
+          {`
+            window.ezstandalone = window.ezstandalone || {};
+            window.ezstandalone.cmd = window.ezstandalone.cmd || [];
+          `}
+        </Script>
+        <Script
+          id="ezoic-analytics"
+          src="//ezoicanalytics.com/analytics.js"
+          strategy="afterInteractive"
+        />
         <script
           id="schema-website"
           type="application/ld+json"
@@ -172,6 +204,7 @@ export default async function RootLayout({ children }) {
           <ToastProvider>
             <AuthProvider>
               <SiteProvider initialSettings={settings} initialCategories={categories}>
+                <EzoicRouteHandler />
                 <ClientGlobalAds />
                 <SmoothScroll>
                   <LayoutShell initialCategories={categories}>{children}</LayoutShell>

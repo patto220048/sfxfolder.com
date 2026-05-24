@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Download, Check, Loader2 } from "lucide-react";
 import { useAuth } from "@/app/lib/auth-context";
 import { useSiteData } from "@/app/context/SiteContext";
-import AdSlot from "@/app/components/ads/AdSlot";
+import AdRenderer from "@/app/components/ads/AdRenderer";
 import styles from "./gateway.module.css";
 
 function formatSize(bytes) {
@@ -76,7 +76,7 @@ export default function ClientGateway({ resource }) {
           {/* Left Ad */}
           {ads.gateway_left && ads.gateway_left.trim() !== '' ? (
             <div className={styles.sideAdContainer}>
-              <AdSlot htmlContent={ads.gateway_left} />
+              <AdRenderer content={ads.gateway_left} />
             </div>
           ) : (
             <div className={styles.sideAdPlaceholder}>
@@ -137,7 +137,7 @@ export default function ClientGateway({ resource }) {
           {/* Right Ad */}
           {ads.gateway_right && ads.gateway_right.trim() !== '' ? (
             <div className={styles.sideAdContainer}>
-              <AdSlot htmlContent={ads.gateway_right} />
+              <AdRenderer content={ads.gateway_right} />
             </div>
           ) : (
             <div className={styles.sideAdPlaceholder}>
@@ -151,7 +151,7 @@ export default function ClientGateway({ resource }) {
       <div className={styles.bottomAd}>
         {ads.category_sticky && ads.category_sticky.trim() !== '' ? (
           <div className={styles.adWrapper}>
-            <AdSlot htmlContent={ads.category_sticky} />
+            <AdRenderer content={ads.category_sticky} />
           </div>
         ) : (
           <div className={styles.adPlaceholder}>
