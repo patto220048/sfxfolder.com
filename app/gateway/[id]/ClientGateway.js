@@ -26,6 +26,16 @@ export default function ClientGateway({ resource }) {
   const handleDownload = async () => {
     setStatus("downloading");
     setErrorMessage("");
+
+    // Trigger Popunder Smartlink in new tab if configured
+    if (ads.gateway_popup_link && ads.gateway_popup_link.trim() !== '') {
+      try {
+        window.open(ads.gateway_popup_link.trim(), "_blank");
+      } catch (e) {
+        console.error("Popunder popup blocked:", e);
+      }
+    }
+
     try {
       const headers = { "Content-Type": "application/json" };
       if (session?.access_token) {
