@@ -16,6 +16,7 @@
   cursor: default;
   position: relative;
   overflow: hidden;
+  contain: content;
 
   /* Staggered entrance */
   opacity: 0;

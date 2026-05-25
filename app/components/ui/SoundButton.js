@@ -39,6 +39,7 @@ const SoundButton = memo(function SoundButton({
   similarity,
   isPlugin = false,
   isHighlighted = false,
+  isScrolling = false,
   ...otherProps
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -167,7 +168,19 @@ const SoundButton = memo(function SoundButton({
 
   const preloadTimeoutRef = useRef(null);
 
+  // Cancel hover immediately when scrolling starts
+  useEffect(() => {
+    if (isScrolling) {
+      setIsHovered(false);
+      if (preloadTimeoutRef.current) {
+        clearTimeout(preloadTimeoutRef.current);
+        preloadTimeoutRef.current = null;
+      }
+    }
+  }, [isScrolling]);
+
   const handleMouseEnter = useCallback(() => {
+    if (isScrolling) return;
     setIsHovered(true);
     
     // Debounce preloading to prevent network congestion during fast scrolling
@@ -191,7 +204,7 @@ const SoundButton = memo(function SoundButton({
         }
       }
     }, 200);
-  }, [downloadUrl, id]);
+  }, [downloadUrl, id, isScrolling]);
 
   const handleMouseLeave = useCallback(() => {
     setIsHovered(false);

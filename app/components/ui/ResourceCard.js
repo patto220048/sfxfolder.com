@@ -39,6 +39,7 @@ const ResourceCard = memo(function ResourceCard({
   primaryColor = "#FFFFFF",
   isPlugin = false,
   isHighlighted = false,
+  isScrolling = false,
   ...otherProps
 }) {
   const router = useRouter();
@@ -262,6 +263,17 @@ const ResourceCard = memo(function ResourceCard({
 
   const hoverTimeoutRef = useRef(null);
 
+  // Cancel hover immediately when scrolling starts (except for LUT cards to prevent image stutter/reset)
+  useEffect(() => {
+    if (isScrolling && effectiveCardType !== "lut") {
+      setIsHovering(false);
+      if (hoverTimeoutRef.current) {
+        clearTimeout(hoverTimeoutRef.current);
+        hoverTimeoutRef.current = null;
+      }
+    }
+  }, [isScrolling, effectiveCardType]);
+
   // Cleanup timeout and video state on unmount
   useEffect(() => {
     return () => {
@@ -275,19 +287,16 @@ const ResourceCard = memo(function ResourceCard({
     const video = videoRef.current;
     if (!video) return;
 
-    if (isHovering) {
+    if (isHovering && !isScrolling) {
       // Auto-play disabled. Video will only show if rendered, but not play automatically.
-      // mediaManager.play(video, 'video');
-      // video.play().then(() => {
-      //   if (!rafRef.current) rafRef.current = requestAnimationFrame(updateVideoProgress);
-      // }).catch(() => {});
     } else {
       video.pause();
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     }
-  }, [isHovering, updateVideoProgress]);
+  }, [isHovering, isScrolling, updateVideoProgress]);
 
   const handleMouseEnter = () => {
+    if (isScrolling && effectiveCardType !== "lut") return;
     if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
     hoverTimeoutRef.current = setTimeout(() => {
       setIsHovering(true);
@@ -309,7 +318,7 @@ const ResourceCard = memo(function ResourceCard({
           <div className={styles.preview}>
             {!!thumbnailUrl ? (
               <>
-                {isHovering && resolvedUrl ? (
+                {!isScrolling && isHovering && resolvedUrl ? (
                   <video
                     ref={videoRef}
                     className={styles.videoPreview}
@@ -334,7 +343,7 @@ const ResourceCard = memo(function ResourceCard({
                   />
                 )}
               </>
-            ) : (effectiveCardType === "video" || isVideoFormat(resourceObj)) && resolvedUrl ? (
+            ) : !isScrolling && (effectiveCardType === "video" || isVideoFormat(resourceObj)) && resolvedUrl ? (
               <video
                 ref={videoRef}
                 src={`${resolvedUrl}#t=0.1`}
@@ -345,9 +354,9 @@ const ResourceCard = memo(function ResourceCard({
                 preload="metadata"
                 poster={""}
               />
-            ) : resolvedUrl && isImageFormat(resourceObj) ? (
+            ) : (thumbnailUrl || resolvedUrl) ? (
               <Image
-                src={getOptimizedUrl(resolvedUrl, { width: 480 })}
+                src={getOptimizedUrl(thumbnailUrl || resolvedUrl, { width: 480 })}
                 alt={displayName}
                 fill
                 className={styles.cardImage}
@@ -365,7 +374,7 @@ const ResourceCard = memo(function ResourceCard({
               </div>
             )}
             {/* Video Progress Bar */}
-            {(isHovering || isScrubbing) && (
+            {!isScrolling && (isHovering || isScrubbing) && (
               <div 
                 className={styles.videoProgressWrapper} 
                 onMouseDown={handleMouseDown}
@@ -381,7 +390,7 @@ const ResourceCard = memo(function ResourceCard({
             )}
 
             {/* Volume Control */}
-            {isHovering && effectiveCardType === "video" && (
+            {!isScrolling && isHovering && effectiveCardType === "video" && (
               <div className={styles.volumeControl} onClick={(e) => e.stopPropagation()}>
                 <button 
                   className={styles.volumeBtn}

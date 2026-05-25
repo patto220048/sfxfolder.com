@@ -9,7 +9,7 @@ import SoundButton from "@/app/components/ui/SoundButton";
 import styles from "../page.module.css";
 
 // Row renderer outside component to prevent re-creation
-const Row = memo(({ index, style, columnCount, flatItems, rowCount, category, onPreview, router, handleSelectFolder, info, hasMoreDB, isLoadingMore, isPlugin, highlightSlug }) => {
+const Row = memo(({ index, style, columnCount, flatItems, rowCount, category, onPreview, router, handleSelectFolder, info, hasMoreDB, isLoadingMore, isPlugin, highlightSlug, isScrolling }) => {
   
   if (index === rowCount - 1 && (isLoadingMore || hasMoreDB)) {
     return (
@@ -31,6 +31,7 @@ const Row = memo(({ index, style, columnCount, flatItems, rowCount, category, on
     <div
       style={{
         ...style,
+        willChange: "transform",
         display: "grid",
         gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
         gap: isPlugin ? "10px" : (info.layout === "audio" || info.layout === "sound" ? "16px" : "24px"),
@@ -47,6 +48,7 @@ const Row = memo(({ index, style, columnCount, flatItems, rowCount, category, on
             onClick={() => handleSelectFolder(item)}
             primaryColor={info.color}
             index={startIndex + i}
+            isScrolling={isScrolling}
           />
         ) : (
           (info.layout === "audio" || info.layout === "sound") ? (
@@ -68,6 +70,7 @@ const Row = memo(({ index, style, columnCount, flatItems, rowCount, category, on
               info={info}
               isPlugin={isPlugin}
               isHighlighted={item.slug === highlightSlug}
+              isScrolling={isScrolling}
             />
           ) : (
             <ResourceCard
@@ -89,6 +92,7 @@ const Row = memo(({ index, style, columnCount, flatItems, rowCount, category, on
               info={info}
               isPlugin={isPlugin}
               isHighlighted={item.slug === highlightSlug}
+              isScrolling={isScrolling}
             />
           )
         )
@@ -131,6 +135,54 @@ const ResourceGrid = ({
   const highlightSlugCategoryRef = React.useRef(slug);
   
   const [activeHighlightSlug, setActiveHighlightSlug] = React.useState(null);
+  const [isScrolling, setIsScrolling] = React.useState(false);
+  const scrollTimeoutRef = React.useRef(null);
+  const lastScrollTopRef = React.useRef(0);
+  const lastScrollTimeRef = React.useRef(0);
+
+  const handleScroll = React.useCallback((e) => {
+    const scrollTop = e.currentTarget.scrollTop;
+    const now = performance.now();
+    
+    const timeDelta = now - lastScrollTimeRef.current;
+    const scrollDelta = Math.abs(scrollTop - lastScrollTopRef.current);
+    
+    lastScrollTopRef.current = scrollTop;
+    lastScrollTimeRef.current = now;
+
+    // Calculate scroll velocity (px/ms)
+    const velocity = timeDelta > 0 ? scrollDelta / timeDelta : 0;
+
+    // Threshold for fast scroll: 1.5px/ms (1500px/s)
+    const isScrollingFast = velocity > 1.5;
+
+    if (isScrollingFast) {
+      if (!isScrolling) {
+        setIsScrolling(true);
+      }
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      scrollTimeoutRef.current = setTimeout(() => {
+        setIsScrolling(false);
+      }, 150);
+    } else {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      scrollTimeoutRef.current = setTimeout(() => {
+        setIsScrolling(false);
+      }, 50); // fast recovery for low velocity
+    }
+  }, [isScrolling]);
+
+  React.useEffect(() => {
+    return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Synchronously reset activeHighlightSlug in render phase if folder or category changes
   if (selectedFolderId !== highlightFolderIdRef.current || slug !== highlightSlugCategoryRef.current) {
@@ -237,30 +289,7 @@ const ResourceGrid = ({
     }
   }, [highlightSlug, flatItems, getColumnCount, isInitialLoading, isFetchLoading, isPending]);
 
-  const getRowHeight = (index, currentColumnCount) => {
-    // Plugin mode needs a bit more height for spacing between rows
-    const pluginRowHeight = 66; // 54px card + 12px vertical padding
-    
-    if (isSoundLayout) return isPlugin ? pluginRowHeight : 86;
-    
-    const hasLoader = hasMoreDB || isLoadingMore;
-    const baseRowCount = Math.ceil(flatItems.length / currentColumnCount);
-    
-    // Loader row
-    if (hasLoader && index === baseRowCount) return 100;
 
-    const startIndex = index * currentColumnCount;
-    const rowItems = flatItems.slice(startIndex, startIndex + currentColumnCount);
-    
-    // If no items in row (shouldn't happen), default to resource height
-    if (rowItems.length === 0) return isPlugin ? pluginRowHeight : 404;
-    
-    // Check if the row contains any resources
-    const hasResource = rowItems.some(item => !item._isFolder);
-    
-    if (hasResource) return isPlugin ? pluginRowHeight : 404;
-    return isPlugin ? pluginRowHeight : 86; // Match audio row height
-  };
 
   if (isLoading && flatItems.length === 0) {
     return (
@@ -295,13 +324,49 @@ const ResourceGrid = ({
           const hasLoader = hasMoreDB || isLoadingMore;
           const rowCount = baseRowCount + (hasLoader ? 1 : 0);
           
+          // Precompute row heights for O(1) lookup
+          const pluginRowHeight = 66;
+          const count = flatItems.length;
+          const rowHeights = [];
+          
+          for (let index = 0; index < baseRowCount; index++) {
+            if (isSoundLayout) {
+              rowHeights.push(isPlugin ? pluginRowHeight : 86);
+              continue;
+            }
+            
+            const startIndex = index * columnCount;
+            const endIndex = Math.min(startIndex + columnCount, count);
+            let hasResource = false;
+            for (let i = startIndex; i < endIndex; i++) {
+              if (flatItems[i] && !flatItems[i]._isFolder) {
+                hasResource = true;
+                break;
+              }
+            }
+            
+            if (hasResource) {
+              rowHeights.push(isPlugin ? pluginRowHeight : 404);
+            } else {
+              rowHeights.push(isPlugin ? pluginRowHeight : 86);
+            }
+          }
+          if (hasLoader) {
+            rowHeights.push(100);
+          }
+
+          const getRowHeight = (index) => {
+            return rowHeights[index] || (isPlugin ? 66 : (isSoundLayout ? 86 : 404));
+          };
+          
           return (
             <List
               ref={listRef}
               key={`${columnCount}-${isSoundLayout}`}
               rowCount={rowCount}
-              rowHeight={(index) => getRowHeight(index, columnCount)}
+              rowHeight={getRowHeight}
               rowComponent={Row}
+              overscanCount={8}
               rowProps={{ 
                 columnCount, 
                 flatItems, 
@@ -315,14 +380,16 @@ const ResourceGrid = ({
                 isLoadingMore,
                 isPlugin,
                 containerWidth: finalWidth,
-                highlightSlug
+                highlightSlug,
+                isScrolling
               }}
+              onScroll={handleScroll}
               onRowsRendered={({ stopIndex }) => {
                 if (stopIndex >= rowCount - 1 && hasMoreDB && !isLoadingMore) {
                   if (onLoadMore) onLoadMore();
                 }
               }}
-              className={isPending ? styles.gridLoading : "scrollbar-hide"}
+              className={isPending ? styles.gridLoading : `scrollbar-hide ${isScrolling ? styles.scrolling : ""}`}
               style={{ width: finalWidth, height: finalHeight }}
             />
           );

@@ -9,7 +9,8 @@ const FolderCard = memo(function FolderCard({
   onClick, 
   isBack = false, 
   primaryColor = "#FACB11",
-  index = 0 
+  index = 0,
+  isScrolling = false
 }) {
   const hexToRgb = (hex) => {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -27,7 +28,7 @@ const FolderCard = memo(function FolderCard({
       style={{ 
         "--cat-color": primaryColor,
         "--cat-color-rgb": rgb,
-        animationDelay: `${index * 0.05}s`
+        animationDelay: (isScrolling || isBack) ? "0s" : `${index * 0.05}s`
       }}
     >
       <div className={styles.iconWrapper}>

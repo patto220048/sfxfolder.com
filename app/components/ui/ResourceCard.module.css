@@ -8,6 +8,7 @@
   height: 380px;
   box-sizing: border-box;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  contain: content;
 
   /* Staggered entrance — use 0.01 to avoid CLS recalculation */
   animation: fadeInUp 0.4s ease forwards;

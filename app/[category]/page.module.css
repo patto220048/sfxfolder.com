@@ -306,6 +306,8 @@
   position: relative;
   width: 100%;
   contain: layout;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
 }
 
 .grid {
@@ -740,6 +742,9 @@
   width: 100%;
   min-height: 0;
   position: relative;
+  will-change: transform;
+  transform: translate3d(0, 0, 0);
+  contain: layout;
 }
 
 .pluginHeader {
@@ -1160,4 +1165,9 @@
   padding: var(--space-1) 0 !important;
   min-height: 0 !important;
 }
+
+.scrolling {
+  pointer-events: none !important;
+}
+
 
