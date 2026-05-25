@@ -7,9 +7,10 @@
 .mainContent {
   flex: 1;
   min-width: 0;
-  padding: 40px var(--space-6) 80px;
+  width: 100%;
   max-width: 1400px;
   margin: 0 auto;
+  padding: 40px var(--space-6) 80px;
 }
 
 /* ---------- Breadcrumb ---------- */
@@ -221,7 +222,9 @@
 .audioPlayerMeta {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 12px;
+  row-gap: 6px;
   font-family: var(--font-mono);
   font-size: 0.7rem;
   color: var(--text-muted);
@@ -502,7 +505,7 @@
 }
 
 /* ---------- Responsive ---------- */
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .content {
     grid-template-columns: 1fr;
     gap: 32px;

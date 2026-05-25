@@ -179,6 +179,8 @@ html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   position: relative;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 body {
@@ -190,6 +192,8 @@ body {
   min-height: 100vh;
   position: relative;
   transition: background-color var(--transition-base), color var(--transition-base);
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 h1,

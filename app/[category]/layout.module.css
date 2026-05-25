@@ -2,6 +2,8 @@
   display: flex;
   min-height: calc(100vh - var(--navbar-height));
   background: var(--bg-primary);
+  width: 100%;
+  max-width: 100%;
 }
 
 .main {
