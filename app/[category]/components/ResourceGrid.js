@@ -9,7 +9,7 @@ import SoundButton from "@/app/components/ui/SoundButton";
 import styles from "../page.module.css";
 
 // Row renderer outside component to prevent re-creation
-const Row = memo(({ index, style, columnCount, flatItems, rowCount, category, onPreview, router, handleSelectFolder, info, hasMoreDB, isLoadingMore, isPlugin, highlightSlug, isScrolling }) => {
+const Row = memo(({ index, style, columnCount, flatItems, rowCount, category, onPreview, router, handleSelectFolder, info, hasMoreDB, isLoadingMore, isPlugin, highlightSlug, isScrolling, containerWidth }) => {
   
   if (index === rowCount - 1 && (isLoadingMore || hasMoreDB)) {
     return (
@@ -27,6 +27,8 @@ const Row = memo(({ index, style, columnCount, flatItems, rowCount, category, on
 
   if (!rowItems || rowItems.length === 0) return null;
 
+  const isMobile = !isPlugin && containerWidth <= 600;
+
   return (
     <div
       style={{
@@ -34,8 +36,8 @@ const Row = memo(({ index, style, columnCount, flatItems, rowCount, category, on
         willChange: "transform",
         display: "grid",
         gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
-        gap: isPlugin ? "10px" : (info.layout === "audio" || info.layout === "sound" ? "16px" : "24px"),
-        padding: isPlugin ? "6px 10px" : "12px 16px",
+        gap: isPlugin ? "10px" : (isMobile ? "12px" : (info.layout === "audio" || info.layout === "sound" ? "16px" : "24px")),
+        padding: isPlugin ? "6px 10px" : (isMobile ? "8px 12px" : "12px 16px"),
         boxSizing: "border-box",
         alignItems: "start",
       }}
@@ -329,9 +331,15 @@ const ResourceGrid = ({
           const count = flatItems.length;
           const rowHeights = [];
           
+          const isMobile = !isPlugin && finalWidth <= 600;
+          const mobileRowHeight = 76;
+          const desktopRowHeight = 86;
+          const soundRowHeight = isPlugin ? pluginRowHeight : (isMobile ? mobileRowHeight : desktopRowHeight);
+          const folderRowHeight = isPlugin ? pluginRowHeight : (isMobile ? mobileRowHeight : desktopRowHeight);
+
           for (let index = 0; index < baseRowCount; index++) {
             if (isSoundLayout) {
-              rowHeights.push(isPlugin ? pluginRowHeight : 86);
+              rowHeights.push(soundRowHeight);
               continue;
             }
             
@@ -348,7 +356,7 @@ const ResourceGrid = ({
             if (hasResource) {
               rowHeights.push(isPlugin ? pluginRowHeight : 404);
             } else {
-              rowHeights.push(isPlugin ? pluginRowHeight : 86);
+              rowHeights.push(folderRowHeight);
             }
           }
           if (hasLoader) {
@@ -356,7 +364,7 @@ const ResourceGrid = ({
           }
 
           const getRowHeight = (index) => {
-            return rowHeights[index] || (isPlugin ? 66 : (isSoundLayout ? 86 : 404));
+            return rowHeights[index] || (isPlugin ? 66 : (isSoundLayout ? (isMobile ? mobileRowHeight : desktopRowHeight) : 404));
           };
           
           return (
