@@ -19,7 +19,6 @@ import NavigationHeader from "./components/NavigationHeader";
 import FilterSection from "./components/FilterSection";
 import ResourceGrid from "./components/ResourceGrid";
 import Sidebar from "@/app/components/layout/Sidebar";
-import PluginNavbar from "@/app/components/layout/PluginNavbar";
 
 import styles from "./page.module.css";
 
@@ -318,6 +317,25 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
     } else if (resource) {
       setPreviewResource(resource);
     }
+  }, [updateUrl]);
+
+  // Handle breadcrumbs navigation click
+  const handleBreadcrumbClick = useCallback((id) => {
+    mediaManager.stopAll();
+    if (!id) handleSelectFolder(null);
+    else {
+      const folder = findInTree(folders, id);
+      if (folder?.current) handleSelectFolder(folder.current);
+    }
+  }, [folders, handleSelectFolder]);
+
+  // Handle sorting order changes
+  const handleSortChange = useCallback((val) => {
+    mediaManager.stopAll();
+    startTransition(() => {
+      setSortBy(val);
+      updateUrl({ sort: val });
+    });
   }, [updateUrl]);
 
   // Listen for Extension Version from Host
@@ -836,39 +854,47 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
   // Standard Web Layout
   return (
     <div className={styles.main}>
-      <NavigationHeader 
-        selectedFolderId={selectedFolderId}
-        resetToRoot={resetToRoot}
-        goBack={goBack}
-        goForward={goForward}
-        historyPointer={historyPointer}
-        historyStack={historyStack}
-        currentFolder={currentFolder}
-        info={info}
-      />
+      <div className={styles.stickyHeaderGroup} style={{ '--cat-color': info.color }}>
+        <NavigationHeader 
+          selectedFolderId={selectedFolderId}
+          resetToRoot={resetToRoot}
+          goBack={goBack}
+          goForward={goForward}
+          historyPointer={historyPointer}
+          historyStack={historyStack}
+          currentFolder={currentFolder}
+          info={info}
+          breadcrumbs={breadcrumbs}
+          onBreadcrumbClick={handleBreadcrumbClick}
+          inPageSearch={inPageSearch}
+          onSearchChange={setInPageSearch}
+          sortBy={sortBy}
+          onSortChange={handleSortChange}
+        />
 
-      <FilterSection
-        info={info}
-        selectedFormats={selectedFormats}
-        setSelectedFormats={setSelectedFormats}
-        availableTags={availableTags}
-        selectedTags={selectedTags}
-        setSelectedTags={setSelectedTags}
-        sortBy={sortBy}
-        setSortBy={setSortBy}
-        inPageSearch={inPageSearch}
-        setInPageSearch={setInPageSearch}
-        resSlug={resSlug}
-        breadcrumbs={breadcrumbs}
-        handleSelectFolder={handleSelectFolder}
-        updateUrl={updateUrl}
-        router={router}
-        pathname={pathname}
-        folders={folders}
-        findInTree={findInTree}
-        isLoading={isInitialLoading || isFetchLoading || isTagsValidating}
-        isPlugin={isPlugin}
-      />
+        <FilterSection
+          info={info}
+          selectedFormats={selectedFormats}
+          setSelectedFormats={setSelectedFormats}
+          availableTags={availableTags}
+          selectedTags={selectedTags}
+          setSelectedTags={setSelectedTags}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
+          inPageSearch={inPageSearch}
+          setInPageSearch={setInPageSearch}
+          resSlug={resSlug}
+          breadcrumbs={breadcrumbs}
+          handleSelectFolder={handleSelectFolder}
+          updateUrl={updateUrl}
+          router={router}
+          pathname={pathname}
+          folders={folders}
+          findInTree={findInTree}
+          isLoading={isInitialLoading || isFetchLoading || isTagsValidating}
+          isPlugin={isPlugin}
+        />
+      </div>
 
       <ResourceGrid 
         filteredResources={filteredResources}

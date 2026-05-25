@@ -86,32 +86,7 @@ const FilterBar = memo(function FilterBar({
               categoryName={categoryName} 
               onBreadcrumbClick={onBreadcrumbClick}
             />
-          ) : (
-            <div className={styles.breadcrumbWrapper}>
-              <button 
-                className={styles.breadcrumbBtn} 
-                onClick={() => {
-                  onBreadcrumbClick?.(null);
-                }}
-                title={`Back to all ${categoryName}`}
-              >
-                <Filter size={14} className={styles.breadcrumbIcon} />
-                <span className={styles.breadcrumbText}>{categoryName}</span>
-              </button>
-              
-              {breadcrumbs.map((bc, idx) => (
-                <div key={bc.id} className={styles.breadcrumbPiece}>
-                  <span className={styles.breadcrumbSep}>/</span>
-                  <button 
-                    className={`${styles.breadcrumbBtn} ${idx === breadcrumbs.length - 1 ? styles.activeBreadcrumb : ""}`}
-                    onClick={() => onBreadcrumbClick?.(bc.id)}
-                  >
-                    {bc.name}
-                  </button>
-                </div>
-              ))}
-            </div>
-          )}
+          ) : null}
 
           <div className={styles.chipGroup}>
             {resSlug && (
@@ -142,88 +117,90 @@ const FilterBar = memo(function FilterBar({
           </div>
         </div>
 
-        <div className={styles.rightGroup}>
-          <div className={styles.searchWrapper}>
-            <AnimatePresence>
-              {isSearchExpanded ? (
-                <motion.div
-                  key="search-input-container"
-                  initial={{ width: 40, opacity: 0 }}
-                  animate={{ width: isPlugin ? 150 : 220, opacity: 1 }}
-                  exit={{ width: 40, opacity: 0 }}
-                  className={styles.searchBar}
-                >
-                  <Search size={14} className={styles.searchInnerIcon} />
-                  <input
-                    ref={searchInputRef}
-                    autoFocus
-                    type="text"
-                    placeholder="Search in category..."
-                    value={inPageSearch}
-                    onChange={(e) => onSearchChange(e.target.value)}
-                    className={styles.searchInput}
-                  />
-                  <button
-                    onClick={() => {
-                      onSearchChange("");
-                      setIsSearchExpanded(false);
-                    }}
-                    className={styles.searchClose}
+        {isPlugin && (
+          <div className={styles.rightGroup}>
+            <div className={styles.searchWrapper}>
+              <AnimatePresence>
+                {isSearchExpanded ? (
+                  <motion.div
+                    key="search-input-container"
+                    initial={{ width: 40, opacity: 0 }}
+                    animate={{ width: isPlugin ? 150 : 220, opacity: 1 }}
+                    exit={{ width: 40, opacity: 0 }}
+                    className={styles.searchBar}
                   >
-                    <X size={14} />
-                  </button>
-                </motion.div>
-              ) : (
-                <motion.button
-                  key="search-btn"
-                  onClick={() => setIsSearchExpanded(true)}
-                  className={styles.iconButton}
-                  whileHover={{ scale: 1.1 }}
-                  whileTap={{ scale: 0.95 }}
-                  title="Search in this category"
-                >
-                  <Search size={18} />
-                </motion.button>
-              )}
-            </AnimatePresence>
-          </div>
-
-          <div className={styles.sortWrapper} ref={sortRef}>
-            <button
-              className={`${styles.sortTrigger} ${isSortOpen ? styles.sortOpen : ""}`}
-              onClick={() => setIsSortOpen(!isSortOpen)}
-            >
-              <ArrowUpDown size={14} />
-              <span>{currentSortLabel}</span>
-              <ChevronDown size={14} className={styles.chevron} />
-            </button>
-
-            <AnimatePresence>
-              {isSortOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                  className={styles.sortMenu}
-                >
-                  {sortOptions.map((opt) => (
+                    <Search size={14} className={styles.searchInnerIcon} />
+                    <input
+                      ref={searchInputRef}
+                      autoFocus
+                      type="text"
+                      placeholder="Search in category..."
+                      value={inPageSearch}
+                      onChange={(e) => onSearchChange(e.target.value)}
+                      className={styles.searchInput}
+                    />
                     <button
-                      key={opt.value}
-                      className={`${styles.sortItem} ${sortBy === opt.value ? styles.activeSortItem : ""}`}
                       onClick={() => {
-                        onSortChange(opt.value);
-                        setIsSortOpen(false);
+                        onSearchChange("");
+                        setIsSearchExpanded(false);
                       }}
+                      className={styles.searchClose}
                     >
-                      {opt.label}
-                      {sortBy === opt.value && <Check size={14} className={styles.checkIcon} />}
+                      <X size={14} />
                     </button>
-                  ))}
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  </motion.div>
+                ) : (
+                  <motion.button
+                    key="search-btn"
+                    onClick={() => setIsSearchExpanded(true)}
+                    className={styles.iconButton}
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
+                    title="Search in this category"
+                  >
+                    <Search size={18} />
+                  </motion.button>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <div className={styles.sortWrapper} ref={sortRef}>
+              <button
+                className={`${styles.sortTrigger} ${isSortOpen ? styles.sortOpen : ""}`}
+                onClick={() => setIsSortOpen(!isSortOpen)}
+              >
+                <ArrowUpDown size={14} />
+                <span>{currentSortLabel}</span>
+                <ChevronDown size={14} className={styles.chevron} />
+              </button>
+
+              <AnimatePresence>
+                {isSortOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className={styles.sortMenu}
+                  >
+                    {sortOptions.map((opt) => (
+                      <button
+                        key={opt.value}
+                        className={`${styles.sortItem} ${sortBy === opt.value ? styles.activeSortItem : ""}`}
+                        onClick={() => {
+                          onSortChange(opt.value);
+                          setIsSortOpen(false);
+                        }}
+                      >
+                        {opt.label}
+                        {sortBy === opt.value && <Check size={14} className={styles.checkIcon} />}
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <AnimatePresence>
