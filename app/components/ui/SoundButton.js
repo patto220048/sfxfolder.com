@@ -27,6 +27,7 @@ function formatTime(seconds) {
 
 const SoundButton = memo(function SoundButton({
   id,
+  categoryId,
   name,
   fileName,
   downloadUrl,
@@ -65,8 +66,8 @@ const SoundButton = memo(function SoundButton({
   const handleFavoriteClick = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
-    toggleFavorite(id);
-  }, [id, toggleFavorite]);
+    toggleFavorite(id, categoryId);
+  }, [id, categoryId, toggleFavorite]);
 
   const router = useRouter();
 

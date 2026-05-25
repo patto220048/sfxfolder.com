@@ -21,6 +21,7 @@ function formatSize(bytes) {
 
 const ResourceCard = memo(function ResourceCard({
   id,
+  categoryId,
   name,
   downloadUrl,
   fileUrl,
@@ -50,8 +51,8 @@ const ResourceCard = memo(function ResourceCard({
   const handleFavoriteClick = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
-    toggleFavorite(id);
-  }, [id, toggleFavorite]);
+    toggleFavorite(id, categoryId);
+  }, [id, categoryId, toggleFavorite]);
 
   const resourceObj = { id, name, fileName, fileFormat, downloadUrl, ...otherProps };
   

@@ -41,12 +41,13 @@ const Sidebar = memo(function Sidebar({
   
   const urlFolderId = searchParams?.get("folder");
   const effectiveFolderId = selectedFolderId || contextFolderId || urlFolderId;
+  const favoritesCount = categorySlug ? (categoryFavoriteCounts[categorySlug] || 0) : favorites.size;
 
 
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const { user, profile, logout, isPremium, isSyncingProfile, markAwaitingPayment } = useAuth();
-  const { favorites } = useFavorites();
+  const { favorites, categoryFavoriteCounts = {} } = useFavorites();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -296,8 +297,8 @@ const Sidebar = memo(function Sidebar({
             >
               <Star size={14} fill={selectedFolderId === "favorites" ? "#FFD93D" : "none"} className={selectedFolderId === "favorites" ? styles.starYellow : ""} />
               <span style={{ flex: 1, marginLeft: "6px" }}>My Favorites</span>
-              {favorites.size > 0 && (
-                <span className={styles.favoritesCount}>{favorites.size}</span>
+              {favoritesCount > 0 && (
+                <span className={styles.favoritesCount}>{favoritesCount}</span>
               )}
             </button>
           )}
