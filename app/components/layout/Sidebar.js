@@ -295,7 +295,7 @@ const Sidebar = memo(function Sidebar({
                 setMobileOpen(false);
               }}
             >
-              <Star size={14} fill={selectedFolderId === "favorites" ? "#FFD93D" : "none"} className={selectedFolderId === "favorites" ? styles.starYellow : ""} />
+              <Star size={16} className={styles.favoriteIcon} />
               <span style={{ flex: 1, marginLeft: "6px" }}>My Favorites</span>
               {favoritesCount > 0 && (
                 <span className={styles.favoritesCount}>{favoritesCount}</span>

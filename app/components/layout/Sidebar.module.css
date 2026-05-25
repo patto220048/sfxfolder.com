@@ -340,6 +340,8 @@
   background: transparent;
   color: var(--text-secondary);
   font-size: 0.85rem;
+  font-family: inherit;
+  font-weight: 500;
   cursor: pointer;
   border-radius: 0;
   transition: all var(--transition-fast);
@@ -455,6 +457,8 @@
   background: transparent;
   color: var(--text-secondary);
   font-size: 0.85rem;
+  font-family: inherit;
+  font-weight: 500;
   cursor: pointer;
   border-radius: 0;
   transition: all var(--transition-fast);
@@ -497,11 +501,21 @@
   background: rgba(255, 255, 255, 0.8);
 }
 
-.starYellow {
-  color: #FFD93D !important;
+.favoriteIcon {
+  flex-shrink: 0;
+  color: #FFD93D;
+  fill: none;
+  opacity: 0.8;
+  transition: transform var(--transition-fast), opacity var(--transition-fast);
 }
 
-.favoritesBtn.favoritesActive .starYellow {
-  color: #000 !important;
-  fill: #000 !important;
+.favoritesBtn:hover .favoriteIcon {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.favoritesBtn.favoritesActive .favoriteIcon {
+  color: #000;
+  fill: #000;
+  opacity: 1;
 }
