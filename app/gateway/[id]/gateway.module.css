@@ -63,6 +63,32 @@
   box-shadow: var(--shadow-neo);
 }
 
+.middleAd {
+  margin-top: 10px;
+  margin-bottom: 25px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+}
+
+.middleAdPlaceholder {
+  margin-top: 10px;
+  margin-bottom: 25px;
+  width: 100%;
+  height: 150px; /* Let's keep it compact so it doesn't push download button too far down, or we can use 250px */
+  background-color: var(--bg-hover);
+  border: 2px dashed var(--border-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  border-radius: 8px;
+  text-align: center;
+  padding: 10px;
+}
+
 .premiumUpgrade {
   margin-top: 20px;
   padding: 15px;

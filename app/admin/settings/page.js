@@ -19,6 +19,7 @@ export default function AdminSettings() {
       category_sticky: "",
       gateway_left: "",
       gateway_right: "",
+      gateway_middle: "",
       home_left: "",
       home_right: "",
       gateway_popup_link: ""
@@ -43,6 +44,7 @@ export default function AdminSettings() {
               home_right: "",
               gateway_left: "",
               gateway_right: "",
+              gateway_middle: "",
               gateway_popup_link: "",
               ...(data.ads_config || {})
             }
@@ -316,6 +318,15 @@ export default function AdminSettings() {
                   style={{ padding: "var(--space-2)", background: "black", border: "1px solid var(--border-default)", color: "var(--neon-green, #00ff00)", fontFamily: "monospace", width: "100%", resize: "vertical" }}
                 />
               </div>
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
+              <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Gateway - Trong hộp tải (300x250 hoặc Banner linh hoạt)</label>
+              <textarea 
+                name="gateway_middle" value={settings.ads_config?.gateway_middle || ""} onChange={handleAdsChange}
+                placeholder="Mã quảng cáo đặt trong khung tải (phù hợp quảng cáo 300x250, native banner)..." rows={3}
+                style={{ padding: "var(--space-2)", background: "black", border: "1px solid var(--border-default)", color: "var(--neon-green, #00ff00)", fontFamily: "monospace", width: "100%", resize: "vertical" }}
+              />
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>

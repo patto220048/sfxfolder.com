@@ -15,6 +15,63 @@ export default function AdSlot({ htmlContent, className }) {
 
     // Set the HTML content
     const container = containerRef.current;
+    
+    // Check if this is Adsterra code using atOptions
+    const isAdsterra = htmlContent.includes('atOptions') || htmlContent.includes('highperformanceformat.com');
+
+    if (isAdsterra) {
+      // Clear container and create an isolated iframe
+      container.innerHTML = '';
+      
+      const iframe = document.createElement('iframe');
+      iframe.style.border = 'none';
+      iframe.style.overflow = 'hidden';
+      iframe.style.background = 'transparent';
+      iframe.setAttribute('scrolling', 'no');
+      
+      // Parse width and height from htmlContent
+      const widthMatch = htmlContent.match(/'width'\s*:\s*(\d+)/i) || htmlContent.match(/"width"\s*:\s*(\d+)/i) || htmlContent.match(/width="(\d+)"/i) || htmlContent.match(/width:(\d+)px/i);
+      const heightMatch = htmlContent.match(/'height'\s*:\s*(\d+)/i) || htmlContent.match(/"height"\s*:\s*(\d+)/i) || htmlContent.match(/height="(\d+)"/i) || htmlContent.match(/height:(\d+)px/i);
+      
+      const w = widthMatch ? widthMatch[1] : '300';
+      const h = heightMatch ? heightMatch[1] : '250';
+      
+      iframe.style.width = `${w}px`;
+      iframe.style.height = `${h}px`;
+      
+      container.appendChild(iframe);
+      
+      try {
+        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+        iframeDoc.open();
+        iframeDoc.write(`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <style>
+                body {
+                  margin: 0;
+                  padding: 0;
+                  display: flex;
+                  justify-content: center;
+                  align-items: center;
+                  background: transparent;
+                  overflow: hidden;
+                }
+              </style>
+            </head>
+            <body>
+              ${htmlContent}
+            </body>
+          </html>
+        `);
+        iframeDoc.close();
+      } catch (err) {
+        console.warn("AdSlot: Failed to write to isolated iframe:", err);
+      }
+      return;
+    }
+
     container.innerHTML = htmlContent;
 
     // React's dangerouslySetInnerHTML doesn't execute <script> tags.

@@ -106,6 +106,17 @@ export default function ClientGateway({ resource }) {
               </div>
             </div>
 
+            {/* Middle Ad inside container */}
+            {ads.gateway_middle && ads.gateway_middle.trim() !== '' ? (
+              <div className={styles.middleAd}>
+                <AdRenderer content={ads.gateway_middle} />
+              </div>
+            ) : (
+              <div className={styles.middleAdPlaceholder}>
+                Advertisement<br />(300x250)
+              </div>
+            )}
+
             {status === "waiting" && countdown > 0 && (
               <button className={styles.fallbackBtn} disabled>
                 <Loader2 size={18} className="animate-spin" /> Please wait...
