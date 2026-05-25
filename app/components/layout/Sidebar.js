@@ -41,13 +41,13 @@ const Sidebar = memo(function Sidebar({
   
   const urlFolderId = searchParams?.get("folder");
   const effectiveFolderId = selectedFolderId || contextFolderId || urlFolderId;
-  const favoritesCount = categorySlug ? (categoryFavoriteCounts[categorySlug] || 0) : favorites.size;
 
 
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const { user, profile, logout, isPremium, isSyncingProfile, markAwaitingPayment } = useAuth();
   const { favorites, categoryFavoriteCounts = {} } = useFavorites();
+  const favoritesCount = categorySlug ? (categoryFavoriteCounts[categorySlug] || 0) : favorites.size;
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
