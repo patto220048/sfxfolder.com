@@ -212,6 +212,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
   const lastSyncedFormatsRef = useRef("");
   const lastSyncedFolderRef = useRef(null);
   const lastSyncedSortRef = useRef("newest");
+  const lastLoadedFavoritesRef = useRef(null);
 
   useEffect(() => {
     if (!isInitialized || isPending) return;
@@ -435,6 +436,21 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
       mediaManager.stopAll();
       const isFolderChangeOnly = debouncedFolderId !== lastSyncedFolderRef.current && !debouncedSearch && debouncedTags.length === 0 && debouncedFormats.length === 0;
       
+      // Bypass server fetch for search/filter changes within "My Favorites" folder,
+      // as we perform client-side filtering on all favorited resources already in memory.
+      const isFavoritesLoaded = debouncedFolderId === 'favorites' && loadedFolderId === 'favorites';
+      const favoritesNotChanged = lastLoadedFavoritesRef.current &&
+        lastLoadedFavoritesRef.current.length === favoriteIdsArray.length &&
+        lastLoadedFavoritesRef.current.every((val, index) => val === favoriteIdsArray[index]);
+
+      if (isFavoritesLoaded && favoritesNotChanged) {
+        if (requestId === lastRequestIdRef.current) {
+          setIsInitialLoading(false);
+          setIsFetchLoading(false);
+        }
+        return;
+      }
+
       if (hasLoadedInitialStateRef.current && isFirstRun.current) {
         isFirstRun.current = false;
         const hasNoFilters = !debouncedSearch && debouncedTags.length === 0 && debouncedFormats.length === 0;
@@ -494,6 +510,9 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
             return freshList;
           });
           setLoadedFolderId(debouncedFolderId);
+          if (debouncedFolderId === 'favorites') {
+            lastLoadedFavoritesRef.current = favoriteIdsArray;
+          }
           setServerOffset(fresh?.length || 0);
           setHasMoreDB(fresh?.length === PAGE_SIZE_BATCH);
           setVisibleCount(PAGE_SIZE_DISPLAY);
@@ -620,7 +639,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
 
   // 2. Tối ưu: Tính toán danh sách tag hiển thị dựa trên trạng thái hiện tại
   const availableTags = useMemo(() => {
-    const isFiltered = selectedTags.length > 0 || inPageSearch || selectedFormats.length > 0;
+    const isFiltered = selectedTags.length > 0 || inPageSearch || selectedFormats.length > 0 || selectedFolderId === 'favorites';
     const selectedTagsSet = new Set(selectedTags.map(t => t.toLowerCase()));
     
     let baseTagsNames;
