@@ -267,6 +267,14 @@
   to { transform: rotate(360deg); }
 }
 
+.container.detailMode {
+  height: 100%;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  border: none;
+}
+
 .container.cardMode {
   height: 100%;
   padding: 0;
@@ -334,11 +342,15 @@
 
 @media (max-width: 768px) {
   .container {
-    min-height: 350px;
+    min-height: 280px !important;
+  }
+  .container.detailMode {
+    min-height: 0 !important;
   }
   .labels {
     padding: 0 10px;
     top: 20px;
+    bottom: auto !important;
   }
   .labelItem {
     padding: 4px 10px;

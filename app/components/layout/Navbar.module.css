@@ -319,3 +319,85 @@
   flex: 0 0 auto !important;
   gap: 5px !important;
 }
+
+/* ---------- Web Responsive Header Customizations ---------- */
+.logoImage {
+  display: none;
+  border-radius: 50%;
+}
+
+.logoIcon, .logoRest {
+  display: inline-block;
+  transition: all var(--transition-fast);
+}
+
+@media (max-width: 768px) {
+  .logoIcon, .logoRest {
+    display: none !important;
+  }
+
+  .logoImage {
+    display: block;
+    width: 32px;
+    height: 32px;
+    object-fit: contain;
+  }
+}
+
+@media (max-width: 600px) {
+  .inner {
+    padding: 0 var(--space-4) !important;
+  }
+
+  .actions {
+    gap: 6px !important;
+  }
+
+  .logoImage {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  /* Scale down standard action buttons to 32px x 32px */
+  .searchBtn,
+  .hamburger,
+  .actions [class*="ThemeToggle_toggle"],
+  .actions [class*="GlobalAudioSettings_trigger"] {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+  }
+
+  /* Scale down icons inside these buttons */
+  .searchBtn svg,
+  .hamburger svg,
+  .actions [class*="ThemeToggle_toggle"] svg,
+  .actions [class*="GlobalAudioSettings_trigger"] svg {
+    width: 15px !important;
+    height: 15px !important;
+  }
+
+  /* Scale down UserMenu trigger and avatar */
+  .actions [class*="UserMenu_trigger"] {
+    border-width: 1px !important;
+  }
+
+  .actions [class*="UserMenu_avatar"],
+  .actions [class*="UserMenu_avatarFallback"] {
+    width: 28px !important;
+    height: 28px !important;
+    font-size: 0.75rem !important;
+  }
+
+  /* Scale down SignIn button */
+  .signInBtn {
+    height: 32px !important;
+    padding: 0 10px !important;
+    gap: 4px !important;
+  }
+
+  .signInBtn svg {
+    width: 16px !important;
+    height: 16px !important;
+  }
+}

@@ -1,14 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback, useMemo } from "react";
+import { getOptimizedUrl } from "@/app/lib/mediaUtils";
 import styles from "./LUTPreview.module.css";
-
-const getOptimizedUrl = (url, { width, quality }) => {
-  if (!url) return "";
-  if (!url.startsWith('http')) return url;
-  const baseUrl = url.split('?')[0];
-  return `${baseUrl}?q=${quality}&w=${width}&auto=format&fit=crop`;
-};
 
 const SAMPLE_IMAGES = [
   { id: 'portrait', name: 'Portrait', url: '/images/samples/portrait.png', gradedUrl: null },
@@ -119,8 +113,9 @@ export default function LUTPreview({
   }, [activeSample]);
 
   const containerRef = useRef(null);
+  const imgRef = useRef(null);
   const [imageRatio, setImageRatio] = useState(null);
-  const [imgBounds, setImgBounds] = useState({ left: 0, width: 0 });
+  const [imgBounds, setImgBounds] = useState({ left: 0, top: 0, width: 0, height: 0 });
   const [originalLoaded, setOriginalLoaded] = useState(false);
   const [gradedLoaded, setGradedLoaded] = useState(false);
 
@@ -128,11 +123,34 @@ export default function LUTPreview({
     setSliderPos(50);
   }, [activeImageUrl]);
 
+  // Handle cached or slow loading of the original image
+  useEffect(() => {
+    const img = imgRef.current;
+    if (!img) return;
+
+    const handleLoad = () => {
+      const { naturalWidth, naturalHeight } = img;
+      if (naturalWidth && naturalHeight) {
+        setImageRatio(naturalWidth / naturalHeight);
+      }
+      setOriginalLoaded(true);
+    };
+
+    if (img.complete) {
+      handleLoad();
+    } else {
+      img.addEventListener('load', handleLoad);
+      return () => img.removeEventListener('load', handleLoad);
+    }
+  }, [activeImageUrl]);
+
   useEffect(() => {
     setOriginalLoaded(false);
     setGradedLoaded(false);
     setIsLoading(true);
     setError(null);
+    setImageRatio(null); // Reset ratio to prevent jumpy layout and misalignments
+    setImgBounds({ left: 0, top: 0, width: 0, height: 0 });
   }, [currentSampleId]);
 
   useEffect(() => {
@@ -160,16 +178,25 @@ export default function LUTPreview({
     
     const wrapperRatio = wrapperWidth / wrapperHeight;
     
-    let renderedWidth, leftOffset;
+    let renderedWidth, renderedHeight, leftOffset, topOffset;
     if (imageRatio > wrapperRatio) {
       renderedWidth = wrapperWidth;
+      renderedHeight = wrapperWidth / imageRatio;
       leftOffset = 0;
+      topOffset = (wrapperHeight - renderedHeight) / 2;
     } else {
       renderedWidth = wrapperHeight * imageRatio;
+      renderedHeight = wrapperHeight;
       leftOffset = (wrapperWidth - renderedWidth) / 2;
+      topOffset = 0;
     }
     
-    setImgBounds({ left: leftOffset, width: renderedWidth });
+    setImgBounds({ 
+      left: leftOffset, 
+      top: topOffset, 
+      width: renderedWidth, 
+      height: renderedHeight 
+    });
   }, [imageRatio]);
 
   useEffect(() => {
@@ -178,6 +205,20 @@ export default function LUTPreview({
     window.addEventListener("resize", updateImgBounds);
     return () => window.removeEventListener("resize", updateImgBounds);
   }, [imageRatio, updateImgBounds]);
+
+  const clipPercent = useMemo(() => {
+    if (!containerRef.current || !imgBounds.width) return sliderPos;
+    const wrapper = containerRef.current.querySelector(`.${styles.comparisonWrapper}`);
+    if (!wrapper) return sliderPos;
+    const wrapperWidth = wrapper.getBoundingClientRect().width;
+    if (!wrapperWidth) return sliderPos;
+    
+    const leftPercent = (imgBounds.left / wrapperWidth) * 100;
+    const widthPercent = (imgBounds.width / wrapperWidth) * 100;
+    
+    if (widthPercent === 0) return sliderPos;
+    return Math.max(0, Math.min(100, ((sliderPos - leftPercent) / widthPercent) * 100));
+  }, [sliderPos, imgBounds]);
 
   const handleMove = useCallback((clientX) => {
     if (!containerRef.current || !imageRatio) return;
@@ -232,15 +273,19 @@ export default function LUTPreview({
     };
   }, [isResizing, handleMove]);
 
+  const isDetail = variant === 'detail';
   const isOverlay = variant === 'overlay';
+  const showHeader = !isCard && (!isDetail || samples.length > 1);
 
   return (
-    <div className={`${styles.container} ${isCard ? styles.cardMode : ''}`} ref={containerRef}>
-      {!isCard && (
-        <div className={`${styles.header} ${isOverlay ? styles.overlayHeader : ''}`}>
-          <div className={styles.titleWrapper}>
-            <h3 className={styles.previewTitle}>{finalName}</h3>
-          </div>
+    <div className={`${styles.container} ${isCard ? styles.cardMode : ''} ${isDetail ? styles.detailMode : ''}`} ref={containerRef}>
+      {showHeader && (
+        <div className={`${styles.header} ${isOverlay ? styles.overlayHeader : ''} ${isDetail ? styles.detailHeader : ''}`}>
+          {!isDetail && (
+            <div className={styles.titleWrapper}>
+              <h3 className={styles.previewTitle}>{finalName}</h3>
+            </div>
+          )}
           
           {samples.length > 1 && (
             <div className={styles.sampleSwitcher}>
@@ -269,9 +314,18 @@ export default function LUTPreview({
       >
         {/* Original Image */}
         <img 
+          ref={imgRef}
           src={activeImageUrl} 
           alt="Original" 
           className={styles.imageOriginal}
+          style={imgBounds.width > 0 && imgBounds.height > 0 ? {
+            position: 'absolute',
+            left: `${imgBounds.left}px`,
+            top: `${imgBounds.top}px`,
+            width: `${imgBounds.width}px`,
+            height: `${imgBounds.height}px`,
+            objectFit: 'fill'
+          } : undefined}
           onLoad={(e) => {
             const { naturalWidth, naturalHeight } = e.target;
             if (naturalWidth && naturalHeight) {
@@ -291,7 +345,15 @@ export default function LUTPreview({
             src={activeGradedImageUrl} 
             alt="Graded" 
             className={styles.imageGraded}
-            style={{ 
+            style={imgBounds.width > 0 && imgBounds.height > 0 ? {
+              position: 'absolute',
+              left: `${imgBounds.left}px`,
+              top: `${imgBounds.top}px`,
+              width: `${imgBounds.width}px`,
+              height: `${imgBounds.height}px`,
+              objectFit: 'fill',
+              clipPath: `inset(0 0 0 ${clipPercent}%)`
+            } : {
               clipPath: `inset(0 0 0 ${sliderPos}%)`
             }}
             onLoad={() => setGradedLoaded(true)}
@@ -319,7 +381,12 @@ export default function LUTPreview({
           <>
             <div 
               className={styles.slider} 
-              style={{ left: `${sliderPos}%` }}
+              style={{ 
+                left: `${sliderPos}%`,
+                top: imgBounds.height > 0 ? `${imgBounds.top}px` : 0,
+                bottom: imgBounds.height > 0 ? `${imgBounds.top}px` : 0,
+                height: imgBounds.height > 0 ? `${imgBounds.height}px` : '100%'
+              }}
             >
               <div className={styles.sliderLine} />
               <div className={styles.sliderHandle} />

@@ -517,7 +517,7 @@ export default function ResourceDetail({
           
           {/* === LUT: interactive split-view === */}
           {isLUT && (
-            <div className={styles.previewBox} style={{ cursor: 'default' }}>
+            <div className={`${styles.previewBox} ${styles.lutPreviewBox}`} style={{ cursor: 'default' }}>
               <LUTPreview 
                 lutUrl={resolvedUrl}
                 resourceName={resource.name}
@@ -527,7 +527,7 @@ export default function ResourceDetail({
                 gradedThumbnailUrl={resource.gradedThumbnailUrl}
                 customSamples={resource.customSamples || []}
                 categorySlug={categorySlug}
-                height="100%"
+                variant="detail"
               />
               <div className={styles.formatBadge}>
                 {resource.fileFormat?.toUpperCase()}

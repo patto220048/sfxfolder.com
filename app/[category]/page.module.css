@@ -419,7 +419,137 @@
   }
 }
 
+@media (max-width: 600px) {
+  .pageHeader {
+    height: 48px !important;
+    min-height: 48px !important;
+    gap: 8px !important;
+  }
 
+  .pageHeader.searchExpanded {
+    flex-wrap: wrap !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding-bottom: 8px !important;
+  }
+
+  .pageHeader.searchExpanded .leftGroup {
+    flex: none !important;
+    width: 100% !important;
+  }
+
+  .pageHeader.searchExpanded .rightGroup {
+    flex: none !important;
+    width: 100% !important;
+    justify-content: space-between !important;
+    margin-top: 4px !important;
+  }
+
+  .leftGroup {
+    gap: 8px !important;
+  }
+
+  .rightGroup {
+    gap: 6px !important;
+  }
+
+  .navActions {
+    gap: 6px !important;
+  }
+
+  .navArrows {
+    gap: 4px !important;
+  }
+
+  .navBtn {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    border-radius: 0px !important;
+  }
+
+  .navBtn svg {
+    width: 15px !important;
+    height: 15px !important;
+  }
+
+  .breadcrumbTitle {
+    gap: 4px !important;
+  }
+
+  .breadcrumbLink {
+    font-size: 10px !important;
+  }
+
+  .breadcrumbSep {
+    font-size: 10px !important;
+  }
+
+  .activeTitle {
+    font-size: 11px !important;
+  }
+
+  .searchWrapper {
+    height: 32px !important;
+  }
+
+  .searchBar {
+    padding: 0 8px !important;
+    gap: 6px !important;
+  }
+
+  .searchInput {
+    font-size: 0.75rem !important;
+  }
+
+  .searchInnerIcon {
+    width: 13px !important;
+    height: 13px !important;
+  }
+
+  .searchClose {
+    padding: 2px !important;
+  }
+
+  .searchClose svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+
+  .iconButton {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+  }
+
+  .iconButton svg {
+    width: 15px !important;
+    height: 15px !important;
+  }
+
+  .sortTrigger {
+    height: 32px !important;
+    padding: 0 8px !important;
+    font-size: 0.75rem !important;
+    gap: 6px !important;
+    border-radius: 0px !important;
+  }
+
+  .sortTrigger svg,
+  .sortTrigger :global(svg) {
+    width: 13px !important;
+    height: 13px !important;
+  }
+
+  .sortMenu {
+    width: 160px !important;
+  }
+
+  .sortItem {
+    padding: 6px 10px !important;
+    font-size: 0.75rem !important;
+  }
+}
 
 /* ---------- Skeleton Loading ---------- */
 .sidebarSkeleton {

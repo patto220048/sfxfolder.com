@@ -89,7 +89,13 @@ export default function Navbar({ isPlugin = false }) {
               onClick={(e) => handleLinkClick(e, "/")}
             >
               <span className={styles.logoText}>
-                {settings?.site_name || "SFXFolder.com"}
+                <img 
+                  src="/favicon.webp" 
+                  alt="SFXFolder Logo" 
+                  className={styles.logoImage} 
+                />
+                <span className={styles.logoIcon}>SFX</span>
+                <span className={styles.logoRest}>FOLDER</span>
               </span>
             </Link>
           )}

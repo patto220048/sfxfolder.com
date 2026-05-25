@@ -34,6 +34,8 @@ const Sidebar = memo(function Sidebar({
   const { selectedFolderId: contextFolderId } = useSidebar();
   const isPluginMode = isPluginSidebar || searchParams?.get('mode') === 'plugin' || pathname?.startsWith('/plugins/');
   
+
+
   // Auto-hide standard sidebar if we are in plugin mode but this is not the designated plugin sidebar
   if (isPluginMode && !isPluginSidebar) {
     return null;

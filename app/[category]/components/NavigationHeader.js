@@ -56,7 +56,7 @@ const NavigationHeader = ({
   const currentSortLabel = sortOptions.find((o) => o.value === sortBy)?.label || "Sort";
 
   return (
-    <div className={styles.pageHeader}>
+    <div className={`${styles.pageHeader} ${isSearchExpanded ? styles.searchExpanded : ""}`}>
       <div className={styles.leftGroup}>
         <div className={styles.navActions}>
           <button 
