@@ -411,18 +411,34 @@
   .mobileToggle {
     display: flex;
     position: fixed;
-    bottom: var(--space-6);
-    right: var(--space-6);
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
+    bottom: 200px;
+    left: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 0 22px 22px 0;
     background: var(--text-primary);
     color: var(--bg-primary);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    box-shadow: 4px 4px 12px rgba(0, 0, 0, 0.3);
     z-index: calc(var(--z-sidebar) + 10);
     padding: 0;
     justify-content: center;
-    border: none;
+    align-items: center;
+    border: 1px solid var(--border-default);
+    border-left: none;
+    cursor: pointer;
+    transform: translateX(0);
+    transition: transform var(--transition-base), border-radius var(--transition-base), background-color var(--transition-fast), border var(--transition-base);
+  }
+
+  .mobileToggle:not(.open) {
+    animation: bounceRight 1.8s ease-in-out 3, pulseGlow 2.5s infinite;
+  }
+
+  .mobileToggle.open {
+    transform: translateX(280px);
+    border-radius: 50%;
+    border: 1px solid var(--cat-color, var(--border-active));
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   }
 
   .overlay {
@@ -518,4 +534,25 @@
   color: #000;
   fill: #000;
   opacity: 1;
+}
+
+@keyframes bounceRight {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(8px);
+  }
+}
+
+@keyframes pulseGlow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.3);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(255, 255, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
+  }
 }

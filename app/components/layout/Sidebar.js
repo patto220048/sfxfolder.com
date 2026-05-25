@@ -209,9 +209,10 @@ const Sidebar = memo(function Sidebar({
       {/* Mobile toggle - Hidden in plugin mode as we use mini-sidebar instead */}
       {!isPluginMode && (
         <button
-          className={styles.mobileToggle}
+          className={`${styles.mobileToggle} ${mobileOpen ? styles.open : ""}`}
           onClick={() => setMobileOpen(!mobileOpen)}
           aria-label="Toggle sidebar"
+          style={{ "--cat-color": primaryColor }}
         >
           {mobileOpen ? <X size={20} /> : <Menu size={20} />}
         </button>
@@ -328,7 +329,12 @@ const Sidebar = memo(function Sidebar({
                   router.push(`${targetPath}?${params.toString()}`);
                 }
               }
-              setMobileOpen(false);
+              
+              // Only close sidebar if the folder has no subfolders (leaf folder)
+              const hasChildren = folder && folder.children && folder.children.length > 0;
+              if (!hasChildren) {
+                setMobileOpen(false);
+              }
             }}
           />
         </div>
