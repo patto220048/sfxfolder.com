@@ -692,6 +692,9 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
   );
 
   const breadcrumbs = useMemo(() => {
+    if (selectedFolderId === 'favorites') {
+      return [{ id: 'favorites', name: 'My Favorites' }];
+    }
     const crumbs = [];
     let curr = findInTree(folders, selectedFolderId);
     while (curr) {
