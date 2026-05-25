@@ -3,9 +3,10 @@
 
 import { memo, useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
-import { ChevronRight, Menu, X, User, LogIn, PanelLeftClose, PanelLeftOpen, Settings, CreditCard, Info, Globe, LogOut, Loader2 } from "lucide-react";
+import { ChevronRight, Menu, X, User, LogIn, PanelLeftClose, PanelLeftOpen, Settings, CreditCard, Info, Globe, LogOut, Loader2, Star } from "lucide-react";
 import { useSidebar } from "@/app/context/SidebarContext";
 import { useAuth } from "@/app/lib/auth-context";
+import { useFavorites } from "@/app/context/FavoritesContext";
 import AuthModal from "@/app/components/auth/AuthModal";
 
 
@@ -45,6 +46,7 @@ const Sidebar = memo(function Sidebar({
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const { user, profile, logout, isPremium, isSyncingProfile, markAwaitingPayment } = useAuth();
+  const { favorites } = useFavorites();
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -270,6 +272,35 @@ const Sidebar = memo(function Sidebar({
               ) : null;
             })()}
           </button>
+
+          {/* "My Favorites" option */}
+          {user && (
+            <button
+              className={`${styles.favoritesBtn} ${selectedFolderId === "favorites" ? styles.favoritesActive : ""}`}
+              onClick={() => {
+                if (onSelectFolder) {
+                  onSelectFolder({ id: "favorites", name: "My Favorites" });
+                } else {
+                  const params = new URLSearchParams(window.location.search);
+                  params.set("folder", "favorites");
+                  params.delete("highlight");
+                  const targetPath = isPluginMode ? "/plugins/premiere" : `/${categorySlug || ""}`;
+                  if (typeof window !== "undefined" && window.location.pathname.replace(/\/$/, "") === targetPath.replace(/\/$/, "")) {
+                    window.history.pushState(null, "", `${targetPath}?${params.toString()}`);
+                  } else {
+                    router.push(`${targetPath}?${params.toString()}`);
+                  }
+                }
+                setMobileOpen(false);
+              }}
+            >
+              <Star size={14} fill={selectedFolderId === "favorites" ? "#FFD93D" : "none"} className={selectedFolderId === "favorites" ? styles.starYellow : ""} />
+              <span style={{ flex: 1, marginLeft: "6px" }}>My Favorites</span>
+              {favorites.size > 0 && (
+                <span className={styles.favoritesCount}>{favorites.size}</span>
+              )}
+            </button>
+          )}
 
           <TreeFolder
             folders={folders}

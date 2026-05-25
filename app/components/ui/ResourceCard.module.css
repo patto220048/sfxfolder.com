@@ -447,7 +447,7 @@
 .lutCardHeader {
   position: absolute;
   top: 10px;
-  left: 10px;
+  left: 48px;
   z-index: 15;
 }
 
@@ -689,5 +689,65 @@
     box-shadow: none;
   }
 }
+.previewWrapper {
+  position: relative;
+  width: 100%;
+}
 
+.favoriteBtn {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  width: 32px;
+  height: 32px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 15;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0;
+}
 
+.favoriteBtn:hover {
+  background: rgba(0, 0, 0, 0.85);
+  border-color: var(--cat-color, var(--text-primary));
+  color: var(--text-primary);
+  transform: scale(1.05);
+}
+
+.favoriteBtn.active {
+  color: #FFD93D;
+  border-color: #FFD93D;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.compactFavoriteBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border: 1px solid var(--border-default);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.compactFavoriteBtn:hover {
+  border-color: var(--cat-color, var(--text-primary));
+  color: var(--text-primary);
+  background: var(--bg-hover);
+}
+
+.compactFavoriteBtn.active {
+  color: #FFD93D;
+  border-color: #FFD93D;
+}

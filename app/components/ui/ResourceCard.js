@@ -5,10 +5,11 @@ import { memo, useState, useRef, useCallback, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Download as DownloadCount, Play, Eye, Volume2, VolumeX } from "lucide-react";
+import { Download as DownloadCount, Play, Eye, Volume2, VolumeX, Star } from "lucide-react";
 import DownloadButton from "./DownloadButton";
 import { mediaManager } from "@/app/lib/mediaManager";
 import { isVideoFormat, isImageFormat, isFontFormat, isLUTFormat, getOptimizedUrl } from "@/app/lib/mediaUtils";
+import { useFavorites } from "@/app/context/FavoritesContext";
 import styles from "./ResourceCard.module.css";
 
 function formatSize(bytes) {
@@ -43,6 +44,15 @@ const ResourceCard = memo(function ResourceCard({
   ...otherProps
 }) {
   const router = useRouter();
+  const { isFavorited, toggleFavorite } = useFavorites();
+  const isFav = isFavorited(id);
+
+  const handleFavoriteClick = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleFavorite(id);
+  }, [id, toggleFavorite]);
+
   const resourceObj = { id, name, fileName, fileFormat, downloadUrl, ...otherProps };
   
   // Determine effective card type based on format if not explicitly set to something else
@@ -663,6 +673,14 @@ const ResourceCard = memo(function ResourceCard({
 
           {/* Compact Right: Actions */}
           <div className={styles.compactActions}>
+            <button 
+              type="button"
+              className={`${styles.compactFavoriteBtn} ${isFav ? styles.active : ""}`}
+              onClick={handleFavoriteClick}
+              title={isFav ? "Remove from Favorites" : "Add to Favorites"}
+            >
+              <Star size={13} fill={isFav ? "#FFD93D" : "none"} />
+            </button>
             <DownloadButton 
               downloadUrl={resolvedUrl} 
               fileName={name || fileName} 
@@ -675,8 +693,18 @@ const ResourceCard = memo(function ResourceCard({
         </>
       ) : (
         <>
-          <div className={styles.previewClickArea} onClick={() => onPreview && onPreview()}>
-            {renderPreview()}
+          <div className={styles.previewWrapper}>
+            <div className={styles.previewClickArea} onClick={() => onPreview && onPreview()}>
+              {renderPreview()}
+            </div>
+            <button 
+              type="button"
+              className={`${styles.favoriteBtn} ${isFav ? styles.active : ""}`}
+              onClick={handleFavoriteClick}
+              title={isFav ? "Remove from Favorites" : "Add to Favorites"}
+            >
+              <Star size={16} fill={isFav ? "#FFD93D" : "none"} />
+            </button>
           </div>
 
           <div className={styles.info} onClick={() => onPreview && onPreview()}>

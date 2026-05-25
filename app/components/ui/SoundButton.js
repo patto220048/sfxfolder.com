@@ -2,12 +2,13 @@
 
 import { memo, useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Download, Eye, Plus, Loader2 } from "lucide-react";
+import { Download, Eye, Plus, Loader2, Star } from "lucide-react";
 import { useAuth } from "@/app/lib/auth-context";
 import { usePluginCache } from "@/app/hooks/usePluginCache";
 import { incrementDownloadCount } from "@/app/lib/api";
 import { mediaManager } from "@/app/lib/mediaManager";
 import { isVideoFormat, isImageFormat, isFontFormat, isAudioFormat } from "@/app/lib/mediaUtils";
+import { useFavorites } from "@/app/context/FavoritesContext";
 import styles from "./SoundButton.module.css";
 
 function formatSize(bytes) {
@@ -58,6 +59,15 @@ const SoundButton = memo(function SoundButton({
   } = usePluginCache(id, name || fileName, fileFormat);
   
   const { user, session, isPremium: userIsPremium, isAdmin, loading } = useAuth();
+  const { isFavorited, toggleFavorite } = useFavorites();
+  const isFav = isFavorited(id);
+
+  const handleFavoriteClick = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    toggleFavorite(id);
+  }, [id, toggleFavorite]);
+
   const router = useRouter();
 
   const audioRef = useRef(null);
@@ -503,6 +513,17 @@ const SoundButton = memo(function SoundButton({
           {Math.round(similarity * 100)}% MATCH
         </div>
       )}
+
+      {/* Star button */}
+      <button
+        type="button"
+        className={`${styles.favoriteBtn} ${isFav ? styles.active : ""}`}
+        onClick={handleFavoriteClick}
+        title={isFav ? "Remove from Favorites" : "Add to Favorites"}
+        aria-label={isFav ? "Remove from Favorites" : "Add to Favorites"}
+      >
+        <Star size={14} fill={isFav ? "#FFD93D" : "none"} />
+      </button>
 
       {/* Detail Page Link */}
       {!isPlugin && !isInsidePlugin && onPreview && (

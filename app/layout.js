@@ -8,6 +8,7 @@ import { ToastProvider } from "@/app/context/ToastContext";
 import { ToastContainer } from "@/app/components/ui/ToastContainer";
 import { SiteProvider } from "@/app/context/SiteContext";
 import { AuthProvider } from "@/app/lib/auth-context";
+import { FavoritesProvider } from "@/app/context/FavoritesContext";
 import { GoogleAnalytics } from '@next/third-parties/google';
 
 import Script from "next/script";
@@ -251,16 +252,18 @@ export default async function RootLayout({ children }) {
         >
           <ToastProvider>
             <AuthProvider>
-              <SiteProvider initialSettings={settings} initialCategories={categories}>
-                <EzoicRouteHandler />
-                <ClientGlobalAds />
-                <SmoothScroll>
-                  <LayoutShell initialCategories={categories}>{children}</LayoutShell>
-                </SmoothScroll>
-                <ToastContainer />
-                <SpeedInsights />
-                <Analytics />
-              </SiteProvider>
+              <FavoritesProvider>
+                <SiteProvider initialSettings={settings} initialCategories={categories}>
+                  <EzoicRouteHandler />
+                  <ClientGlobalAds />
+                  <SmoothScroll>
+                    <LayoutShell initialCategories={categories}>{children}</LayoutShell>
+                  </SmoothScroll>
+                  <ToastContainer />
+                  <SpeedInsights />
+                  <Analytics />
+                </SiteProvider>
+              </FavoritesProvider>
             </AuthProvider>
           </ToastProvider>
         </ThemeProvider>

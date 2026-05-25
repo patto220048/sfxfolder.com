@@ -8,6 +8,7 @@ import { Volume2, Music, Camera, Layers, Video, Folder } from "lucide-react";
 import useSWR from "swr";
 import { useDebounce } from "@/app/hooks/useDebounce";
 import { usePluginDataCache } from "@/app/hooks/usePluginDataCache";
+import { useFavorites } from "@/app/context/FavoritesContext";
 
 import dynamic from "next/dynamic";
 const PreviewOverlay = dynamic(() => import("@/app/components/ui/PreviewOverlay"));
@@ -50,6 +51,9 @@ const getDescendantIds = (node) => {
 const LATEST_EXT_VERSION = "1.0.3";
 
 function ClientPageContent({ slug, info, folders, resources: initialResources, categoryTags = [], isPlugin: propIsPlugin = false, initialCacheHint = false, faqs = [] }) {
+  const { favorites } = useFavorites();
+  const favoriteIdsArray = useMemo(() => Array.from(favorites), [favorites]);
+
   const [extVersion, setExtVersion] = useState(null);
   const [showUpdateBanner, setShowUpdateBanner] = useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState(null);
@@ -117,6 +121,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
   const debouncedFormats = useDebounce(selectedFormats, 200);
   const debouncedFolderId = useDebounce(selectedFolderId, 50); // Faster folder transition
   const debouncedSortBy = useDebounce(sortBy, 100);
+  const favoritesTrigger = debouncedFolderId === 'favorites' ? favoriteIdsArray : null;
   
   // Track the folder ID for which data is currently loaded
   const [loadedFolderId, setLoadedFolderId] = useState(null);
@@ -473,6 +478,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
           searchTerm: debouncedSearch,
           offset: 0,
           limit: PAGE_SIZE_BATCH,
+          favoriteIds: favoriteIdsArray,
           abortSignal: controller.signal
         });
 
@@ -510,7 +516,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
     }, 8000);
 
     return () => clearTimeout(timeoutId);
-  }, [isInitialized, debouncedFolderId, debouncedFormats, debouncedTags, debouncedSortBy, debouncedSearch, slug]);
+  }, [isInitialized, debouncedFolderId, debouncedFormats, debouncedTags, debouncedSortBy, debouncedSearch, slug, favoritesTrigger]);
 
   const tagKey = (selectedFolderId && isInitialized) ? [`tags`, slug, selectedFolderId] : null;
   const { data: swrFolderTags, isValidating: isTagsValidating } = useSWR(tagKey, async ([, category, folder]) => {
@@ -544,7 +550,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
     const hasSearch = inPageSearch && inPageSearch.trim().length > 0;
     const hasTags = selectedTags && selectedTags.length > 0;
     const hasFormats = selectedFormats && selectedFormats.length > 0;
-    const isFiltering = hasSearch || hasTags || hasFormats || resSlug;
+    const isFiltering = hasSearch || hasTags || hasFormats || resSlug || selectedFolderId === 'favorites';
 
     // If we've just changed folders and we're not filtering, 
     // hide the old items immediately to prevent "jumping"
@@ -562,6 +568,11 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
     }
 
     let results = [...allLoadedResources];
+    
+    // Lọc cục bộ ngay lập tức cho bộ lọc favorites
+    if (selectedFolderId === 'favorites') {
+      results = results.filter(r => favorites.has(r.id));
+    }
     
     // Lọc cục bộ ngay lập tức bằng giá trị hiện tại (không chờ debounce)
     // để UI phản hồi nhanh. Tuy nhiên nếu dataset cực lớn, có thể dùng debouncedSearch ở đây.
@@ -591,7 +602,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
       case "name": results.sort((a, b) => (a.name || "").localeCompare(b.name || "")); break;
     }
     return results;
-  }, [allLoadedResources, sortBy, resSlug, selectedFolderId, loadedFolderId, inPageSearch, selectedTags, selectedFormats, highlightSlug]);
+  }, [allLoadedResources, sortBy, resSlug, selectedFolderId, loadedFolderId, inPageSearch, selectedTags, selectedFormats, highlightSlug, favorites]);
 
   // 1. Tối ưu: Chỉ tính toán bản đồ tần suất tag khi danh sách tài nguyên thay đổi
   const tagFrequencyMap = useMemo(() => {
@@ -651,6 +662,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
 
   const { currentSubfolders, parentFolder } = useMemo(() => {
     if (!selectedFolderId) return { currentSubfolders: folders, parentFolder: null };
+    if (selectedFolderId === 'favorites') return { currentSubfolders: [], parentFolder: null };
     const result = findInTree(folders, selectedFolderId);
     return { currentSubfolders: result?.current?.children || [], parentFolder: result?.parent };
   }, [folders, selectedFolderId]);
@@ -709,6 +721,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
       searchTerm: debouncedSearch,
       offset: serverOffset,
       limit: PAGE_SIZE_BATCH,
+      favoriteIds: favoriteIdsArray,
     }).then(more => {
       if (more?.length > 0) {
         setAllLoadedResources(prev => [...prev, ...more]);
@@ -716,7 +729,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
         setHasMoreDB(more.length === PAGE_SIZE_BATCH);
       } else setHasMoreDB(false);
     }).finally(() => setIsLoadingMore(false));
-  }, [isInitialLoading, isFetchLoading, isLoadingMore, hasMoreDB, serverOffset, debouncedSearch, debouncedFormats, debouncedTags, debouncedFolderId, slug, folders]);
+  }, [isInitialLoading, isFetchLoading, isLoadingMore, hasMoreDB, serverOffset, debouncedSearch, debouncedFormats, debouncedTags, debouncedFolderId, slug, folders, favoriteIdsArray]);
 
 
   const { categories } = useSiteData();

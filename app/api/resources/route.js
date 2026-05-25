@@ -12,6 +12,8 @@ export async function GET(request) {
   const limit = parseInt(searchParams.get('limit') || '40');
   const offset = parseInt(searchParams.get('offset') || '0');
   const sortOrder = searchParams.get('sort') || 'newest'; // Matches api.js
+  const favoriteIdsParam = searchParams.get('favoriteIds');
+  const favoriteIds = favoriteIdsParam ? favoriteIdsParam.split(',') : [];
 
   // Handle folderId parsing (can be single UUID, array string, or 'null')
   let folderId = undefined;
@@ -30,7 +32,8 @@ export async function GET(request) {
       selectedFormats: formats,
       limit,
       offset,
-      sortOrder
+      sortOrder,
+      favoriteIds
     });
 
     return NextResponse.json(resources);

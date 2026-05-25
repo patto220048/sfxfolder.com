@@ -226,10 +226,11 @@ export async function getResources({
   limit = 25, 
   offset = 0,
   sortOrder = "newest",
+  favoriteIds = [],
   abortSignal = null
 } = {}) {
   // Key for cache should include all parameters
-  const cacheKey = `resources-${categorySlug || "all"}-${folderId || "all"}-${searchTerm || "none"}-${selectedTags.join(",")}-${selectedFormats.join(",")}-${isAdmin ? "admin" : "public"}-${limit}-${offset}`;
+  const cacheKey = `resources-${categorySlug || "all"}-${folderId || "all"}-${searchTerm || "none"}-${selectedTags.join(",")}-${selectedFormats.join(",")}-${isAdmin ? "admin" : "public"}-${limit}-${offset}-${favoriteIds.join(",")}`;
   
   // If called from client, unstable_cache might not be available or needed.
   // We check if we are in a server context.
@@ -280,7 +281,12 @@ export async function getResources({
       if (folderId !== undefined) {
         const isGlobalAction = (selectedTags && selectedTags.length > 0) || (selectedFormats && selectedFormats.length > 0);
         if (folderId !== null || !isGlobalAction) {
-          if (folderId === null) {
+          if (folderId === 'favorites') {
+            if (!favoriteIds || favoriteIds.length === 0) {
+              return [];
+            }
+            query = query.in("id", favoriteIds);
+          } else if (folderId === null) {
             query = query.is("folder_id", null);
           } else if (Array.isArray(folderId)) {
             query = query.in("folder_id", folderId);
@@ -342,10 +348,18 @@ export async function getResources({
       mappedData = mappedData.slice(0, limit);
     }
 
+    // Post-filter for favorites search
+    if (isRPC && folderId === 'favorites') {
+      const favSet = new Set(favoriteIds);
+      mappedData = mappedData.filter(r => favSet.has(r.id));
+      mappedData = mappedData.slice(0, limit);
+    }
+
     return mappedData;
   };
 
-  if (isServer && REVALIDATE_TIME !== false) {
+  // Bỏ qua cache đối với thư mục favorites để đảm bảo phản hồi tức thì và bảo mật dữ liệu riêng tư của người dùng
+  if (isServer && REVALIDATE_TIME !== false && folderId !== 'favorites') {
     return unstable_cache(
       fetchLogic,
       [cacheKey],
@@ -361,6 +375,7 @@ export async function getResources({
     if (searchTerm) params.set("search", searchTerm);
     if (selectedTags.length) params.set("tags", selectedTags.join(","));
     if (selectedFormats.length) params.set("formats", selectedFormats.join(","));
+    if (favoriteIds.length) params.set("favoriteIds", favoriteIds.join(","));
     if (limit) params.set("limit", limit);
     if (offset) params.set("offset", offset);
     if (sortOrder) params.set("sort", sortOrder);
