@@ -104,12 +104,50 @@ export const metadata = {
   },
 };
 
+// Helper to parse meta and link tags from raw HTML string
+function parseMetaAndLinkTags(htmlString) {
+  if (!htmlString) return [];
+  const tags = [];
+  // Remove HTML comments
+  const cleanHtml = htmlString.replace(/<!--[\s\S]*?-->/g, '');
+  
+  // Match meta and link tags
+  const regex = /<(meta|link)\b([^>]*)\/?>/gi;
+  let match;
+  while ((match = regex.exec(cleanHtml)) !== null) {
+    const tagName = match[1].toLowerCase();
+    const attrsStr = match[2];
+    
+    // Parse attributes
+    const attrs = {};
+    const attrRegex = /(\w+)(?:=(?:["']([^"']*)["']|(\S+)))?/g;
+    let attrMatch;
+    while ((attrMatch = attrRegex.exec(attrsStr)) !== null) {
+      const name = attrMatch[1];
+      let reactName = name;
+      if (name === 'crossorigin') reactName = 'crossOrigin';
+      else if (name === 'charset') reactName = 'charSet';
+      else if (name === 'http-equiv') reactName = 'httpEquiv';
+      else if (name === 'class') reactName = 'className';
+      
+      const value = attrMatch[2] !== undefined ? attrMatch[2] : (attrMatch[3] !== undefined ? attrMatch[3] : true);
+      attrs[reactName] = value;
+    }
+    
+    tags.push({ type: tagName, attrs });
+  }
+  return tags;
+}
+
 export default async function RootLayout({ children }) {
   // Fetch categories and settings on the server (cached)
   const [categories, settings] = await Promise.all([
     getCategories(),
     getSiteSettings()
   ]);
+
+  const headScript = settings?.ads_config?.head_script || '';
+  const parsedMetaAndLinkTags = parseMetaAndLinkTags(headScript);
 
   // JSON-LD: WebSite schema with SearchAction for sitelinks search box
   const websiteSchema = {
@@ -146,6 +184,16 @@ export default async function RootLayout({ children }) {
         <link rel="icon" href="/favicon.webp?v=3" type="image/webp" />
         <link rel="apple-touch-icon" href="/favicon.webp?v=3" />
         <link rel="manifest" href="/site.webmanifest" />
+        {/* Render dynamic verification/meta/link tags from site settings */}
+        {parsedMetaAndLinkTags.map((tag, idx) => {
+          if (tag.type === 'meta') {
+            return <meta key={`dyn-meta-${idx}`} {...tag.attrs} />;
+          }
+          if (tag.type === 'link') {
+            return <link key={`dyn-link-${idx}`} {...tag.attrs} />;
+          }
+          return null;
+        })}
       </head>
       <body suppressHydrationWarning>
         <GoogleAnalytics gaId="G-LW9D5CH1WQ" />
