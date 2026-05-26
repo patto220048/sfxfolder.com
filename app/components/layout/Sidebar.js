@@ -8,10 +8,10 @@ import { useSidebar } from "@/app/context/SidebarContext";
 import { useAuth } from "@/app/lib/auth-context";
 import { useFavorites } from "@/app/context/FavoritesContext";
 import AuthModal from "@/app/components/auth/AuthModal";
-
-
-
+import dynamic from "next/dynamic";
 import TreeFolder from "@/app/components/ui/TreeFolder";
+
+const PremiumModal = dynamic(() => import("@/app/components/ui/PremiumModal"));
 import styles from "./Sidebar.module.css";
 
 const MIN_WIDTH = 200;
@@ -51,8 +51,30 @@ const Sidebar = memo(function Sidebar({
   const { favorites, categoryFavoriteCounts = {} } = useFavorites();
   const favoritesCount = categorySlug ? (categoryFavoriteCounts[categorySlug] || 0) : favorites.size;
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isPremiumModalOpen, setIsPremiumModalOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  // Listen for need-auth and need-premium events in plugin mode
+  useEffect(() => {
+    if (!isPluginMode) return;
+
+    const handleNeedAuth = () => {
+      setIsAuthModalOpen(true);
+    };
+
+    const handleNeedPremium = () => {
+      setIsPremiumModalOpen(true);
+    };
+
+    window.addEventListener("need-auth", handleNeedAuth);
+    window.addEventListener("need-premium", handleNeedPremium);
+
+    return () => {
+      window.removeEventListener("need-auth", handleNeedAuth);
+      window.removeEventListener("need-premium", handleNeedPremium);
+    };
+  }, [isPluginMode]);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -427,6 +449,9 @@ const Sidebar = memo(function Sidebar({
 
         {isAuthModalOpen && (
           <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+        )}
+        {isPremiumModalOpen && (
+          <PremiumModal isOpen={isPremiumModalOpen} onClose={() => setIsPremiumModalOpen(false)} />
         )}
       </aside>
 

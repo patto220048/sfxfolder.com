@@ -31,7 +31,17 @@ export default function PremiumModal({ isOpen, onClose }) {
 
   const handleUpgrade = () => {
     onClose();
-    router.push("/pricing");
+    const isPlugin = typeof window !== 'undefined' && (window.location.search.includes('mode=plugin') || window.location.pathname.startsWith('/plugins/'));
+    if (isPlugin && typeof window !== 'undefined') {
+      const pricingUrl = `${window.location.origin}/pricing`;
+      if (window.__adobe_cep__ && window.cep && window.cep.util) {
+        window.cep.util.openURLInDefaultBrowser(pricingUrl);
+      } else if (window.parent) {
+        window.parent.postMessage({ type: 'OPEN_URL', url: pricingUrl }, '*');
+      }
+    } else {
+      router.push("/pricing");
+    }
   };
 
   const handleLogin = () => {
