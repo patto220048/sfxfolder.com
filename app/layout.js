@@ -203,13 +203,13 @@ export default async function RootLayout({ children }) {
         <Script
           id="ezoic-cmp"
           src="https://cmp.gatekeeperconsent.com/min.js"
-          strategy="beforeInteractive"
+          strategy="afterInteractive"
           data-cfasync="false"
         />
         <Script
           id="ezoic-cmp-2"
           src="https://the.gatekeeperconsent.com/cmp.min.js"
-          strategy="beforeInteractive"
+          strategy="afterInteractive"
           data-cfasync="false"
         />
         <Script

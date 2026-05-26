@@ -12,8 +12,18 @@ export default function ClientHomeAds({ side }) {
   const adsConfig = settings?.ads_config || {};
   const [showCloseButton, setShowCloseButton] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
+  const [isDesktop, setIsDesktop] = useState(false);
   
   useEffect(() => {
+    const checkWidth = () => {
+      setIsDesktop(window.innerWidth >= 1300);
+    };
+    
+    // Check initially on client mount
+    checkWidth();
+    
+    window.addEventListener('resize', checkWidth);
+    
     const timer = setTimeout(() => {
       setShowCloseButton(true);
     }, 5000);
@@ -22,6 +32,7 @@ export default function ClientHomeAds({ side }) {
     window.addEventListener('close-home-ads', handleSyncClose);
     
     return () => {
+      window.removeEventListener('resize', checkWidth);
       clearTimeout(timer);
       window.removeEventListener('close-home-ads', handleSyncClose);
     };
@@ -35,7 +46,7 @@ export default function ClientHomeAds({ side }) {
   const adContent = side === 'left' ? adsConfig.home_left : adsConfig.home_right;
   const label = side === 'left' ? 'Trang Chủ - Trái (160x600)' : 'Trang Chủ - Phải (160x600)';
 
-  if (!isVisible || isPremium) return null;
+  if (!isDesktop || !isVisible || isPremium) return null;
 
   return (
     <div className={adContent ? styles.sideAdContainer : styles.sideAdPlaceholder}>
