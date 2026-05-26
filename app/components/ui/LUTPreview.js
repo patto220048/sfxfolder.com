@@ -19,7 +19,8 @@ export default function LUTPreview({
   customSamples = [],
   name, 
   resourceName, 
-  variant = 'full' 
+  variant = 'full',
+  onImageRatioChange
 }) {
   const isCard = variant === 'card';
   const finalName = name || resourceName;
@@ -113,11 +114,19 @@ export default function LUTPreview({
   }, [activeSample]);
 
   const containerRef = useRef(null);
+  const comparisonRef = useRef(null);
   const imgRef = useRef(null);
+  const gradedImgRef = useRef(null);
   const [imageRatio, setImageRatio] = useState(null);
   const [imgBounds, setImgBounds] = useState({ left: 0, top: 0, width: 0, height: 0 });
   const [originalLoaded, setOriginalLoaded] = useState(false);
   const [gradedLoaded, setGradedLoaded] = useState(false);
+
+  useEffect(() => {
+    if (onImageRatioChange) {
+      onImageRatioChange(imageRatio);
+    }
+  }, [imageRatio, onImageRatioChange]);
 
   useEffect(() => {
     setSliderPos(50);
@@ -144,6 +153,28 @@ export default function LUTPreview({
     }
   }, [activeImageUrl]);
 
+  // Handle cached or slow loading of the graded image
+  useEffect(() => {
+    if (!activeGradedImageUrl) {
+      setGradedLoaded(false);
+      return;
+    }
+    
+    const img = gradedImgRef.current;
+    if (!img) return;
+
+    const handleLoad = () => {
+      setGradedLoaded(true);
+    };
+
+    if (img.complete) {
+      handleLoad();
+    } else {
+      img.addEventListener('load', handleLoad);
+      return () => img.removeEventListener('load', handleLoad);
+    }
+  }, [activeGradedImageUrl]);
+
   useEffect(() => {
     setOriginalLoaded(false);
     setGradedLoaded(false);
@@ -166,9 +197,8 @@ export default function LUTPreview({
   }, [originalLoaded, gradedLoaded, activeGradedImageUrl]);
 
   const updateImgBounds = useCallback(() => {
-    if (!containerRef.current || !imageRatio) return;
-    const wrapper = containerRef.current.querySelector(`.${styles.comparisonWrapper}`);
-    if (!wrapper) return;
+    if (!comparisonRef.current || !imageRatio) return;
+    const wrapper = comparisonRef.current;
     
     const rect = wrapper.getBoundingClientRect();
     const wrapperWidth = rect.width;
@@ -199,17 +229,25 @@ export default function LUTPreview({
     });
   }, [imageRatio]);
 
+  // Handle dynamic size changes with ResizeObserver
   useEffect(() => {
-    if (!imageRatio) return;
+    if (!imageRatio || !comparisonRef.current) return;
+    
+    const observer = new ResizeObserver(() => {
+      updateImgBounds();
+    });
+    
+    observer.observe(comparisonRef.current);
     updateImgBounds();
-    window.addEventListener("resize", updateImgBounds);
-    return () => window.removeEventListener("resize", updateImgBounds);
+    
+    return () => {
+      observer.disconnect();
+    };
   }, [imageRatio, updateImgBounds]);
 
   const clipPercent = useMemo(() => {
-    if (!containerRef.current || !imgBounds.width) return sliderPos;
-    const wrapper = containerRef.current.querySelector(`.${styles.comparisonWrapper}`);
-    if (!wrapper) return sliderPos;
+    if (!comparisonRef.current || !imgBounds.width) return sliderPos;
+    const wrapper = comparisonRef.current;
     const wrapperWidth = wrapper.getBoundingClientRect().width;
     if (!wrapperWidth) return sliderPos;
     
@@ -221,10 +259,9 @@ export default function LUTPreview({
   }, [sliderPos, imgBounds]);
 
   const handleMove = useCallback((clientX) => {
-    if (!containerRef.current || !imageRatio) return;
+    if (!comparisonRef.current || !imageRatio) return;
     
-    const wrapper = containerRef.current.querySelector(`.${styles.comparisonWrapper}`);
-    if (!wrapper) return;
+    const wrapper = comparisonRef.current;
     const rect = wrapper.getBoundingClientRect();
     
     const wrapperWidth = rect.width;
@@ -308,6 +345,7 @@ export default function LUTPreview({
       )}
 
       <div 
+        ref={comparisonRef}
         className={styles.comparisonWrapper} 
         onMouseDown={activeGradedImageUrl ? onMouseDown : undefined}
         onTouchStart={activeGradedImageUrl ? onTouchStart : undefined}
@@ -342,6 +380,7 @@ export default function LUTPreview({
         {/* Graded Image */}
         {activeGradedImageUrl && (
           <img 
+            ref={gradedImgRef}
             src={activeGradedImageUrl} 
             alt="Graded" 
             className={styles.imageGraded}

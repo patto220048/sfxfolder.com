@@ -61,6 +61,11 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
   const [isInserting, setIsInserting] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [lutImageRatio, setLutImageRatio] = useState(null);
+
+  useEffect(() => {
+    setLutImageRatio(null);
+  }, [resource]);
 
   // Sync with mediaManager
   useEffect(() => {
@@ -172,8 +177,11 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
   return (
     <div className={styles.previewOverlay} onClick={onClose}>
       <div 
-        className={`${styles.previewContent} ${isPlugin ? styles.plugin : ""}`} 
+        className={`${styles.previewContent} ${isPlugin ? styles.plugin : ""} ${isLUT ? styles.lutMode : ""}`} 
         onClick={(e) => e.stopPropagation()}
+        style={lutImageRatio ? {
+          '--lut-ratio': lutImageRatio
+        } : undefined}
       >
         <button className={styles.closePreview} onClick={onClose} title="Close (Esc)">
           <X size={isPlugin ? 18 : 24} />
@@ -282,6 +290,7 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
                 customSamples={resource.customSamples || []}
                 name={resource.name}
                 variant="overlay"
+                onImageRatioChange={setLutImageRatio}
               />
             </div>
           )}
