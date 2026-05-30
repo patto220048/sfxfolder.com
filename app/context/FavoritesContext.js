@@ -15,7 +15,7 @@ const FavoritesContext = createContext({
 });
 
 export function FavoritesProvider({ children }) {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const { showToast } = useToast();
   const [favoritesMap, setFavoritesMap] = useState(new Map());
   const [loading, setLoading] = useState(false);
@@ -40,17 +40,14 @@ export function FavoritesProvider({ children }) {
     }
     setLoading(true);
     try {
-      const { data, error } = await supabase
-        .from("favorites")
-        .select(`
-          resource_id,
-          resources (
-            category_id
-          )
-        `)
-        .eq("user_id", user.id);
-      
-      if (error) throw error;
+      const headers = {};
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+
+      const res = await fetch(`/api/favorites`, { headers });
+      if (!res.ok) throw new Error("Failed to fetch favorites");
+      const data = await res.json();
       
       const newMap = new Map();
       (data || []).forEach((item) => {
@@ -64,7 +61,7 @@ export function FavoritesProvider({ children }) {
     } finally {
       setLoading(false);
     }
-  }, [user?.id, showToast]);
+  }, [user?.id, session?.access_token, showToast]);
 
   // Sync favorites when user logs in or out
   useEffect(() => {
@@ -93,28 +90,26 @@ export function FavoritesProvider({ children }) {
     });
 
     try {
-      if (isFav) {
-        // Delete from database
-        const { error } = await supabase
-          .from("favorites")
-          .delete()
-          .eq("user_id", user.id)
-          .eq("resource_id", resourceId);
-
-        if (error) throw error;
-        showToast("Removed from favorites.", "info");
-      } else {
-        // Insert into database
-        const { error } = await supabase
-          .from("favorites")
-          .insert({
-            user_id: user.id,
-            resource_id: resourceId,
-          });
-
-        if (error) throw error;
-        showToast("Added to favorites.", "success");
+      const headers = {
+        "Content-Type": "application/json"
+      };
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
       }
+
+      const method = isFav ? "DELETE" : "POST";
+      const res = await fetch(`/api/favorites`, {
+        method,
+        headers,
+        body: JSON.stringify({ resourceId }),
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Failed to update favorites");
+      }
+
+      showToast(isFav ? "Removed from favorites." : "Added to favorites.", isFav ? "info" : "success");
     } catch (e) {
       console.error("Error toggling favorite:", e);
       showToast("Failed to update favorites.", "error");
@@ -130,7 +125,7 @@ export function FavoritesProvider({ children }) {
         return next;
       });
     }
-  }, [user?.id, favoritesMap, showToast]);
+  }, [user?.id, session?.access_token, favoritesMap, showToast]);
 
   const isFavorited = useCallback((resourceId) => {
     return favoritesMap.has(resourceId);

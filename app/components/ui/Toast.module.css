@@ -110,3 +110,26 @@
     width: 100%;
   }
 }
+
+/* Plugin Mode Compact Styling */
+.toastContainer.pluginContainer {
+  top: 10px;
+  right: 10px;
+  gap: 6px;
+}
+
+.toast.pluginToast {
+  min-width: 180px;
+  max-width: 260px;
+  padding: 8px 12px;
+  gap: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.toast.pluginToast .message {
+  font-size: 0.75rem;
+}
+
+.toast.pluginToast .type {
+  font-size: 0.55rem;
+}

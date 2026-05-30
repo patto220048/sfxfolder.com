@@ -10,8 +10,10 @@ export const ToastContainer = () => {
 
   if (toasts.length === 0) return null;
 
+  const isPlugin = typeof window !== 'undefined' && (window.location.search.includes('mode=plugin') || window.location.pathname.startsWith('/plugins/'));
+
   return (
-    <div className={styles.toastContainer}>
+    <div className={`${styles.toastContainer} ${isPlugin ? styles.pluginContainer : ""}`}>
       {toasts.map((toast) => (
         <Toast
           key={toast.id}
