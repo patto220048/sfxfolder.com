@@ -200,16 +200,61 @@ export const mediaManager = {
    * This prevents creating hundreds of Audio objects.
    */
   getSharedAudio() {
-    if (!sharedAudio && typeof window !== 'undefined') {
-      sharedAudio = new Audio();
-      
-      // Auto-register shared audio events if needed
-      sharedAudio.addEventListener('ended', () => {
-        if (activeCallback) activeCallback();
-        this.stop(sharedAudio);
-      });
+    initAudioElements();
+    return activeAudio;
+  },
+
+  /**
+   * Preload an audio URL using the background audio channel.
+   * Does not interrupt the currently playing activeAudio channel.
+   * @param {string} id 
+   * @param {string} src 
+   */
+  preload(id, src) {
+    initAudioElements();
+    if (!id || !src) return;
+
+    // If it's already active or already preloaded, skip
+    if (activeMediaId === id || preloadedId === id) return;
+
+    preloadedId = id;
+    preloadedSrc = src;
+
+    try {
+      const normalizedUrl = new URL(src, window.location.href).href;
+      const currentSrc = preloadAudio.src ? new URL(preloadAudio.src, window.location.href).href : "";
+      if (currentSrc !== normalizedUrl) {
+        preloadAudio.src = src;
+        preloadAudio.load();
+      }
+    } catch (e) {
+      preloadAudio.src = src;
+      preloadAudio.load();
     }
-    return sharedAudio;
+  },
+
+  /**
+   * Retrieve preloaded audio. Swaps active and background audio channels
+   * to enable instantaneous playback.
+   * @param {string} id 
+   * @returns {HTMLAudioElement}
+   */
+  getPreloadedAudio(id) {
+    initAudioElements();
+    if (id && preloadedId === id) {
+      // Pause background loading if active on preloadAudio
+      preloadAudio.pause();
+
+      // Swap active and background audio roles
+      const temp = activeAudio;
+      activeAudio = preloadAudio;
+      preloadAudio = temp;
+
+      // Clear preloaded state
+      preloadedId = null;
+      preloadedSrc = null;
+    }
+    return activeAudio;
   },
 
   /**
@@ -230,6 +275,33 @@ export const mediaManager = {
   }
 };
 
-let sharedAudio = null;
+let audioPrimary = null;
+let audioSecondary = null;
+let activeAudio = null;
+let preloadAudio = null;
+let preloadedId = null;
+let preloadedSrc = null;
+
+function initAudioElements() {
+  if (typeof window === 'undefined') return;
+  if (!audioPrimary) {
+    audioPrimary = new Audio();
+    audioPrimary.preload = "auto";
+    audioPrimary.addEventListener('ended', () => {
+      if (activeCallback && activeAudio === audioPrimary) activeCallback();
+      mediaManager.stop(audioPrimary);
+    });
+  }
+  if (!audioSecondary) {
+    audioSecondary = new Audio();
+    audioSecondary.preload = "auto";
+    audioSecondary.addEventListener('ended', () => {
+      if (activeCallback && activeAudio === audioSecondary) activeCallback();
+      mediaManager.stop(audioSecondary);
+    });
+  }
+  if (!activeAudio) activeAudio = audioPrimary;
+  if (!preloadAudio) preloadAudio = audioSecondary;
+}
 
 

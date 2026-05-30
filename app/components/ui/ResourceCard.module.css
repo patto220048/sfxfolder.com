@@ -293,15 +293,22 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 4px;
+  height: 3px;
   background: rgba(0, 0, 0, 0.2);
-  cursor: pointer;
+  cursor: col-resize;
   z-index: 10;
+  transition: height 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.videoProgressWrapper:hover,
+.videoProgressWrapper[data-scrubbing="true"] {
+  height: 6px;
 }
 
 .videoProgressTrack {
   width: 100%;
   height: 100%;
+  position: relative;
 }
 
 .videoProgressFill {
@@ -309,6 +316,28 @@
   background: var(--cat-color, var(--text-primary));
   width: 0;
   transition: width 0.1s linear;
+  position: relative;
+}
+
+.videoProgressFill::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translate(50%, -50%) scale(0);
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--cat-color, var(--text-primary));
+  box-shadow: 0 0 6px var(--cat-color, var(--text-primary));
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 15;
+}
+
+.videoProgressWrapper:hover .videoProgressFill::after,
+.videoProgressWrapper[data-scrubbing="true"] .videoProgressFill::after {
+  transform: translate(50%, -50%) scale(1);
 }
 
 .volumeControl {
