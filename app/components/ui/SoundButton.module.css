@@ -526,3 +526,11 @@
     height: 12px !important;
   }
 }
+
+.draggableItem {
+  cursor: grab;
+}
+
+.draggableItem:active {
+  cursor: grabbing;
+}

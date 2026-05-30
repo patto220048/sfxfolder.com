@@ -56,8 +56,61 @@ const SoundButton = memo(function SoundButton({
     progress: pluginProgress, 
     isInsidePlugin, 
     importAsset, 
-    downloadResource 
+    downloadResource,
+    cachedPath
   } = usePluginCache(id, name || fileName, fileFormat);
+
+  const isDraggable = isInsidePlugin && downloadStatus === 'cached' && cachedPath;
+
+  const handleDragStart = useCallback((e) => {
+    if (isDraggable && cachedPath) {
+      const fileUrl = 'file:///' + cachedPath.replace(/\\/g, '/');
+      const safeName = (name || fileName || "sound").replace(/[:/\\?*|"]/g, "_");
+      const ext = fileFormat || "mp3";
+      const fullFileName = safeName.endsWith("." + ext) ? safeName : `${safeName}.${ext}`;
+      const downloadUrlData = `audio/mpeg:${fullFileName}:${fileUrl}`;
+      const cleanPath = cachedPath.replace(/\\/g, '/');
+      
+      e.dataTransfer.setData("DownloadURL", downloadUrlData);
+      e.dataTransfer.setData("text/plain", cachedPath);
+      e.dataTransfer.setData("com.adobe.cep.dnd.file.0", cleanPath);
+      e.dataTransfer.effectAllowed = "copy";
+
+      // Create a premium custom drag image matching Premiere timeline clip style (green for audio)
+      if (typeof document !== 'undefined') {
+        const dragImage = document.createElement("div");
+        dragImage.style.position = "fixed";
+        dragImage.style.top = "0px";
+        dragImage.style.left = "0px";
+        dragImage.style.zIndex = "-9999";
+        dragImage.style.padding = "4px 8px";
+        dragImage.style.background = "#1e7855";
+        dragImage.style.color = "#FFFFFF";
+        dragImage.style.border = "1px solid #145e42";
+        dragImage.style.borderRadius = "2px";
+        dragImage.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        dragImage.style.fontSize = "11px";
+        dragImage.style.fontWeight = "500";
+        dragImage.style.pointerEvents = "none";
+        dragImage.style.whiteSpace = "nowrap";
+        dragImage.style.display = "flex";
+        dragImage.style.alignItems = "center";
+        dragImage.style.gap = "4px";
+        dragImage.style.boxShadow = "0 2px 4px rgba(0,0,0,0.2)";
+        
+        dragImage.innerHTML = `<span>🔊</span> <span>${fullFileName}</span>`;
+        
+        document.body.appendChild(dragImage);
+        e.dataTransfer.setDragImage(dragImage, 20, 12);
+        
+        setTimeout(() => {
+          if (document.body.contains(dragImage)) {
+            document.body.removeChild(dragImage);
+          }
+        }, 0);
+      }
+    }
+  }, [isDraggable, cachedPath, name, fileName, fileFormat]);
   
   const { user, session, isPremium: userIsPremium, isAdmin, loading } = useAuth();
   const { isFavorited, toggleFavorite } = useFavorites();
@@ -429,11 +482,13 @@ const SoundButton = memo(function SoundButton({
 
   return (
     <div
-      className={`${styles.item} ${isPlaying ? styles.playing : ""} ${isHighlighted ? styles.highlightFlash : ""}`}
+      className={`${styles.item} ${isPlaying ? styles.playing : ""} ${isHighlighted ? styles.highlightFlash : ""} ${isDraggable ? styles.draggableItem : ""}`}
       style={{ "--stagger-index": index, "--cat-color": primaryColor }}
       id={`sound-${id}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      draggable={isDraggable ? "true" : undefined}
+      onDragStart={isDraggable ? handleDragStart : undefined}
     >
       {/* Play button */}
       <button

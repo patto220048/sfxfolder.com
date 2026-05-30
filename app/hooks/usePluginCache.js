@@ -73,6 +73,7 @@ export function usePluginCache(resourceId, fileName, fileFormat) {
     return 0;
   });
   const [lastError, setLastError] = useState(null);
+  const [cachedPath, setCachedPath] = useState(null);
 
   const isInsidePlugin = isPlugin || (typeof window !== 'undefined' && window.location.search.includes('mode=plugin'));
 
@@ -114,10 +115,12 @@ export function usePluginCache(resourceId, fileName, fileFormat) {
           if (exists) {
             setDownloadStatus('cached');
             setProgress(100);
+            setCachedPath(event.data.cachedPath || null);
             updateCacheStore(resourceId, 'cached');
           } else {
             setDownloadStatus('idle');
             setProgress(0);
+            setCachedPath(null);
             updateCacheStore(resourceId, 'idle');
           }
           break;
@@ -130,6 +133,7 @@ export function usePluginCache(resourceId, fileName, fileFormat) {
         case 'DOWNLOAD_COMPLETE':
           setDownloadStatus('cached');
           setProgress(100);
+          setCachedPath(event.data.cachedPath || null);
           updateCacheStore(resourceId, 'cached');
           break;
 
@@ -144,6 +148,7 @@ export function usePluginCache(resourceId, fileName, fileFormat) {
         case 'DOWNLOAD_ERROR':
           setDownloadStatus('idle');
           setLastError(error);
+          setCachedPath(null);
           break;
       }
     };
@@ -183,6 +188,7 @@ export function usePluginCache(resourceId, fileName, fileFormat) {
     downloadResource,
     importAsset,
     checkStatus,
-    isInsidePlugin // Export this so components can use it
+    isInsidePlugin, // Export this so components can use it
+    cachedPath
   };
 }

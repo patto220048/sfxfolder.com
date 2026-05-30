@@ -48,7 +48,7 @@ const getDescendantIds = (node) => {
   return ids;
 };
 
-const LATEST_EXT_VERSION = "1.0.3";
+const LATEST_EXT_VERSION = "1.0.4";
 
 function ClientPageContent({ slug, info, folders, resources: initialResources, categoryTags = [], isPlugin: propIsPlugin = false, initialCacheHint = false, faqs = [] }) {
   const { favorites } = useFavorites();

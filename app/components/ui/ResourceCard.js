@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Download as DownloadCount, Play, Eye, Volume2, VolumeX, Star } from "lucide-react";
 import DownloadButton from "./DownloadButton";
+import { usePluginCache } from "@/app/hooks/usePluginCache";
 import { mediaManager } from "@/app/lib/mediaManager";
 import { isVideoFormat, isImageFormat, isFontFormat, isLUTFormat, getOptimizedUrl } from "@/app/lib/mediaUtils";
 import { useFavorites } from "@/app/context/FavoritesContext";
@@ -47,6 +48,82 @@ const ResourceCard = memo(function ResourceCard({
   const router = useRouter();
   const { isFavorited, toggleFavorite } = useFavorites();
   const isFav = isFavorited(id);
+
+  const { downloadStatus, cachedPath } = usePluginCache(isPlugin ? id : null, name || fileName, fileFormat);
+  const isDraggable = isPlugin && downloadStatus === 'cached' && cachedPath;
+
+  const handleDragStart = useCallback((e) => {
+    if (isDraggable && cachedPath) {
+      const fileUrl = 'file:///' + cachedPath.replace(/\\/g, '/');
+      const safeName = (name || fileName || "download").replace(/[:/\\?*|"]/g, "_");
+      const ext = fileFormat || "mp4";
+      const fullFileName = safeName.endsWith("." + ext) ? safeName : `${safeName}.${ext}`;
+      let mimeType = 'application/octet-stream';
+      let icon = '📦';
+      let bgColor = '#7a437a'; // Default to pink/magenta for other assets
+      let borderColor = '#5c325c';
+      
+      const lowercaseExt = ext.toLowerCase();
+      if (['mp4', 'mov', 'webm'].includes(lowercaseExt)) {
+        mimeType = 'video/mp4';
+        icon = '🎬';
+        bgColor = '#3c5873'; // Premiere Video Track blue
+        borderColor = '#2d4257';
+      } else if (['mp3', 'wav', 'aac', 'm4a'].includes(lowercaseExt)) {
+        mimeType = 'audio/mpeg';
+        icon = '🔊';
+        bgColor = '#1e7855'; // Premiere Audio Track green
+        borderColor = '#145e42';
+      } else if (['jpg', 'jpeg', 'png', 'gif'].includes(lowercaseExt)) {
+        mimeType = 'image/png';
+        icon = '🎨';
+        bgColor = '#7a437a'; // Premiere Graphics track pink
+        borderColor = '#5c325c';
+      }
+      
+      const downloadUrlData = `${mimeType}:${fullFileName}:${fileUrl}`;
+      const cleanPath = cachedPath.replace(/\\/g, '/');
+      
+      e.dataTransfer.setData("DownloadURL", downloadUrlData);
+      e.dataTransfer.setData("text/plain", cachedPath);
+      e.dataTransfer.setData("com.adobe.cep.dnd.file.0", cleanPath);
+      e.dataTransfer.effectAllowed = "copy";
+
+      // Create a premium custom drag image matching Premiere timeline clip style
+      if (typeof document !== 'undefined') {
+        const dragImage = document.createElement("div");
+        dragImage.style.position = "fixed";
+        dragImage.style.top = "0px";
+        dragImage.style.left = "0px";
+        dragImage.style.zIndex = "-9999";
+        dragImage.style.padding = "4px 8px";
+        dragImage.style.background = bgColor;
+        dragImage.style.color = "#FFFFFF";
+        dragImage.style.border = `1px solid ${borderColor}`;
+        dragImage.style.borderRadius = "2px";
+        dragImage.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        dragImage.style.fontSize = "11px";
+        dragImage.style.fontWeight = "500";
+        dragImage.style.pointerEvents = "none";
+        dragImage.style.whiteSpace = "nowrap";
+        dragImage.style.display = "flex";
+        dragImage.style.alignItems = "center";
+        dragImage.style.gap = "4px";
+        dragImage.style.boxShadow = "0 2px 4px rgba(0,0,0,0.2)";
+        
+        dragImage.innerHTML = `<span>${icon}</span> <span>${fullFileName}</span>`;
+        
+        document.body.appendChild(dragImage);
+        e.dataTransfer.setDragImage(dragImage, 20, 12);
+        
+        setTimeout(() => {
+          if (document.body.contains(dragImage)) {
+            document.body.removeChild(dragImage);
+          }
+        }, 0);
+      }
+    }
+  }, [isDraggable, cachedPath, name, fileName, fileFormat]);
 
   const handleFavoriteClick = useCallback((e) => {
     e.preventDefault();
@@ -632,11 +709,13 @@ const ResourceCard = memo(function ResourceCard({
 
   return (
     <div
-      className={`${styles.card} ${isPlugin ? styles.compact : ""} ${isHighlighted ? styles.highlightFlash : ""}`}
+      className={`${styles.card} ${isPlugin ? styles.pluginCard : ""} ${isHighlighted ? styles.highlighted : ""} ${effectiveCardType === 'sound' ? styles.soundCard : ""} ${isDraggable ? styles.draggableCard : ""}`}
       style={{ 
         "--stagger-index": index,
         "--cat-color": primaryColor
       }}
+      draggable={isDraggable ? "true" : undefined}
+      onDragStart={isDraggable ? handleDragStart : undefined}
       id={`resource-${id}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
