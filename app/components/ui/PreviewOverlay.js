@@ -336,7 +336,11 @@ export default function PreviewOverlay({ resource, onClose, showDownload = false
 
                         // Check auth
                         if (!isAdmin && !isPremium) {
-                          alert("Please login with a Premium account to insert assets into Premiere.");
+                          if (!user) {
+                            window.dispatchEvent(new CustomEvent("need-auth"));
+                          } else {
+                            window.dispatchEvent(new CustomEvent("need-premium"));
+                          }
                           return;
                         }
                         
