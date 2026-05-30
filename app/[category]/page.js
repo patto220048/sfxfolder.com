@@ -214,22 +214,18 @@ export async function generateMetadata({ params }) {
 
 async function getCachedCategoryData(slug, tags = [], formats = []) {
   const fetchLogic = async () => {
-    // 1. Fetch category info
-    const info = await getCategoryBySlug(slug);
-
-    // 2. Fetch folders for this category
-    const fetchedFolders = await getFolders(slug);
-    
-    // 3. Fetch resources for this category with filters
-    const fetchedResources = await getResources({ 
-      categorySlug: slug, 
-      selectedTags: tags, 
-      selectedFormats: formats,
-      limit: 50 
-    });
-
-    // 4. Fetch all tags for this category
-    const categoryTags = await getCategoryTags(slug);
+    // Gọi đồng thời cả 4 truy vấn cơ sở dữ liệu để loại bỏ waterfall (song song hóa)
+    const [info, fetchedFolders, fetchedResources, categoryTags] = await Promise.all([
+      getCategoryBySlug(slug),
+      getFolders(slug),
+      getResources({ 
+        categorySlug: slug, 
+        selectedTags: tags, 
+        selectedFormats: formats,
+        limit: 50 
+      }),
+      getCategoryTags(slug)
+    ]);
 
     return {
       categoryInfo: info,

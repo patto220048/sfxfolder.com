@@ -947,6 +947,24 @@ export async function getCategoryTags(categorySlug, folderIds = []) {
   const isServer = typeof window === 'undefined';
 
   const fetchLogic = async () => {
+    // 1. Thử sử dụng hàm RPC để tối ưu hóa hiệu năng và băng thông
+    try {
+      const { data: rpcData, error: rpcError } = await supabase.rpc('get_unique_tags_for_category', {
+        p_category_id: categorySlug,
+        p_folder_ids: folderIds && folderIds.length > 0 ? folderIds : null
+      });
+
+      if (!rpcError && rpcData) {
+        return rpcData;
+      }
+      if (rpcError) {
+        console.warn("RPC get_unique_tags_for_category failed, falling back to direct query:", rpcError.message);
+      }
+    } catch (e) {
+      console.warn("Error calling RPC get_unique_tags_for_category, fallback to direct query:", e);
+    }
+
+    // 2. Phương án Fallback: Query trực tiếp cột tags của tất cả tài nguyên và gộp lại trong memory
     let query = supabase
       .from('resources')
       .select('tags')
