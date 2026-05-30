@@ -229,10 +229,8 @@ const SoundButton = memo(function SoundButton({
         attachedAudio = audio;
       } else {
         // Detach and reset when someone else becomes active
-        if (isPlaying || currentTime > 0) {
-          setIsPlaying(false);
-          setCurrentTime(0);
-        }
+        setIsPlaying(false);
+        setCurrentTime(0);
         if (attachedAudio) {
           attachedAudio.removeEventListener('timeupdate', handleTimeUpdate);
           attachedAudio.removeEventListener('durationchange', handleDurationChange);
@@ -262,7 +260,7 @@ const SoundButton = memo(function SoundButton({
         attachedAudio.removeEventListener('ended', handleEnded);
       }
     };
-  }, [id, isPlaying, currentTime]);
+  }, [id]);
 
   // Reset state when ID changes or on unmount
   useEffect(() => {

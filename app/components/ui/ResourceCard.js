@@ -373,7 +373,7 @@ const ResourceCard = memo(function ResourceCard({
         audio.addEventListener('ended', handleEnded);
         attachedAudio = audio;
       } else {
-        if (isPlaying) setIsPlaying(false);
+        setIsPlaying(false);
         if (attachedAudio) {
           attachedAudio.removeEventListener('timeupdate', handleTimeUpdate);
           attachedAudio.removeEventListener('durationchange', handleDurationChange);
@@ -403,7 +403,7 @@ const ResourceCard = memo(function ResourceCard({
         attachedAudio.removeEventListener('ended', handleEnded);
       }
     };
-  }, [id, isPlaying]);
+  }, [id]);
 
   // Sync with global settings
   useEffect(() => {
