@@ -215,6 +215,21 @@ const SoundButton = memo(function SoundButton({
       if (activeMediaId === id) {
         setIsPlaying(!audio.paused);
         
+        // Sync current audio values immediately (crucial for preloaded/cached audio)
+        if (audio.duration && !isNaN(audio.duration)) {
+          setDuration(audio.duration);
+          
+          // Apply pending seek if metadata was already loaded
+          if (pendingSeekRatioRef.current !== null && audio.duration > 0) {
+            audio.currentTime = pendingSeekRatioRef.current * audio.duration;
+            setCurrentTime(audio.currentTime);
+            pendingSeekRatioRef.current = null;
+          }
+        } else {
+          setDuration(0);
+        }
+        setCurrentTime(audio.currentTime);
+        
         // Detach listeners from previously attached element if changed
         if (attachedAudio && attachedAudio !== audio) {
           attachedAudio.removeEventListener('timeupdate', handleTimeUpdate);
@@ -231,6 +246,7 @@ const SoundButton = memo(function SoundButton({
         // Detach and reset when someone else becomes active
         setIsPlaying(false);
         setCurrentTime(0);
+        setDuration(0); // Reset duration when deactivated
         if (attachedAudio) {
           attachedAudio.removeEventListener('timeupdate', handleTimeUpdate);
           attachedAudio.removeEventListener('durationchange', handleDurationChange);
@@ -244,7 +260,11 @@ const SoundButton = memo(function SoundButton({
     if (mediaManager.isIdActive(id)) {
       const audio = mediaManager.getSharedAudio();
       setIsPlaying(!audio.paused);
-      setDuration(audio.duration);
+      if (audio.duration && !isNaN(audio.duration)) {
+        setDuration(audio.duration);
+      } else {
+        setDuration(0);
+      }
       setCurrentTime(audio.currentTime);
       audio.addEventListener('timeupdate', handleTimeUpdate);
       audio.addEventListener('durationchange', handleDurationChange);
@@ -366,7 +386,7 @@ const SoundButton = memo(function SoundButton({
   // Global seek logic using clientX for accuracy
   const seek = useCallback((clientX, target) => {
     const audio = mediaManager.getSharedAudio();
-    if (!audio || !mediaManager.isIdActive(id)) return;
+    if (!audio) return;
     
     // Use native duration as priority, fallback to state
     const audioDuration = (audio.duration && !isNaN(audio.duration) && audio.duration > 0) 
