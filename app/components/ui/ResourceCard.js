@@ -60,12 +60,25 @@ const ResourceCard = memo(function ResourceCard({
       const fullFileName = safeName.endsWith("." + ext) ? safeName : `${safeName}.${ext}`;
       let mimeType = 'application/octet-stream';
       let icon = '📦';
-      if (['mp4', 'mov', 'webm'].includes(ext.toLowerCase())) {
+      let bgColor = '#7a437a'; // Default to pink/magenta for other assets
+      let borderColor = '#5c325c';
+      
+      const lowercaseExt = ext.toLowerCase();
+      if (['mp4', 'mov', 'webm'].includes(lowercaseExt)) {
         mimeType = 'video/mp4';
         icon = '🎬';
-      } else if (['jpg', 'jpeg', 'png', 'gif'].includes(ext.toLowerCase())) {
+        bgColor = '#3c5873'; // Premiere Video Track blue
+        borderColor = '#2d4257';
+      } else if (['mp3', 'wav', 'aac', 'm4a'].includes(lowercaseExt)) {
+        mimeType = 'audio/mpeg';
+        icon = '🔊';
+        bgColor = '#1e7855'; // Premiere Audio Track green
+        borderColor = '#145e42';
+      } else if (['jpg', 'jpeg', 'png', 'gif'].includes(lowercaseExt)) {
         mimeType = 'image/png';
         icon = '🎨';
+        bgColor = '#7a437a'; // Premiere Graphics track pink
+        borderColor = '#5c325c';
       }
       
       const downloadUrlData = `${mimeType}:${fullFileName}:${fileUrl}`;
@@ -76,31 +89,32 @@ const ResourceCard = memo(function ResourceCard({
       e.dataTransfer.setData("com.adobe.cep.dnd.file.0", cleanPath);
       e.dataTransfer.effectAllowed = "copy";
 
-      // Create a premium custom drag image
+      // Create a premium custom drag image matching Premiere timeline clip style
       if (typeof document !== 'undefined') {
         const dragImage = document.createElement("div");
-        dragImage.style.position = "absolute";
-        dragImage.style.top = "-100px";
-        dragImage.style.left = "-100px";
-        dragImage.style.padding = "6px 12px";
-        dragImage.style.background = "#141414";
+        dragImage.style.position = "fixed";
+        dragImage.style.top = "0px";
+        dragImage.style.left = "0px";
+        dragImage.style.zIndex = "-9999";
+        dragImage.style.padding = "4px 8px";
+        dragImage.style.background = bgColor;
         dragImage.style.color = "#FFFFFF";
-        dragImage.style.border = "1px solid #FFFFFF";
-        dragImage.style.fontFamily = "var(--font-mono), 'JetBrains Mono', monospace";
-        dragImage.style.fontSize = "10px";
-        dragImage.style.letterSpacing = "0.05em";
-        dragImage.style.textTransform = "uppercase";
+        dragImage.style.border = `1px solid ${borderColor}`;
+        dragImage.style.borderRadius = "2px";
+        dragImage.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        dragImage.style.fontSize = "11px";
+        dragImage.style.fontWeight = "500";
         dragImage.style.pointerEvents = "none";
         dragImage.style.whiteSpace = "nowrap";
         dragImage.style.display = "flex";
         dragImage.style.alignItems = "center";
-        dragImage.style.gap = "6px";
-        dragImage.style.zIndex = "9999";
+        dragImage.style.gap = "4px";
+        dragImage.style.boxShadow = "0 2px 4px rgba(0,0,0,0.2)";
         
         dragImage.innerHTML = `<span>${icon}</span> <span>${fullFileName}</span>`;
         
         document.body.appendChild(dragImage);
-        e.dataTransfer.setDragImage(dragImage, 20, 15);
+        e.dataTransfer.setDragImage(dragImage, 20, 12);
         
         setTimeout(() => {
           if (document.body.contains(dragImage)) {

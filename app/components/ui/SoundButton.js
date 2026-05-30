@@ -76,31 +76,32 @@ const SoundButton = memo(function SoundButton({
       e.dataTransfer.setData("com.adobe.cep.dnd.file.0", cleanPath);
       e.dataTransfer.effectAllowed = "copy";
 
-      // Create a premium custom drag image
+      // Create a premium custom drag image matching Premiere timeline clip style (green for audio)
       if (typeof document !== 'undefined') {
         const dragImage = document.createElement("div");
-        dragImage.style.position = "absolute";
-        dragImage.style.top = "-100px";
-        dragImage.style.left = "-100px";
-        dragImage.style.padding = "6px 12px";
-        dragImage.style.background = "#141414";
+        dragImage.style.position = "fixed";
+        dragImage.style.top = "0px";
+        dragImage.style.left = "0px";
+        dragImage.style.zIndex = "-9999";
+        dragImage.style.padding = "4px 8px";
+        dragImage.style.background = "#1e7855";
         dragImage.style.color = "#FFFFFF";
-        dragImage.style.border = "1px solid #FFFFFF";
-        dragImage.style.fontFamily = "var(--font-mono), 'JetBrains Mono', monospace";
-        dragImage.style.fontSize = "10px";
-        dragImage.style.letterSpacing = "0.05em";
-        dragImage.style.textTransform = "uppercase";
+        dragImage.style.border = "1px solid #145e42";
+        dragImage.style.borderRadius = "2px";
+        dragImage.style.fontFamily = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+        dragImage.style.fontSize = "11px";
+        dragImage.style.fontWeight = "500";
         dragImage.style.pointerEvents = "none";
         dragImage.style.whiteSpace = "nowrap";
         dragImage.style.display = "flex";
         dragImage.style.alignItems = "center";
-        dragImage.style.gap = "6px";
-        dragImage.style.zIndex = "9999";
+        dragImage.style.gap = "4px";
+        dragImage.style.boxShadow = "0 2px 4px rgba(0,0,0,0.2)";
         
         dragImage.innerHTML = `<span>🔊</span> <span>${fullFileName}</span>`;
         
         document.body.appendChild(dragImage);
-        e.dataTransfer.setDragImage(dragImage, 20, 15);
+        e.dataTransfer.setDragImage(dragImage, 20, 12);
         
         setTimeout(() => {
           if (document.body.contains(dragImage)) {
