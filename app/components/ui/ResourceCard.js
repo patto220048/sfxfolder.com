@@ -59,8 +59,14 @@ const ResourceCard = memo(function ResourceCard({
       const ext = fileFormat || "mp4";
       const fullFileName = safeName.endsWith("." + ext) ? safeName : `${safeName}.${ext}`;
       let mimeType = 'application/octet-stream';
-      if (['mp4', 'mov', 'webm'].includes(ext.toLowerCase())) mimeType = 'video/mp4';
-      else if (['jpg', 'jpeg', 'png', 'gif'].includes(ext.toLowerCase())) mimeType = 'image/png';
+      let icon = '📦';
+      if (['mp4', 'mov', 'webm'].includes(ext.toLowerCase())) {
+        mimeType = 'video/mp4';
+        icon = '🎬';
+      } else if (['jpg', 'jpeg', 'png', 'gif'].includes(ext.toLowerCase())) {
+        mimeType = 'image/png';
+        icon = '🎨';
+      }
       
       const downloadUrlData = `${mimeType}:${fullFileName}:${fileUrl}`;
       const cleanPath = cachedPath.replace(/\\/g, '/');
@@ -69,6 +75,39 @@ const ResourceCard = memo(function ResourceCard({
       e.dataTransfer.setData("text/plain", cachedPath);
       e.dataTransfer.setData("com.adobe.cep.dnd.file.0", cleanPath);
       e.dataTransfer.effectAllowed = "copy";
+
+      // Create a premium custom drag image
+      if (typeof document !== 'undefined') {
+        const dragImage = document.createElement("div");
+        dragImage.style.position = "absolute";
+        dragImage.style.top = "-100px";
+        dragImage.style.left = "-100px";
+        dragImage.style.padding = "6px 12px";
+        dragImage.style.background = "#141414";
+        dragImage.style.color = "#FFFFFF";
+        dragImage.style.border = "1px solid #FFFFFF";
+        dragImage.style.fontFamily = "var(--font-mono), 'JetBrains Mono', monospace";
+        dragImage.style.fontSize = "10px";
+        dragImage.style.letterSpacing = "0.05em";
+        dragImage.style.textTransform = "uppercase";
+        dragImage.style.pointerEvents = "none";
+        dragImage.style.whiteSpace = "nowrap";
+        dragImage.style.display = "flex";
+        dragImage.style.alignItems = "center";
+        dragImage.style.gap = "6px";
+        dragImage.style.zIndex = "9999";
+        
+        dragImage.innerHTML = `<span>${icon}</span> <span>${fullFileName}</span>`;
+        
+        document.body.appendChild(dragImage);
+        e.dataTransfer.setDragImage(dragImage, 20, 15);
+        
+        setTimeout(() => {
+          if (document.body.contains(dragImage)) {
+            document.body.removeChild(dragImage);
+          }
+        }, 0);
+      }
     }
   }, [isDraggable, cachedPath, name, fileName, fileFormat]);
 
