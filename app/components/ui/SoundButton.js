@@ -50,6 +50,7 @@ const SoundButton = memo(function SoundButton({
   const [duration, setDuration] = useState(0);
   const [isScrubbing, setIsScrubbing] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const pendingSeekRatioRef = useRef(null);
   
   const { 
     downloadStatus, 
@@ -145,12 +146,15 @@ const SoundButton = memo(function SoundButton({
     }
   }, [isScrubbing, id]);
 
-  // Helper to initialize audio on demand (now using Shared Singleton)
+  // Helper to initialize audio on demand (now using Shared Singleton / Ping-pong Buffer)
   const initAudio = useCallback(() => {
     if (!downloadUrl || typeof window === 'undefined') return null;
     
-    // Use Shared Audio Singleton
-    const audio = mediaManager.getSharedAudio();
+    // Use Preloaded Audio if available
+    const audio = typeof mediaManager.getPreloadedAudio === 'function'
+      ? mediaManager.getPreloadedAudio(id)
+      : mediaManager.getSharedAudio();
+      
     if (!audio) return null;
 
     // Normalize absolute URL
@@ -173,50 +177,90 @@ const SoundButton = memo(function SoundButton({
 
   // Sync volume settings and handle global reset
   useEffect(() => {
-    const audio = mediaManager.getSharedAudio();
+    let attachedAudio = null;
     
     const handleTimeUpdate = () => {
       if (mediaManager.isIdActive(id)) {
+        const audio = mediaManager.getSharedAudio();
         setCurrentTime(audio.currentTime);
       }
     };
+    
     const handleDurationChange = () => {
       if (mediaManager.isIdActive(id)) {
+        const audio = mediaManager.getSharedAudio();
         setDuration(audio.duration);
+        
+        // Apply pending seek if metadata loaded
+        if (pendingSeekRatioRef.current !== null && audio.duration > 0) {
+          audio.currentTime = pendingSeekRatioRef.current * audio.duration;
+          setCurrentTime(audio.currentTime);
+          pendingSeekRatioRef.current = null;
+        }
       }
     };
+    
     const handleEnded = () => {
       if (mediaManager.isIdActive(id)) {
         setIsPlaying(false);
         setCurrentTime(0);
+        const audio = mediaManager.getSharedAudio();
         mediaManager.stop(audio);
       }
     };
 
     const unsubscribe = mediaManager.subscribe(({ activeMediaId }) => {
+      const audio = mediaManager.getSharedAudio();
+      
       if (activeMediaId === id) {
         setIsPlaying(!audio.paused);
+        
+        // Detach listeners from previously attached element if changed
+        if (attachedAudio && attachedAudio !== audio) {
+          attachedAudio.removeEventListener('timeupdate', handleTimeUpdate);
+          attachedAudio.removeEventListener('durationchange', handleDurationChange);
+          attachedAudio.removeEventListener('ended', handleEnded);
+        }
+        
         // Attach listeners when we become active
         audio.addEventListener('timeupdate', handleTimeUpdate);
         audio.addEventListener('durationchange', handleDurationChange);
         audio.addEventListener('ended', handleEnded);
+        attachedAudio = audio;
       } else {
         // Detach and reset when someone else becomes active
         if (isPlaying || currentTime > 0) {
           setIsPlaying(false);
           setCurrentTime(0);
         }
-        audio.removeEventListener('timeupdate', handleTimeUpdate);
-        audio.removeEventListener('durationchange', handleDurationChange);
-        audio.removeEventListener('ended', handleEnded);
+        if (attachedAudio) {
+          attachedAudio.removeEventListener('timeupdate', handleTimeUpdate);
+          attachedAudio.removeEventListener('durationchange', handleDurationChange);
+          attachedAudio.removeEventListener('ended', handleEnded);
+          attachedAudio = null;
+        }
       }
     });
 
+    // Initial check for handover
+    if (mediaManager.isIdActive(id)) {
+      const audio = mediaManager.getSharedAudio();
+      setIsPlaying(!audio.paused);
+      setDuration(audio.duration);
+      setCurrentTime(audio.currentTime);
+      audio.addEventListener('timeupdate', handleTimeUpdate);
+      audio.addEventListener('durationchange', handleDurationChange);
+      audio.addEventListener('ended', handleEnded);
+      attachedAudio = audio;
+    }
+
     return () => {
       unsubscribe();
-      audio.removeEventListener('timeupdate', handleTimeUpdate);
-      audio.removeEventListener('durationchange', handleDurationChange);
-      audio.removeEventListener('ended', handleEnded);
+      if (attachedAudio) {
+        attachedAudio.removeEventListener('timeupdate', handleTimeUpdate);
+        attachedAudio.removeEventListener('durationchange', handleDurationChange);
+        attachedAudio.removeEventListener('ended', handleEnded);
+      }
     };
   }, [id, isPlaying, currentTime]);
 
@@ -251,20 +295,24 @@ const SoundButton = memo(function SoundButton({
     if (preloadTimeoutRef.current) clearTimeout(preloadTimeoutRef.current);
     
     preloadTimeoutRef.current = setTimeout(() => {
-      // If ANY item is already playing globally, don't interrupt it for a hover preload
-      const activeId = typeof mediaManager.getActiveId === 'function' ? mediaManager.getActiveId() : null;
-      if (activeId) return;
+      if (typeof mediaManager.preload === 'function' && downloadUrl) {
+        mediaManager.preload(id, downloadUrl);
+      } else {
+        // Fallback: If ANY item is already playing globally, don't interrupt it for a hover preload
+        const activeId = typeof mediaManager.getActiveId === 'function' ? mediaManager.getActiveId() : null;
+        if (activeId) return;
 
-      const audio = mediaManager.getSharedAudio();
-      if (audio) {
-        const normalizedUrl = downloadUrl?.startsWith('http') ? downloadUrl : downloadUrl;
-        // Only set src if it's different to avoid interrupting buffer
-        const currentSrc = audio.src ? new URL(audio.src, window.location.href).href : "";
-        const targetSrc = normalizedUrl ? new URL(normalizedUrl, window.location.href).href : "";
-        
-        if (currentSrc !== targetSrc) {
-          audio.src = normalizedUrl;
-          audio.load();
+        const audio = mediaManager.getSharedAudio();
+        if (audio) {
+          const normalizedUrl = downloadUrl?.startsWith('http') ? downloadUrl : downloadUrl;
+          // Only set src if it's different to avoid interrupting buffer
+          const currentSrc = audio.src ? new URL(audio.src, window.location.href).href : "";
+          const targetSrc = normalizedUrl ? new URL(normalizedUrl, window.location.href).href : "";
+          
+          if (currentSrc !== targetSrc) {
+            audio.src = normalizedUrl;
+            audio.load();
+          }
         }
       }
     }, 200);
@@ -276,6 +324,12 @@ const SoundButton = memo(function SoundButton({
       clearTimeout(preloadTimeoutRef.current);
       preloadTimeoutRef.current = null;
     }
+  }, []);
+
+  const stopPlaybackCallback = useCallback(() => {
+    setIsPlaying(false);
+    setCurrentTime(0);
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
   }, []);
 
   const togglePlay = useCallback(() => {
@@ -295,11 +349,7 @@ const SoundButton = memo(function SoundButton({
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     } else {
       if (audio.ended) audio.currentTime = 0;
-      mediaManager.play(audio, 'audio', () => {
-        setIsPlaying(false);
-        setCurrentTime(0); // Sync state when another media overrides
-        if (rafRef.current) cancelAnimationFrame(rafRef.current);
-      }, id);
+      mediaManager.play(audio, 'audio', stopPlaybackCallback, id);
       const playPromise = audio.play();
       if (playPromise !== undefined) {
         playPromise.then(() => {
@@ -313,7 +363,7 @@ const SoundButton = memo(function SoundButton({
         });
       }
     }
-  }, [downloadUrl, isPlaying, updateTime, initAudio]);
+  }, [downloadUrl, isPlaying, updateTime, initAudio, stopPlaybackCallback]);
 
   // Global seek logic using clientX for accuracy
   const seek = useCallback((clientX, target) => {
@@ -325,28 +375,33 @@ const SoundButton = memo(function SoundButton({
       ? audio.duration 
       : duration;
 
-    // If we still don't have duration, we can't seek
-    if (!audioDuration || isNaN(audioDuration) || audioDuration === 0) {
-      return;
-    }
-
     const rect = target.getBoundingClientRect();
     const offsetX = clientX - rect.left;
     const ratio = Math.max(0, Math.min(1, offsetX / rect.width));
-    
+
+    // If we still don't have duration, store pending seek
+    if (!audioDuration || isNaN(audioDuration) || audioDuration === 0) {
+      pendingSeekRatioRef.current = ratio;
+      return;
+    }
+
+    pendingSeekRatioRef.current = null;
     const newTime = ratio * audioDuration;
     audio.currentTime = newTime;
     setCurrentTime(newTime);
-  }, [duration, id, isScrubbing]);
+  }, [duration, id]);
 
   const handleMouseDown = useCallback((e) => {
     e.stopPropagation();
     const audio = initAudio();
     if (!audio) return;
 
-    // YouTube style: Pause while scrubbing, remember if it was playing
+    // Register active media immediately so seek() check passes
+    mediaManager.play(audio, 'audio', stopPlaybackCallback, id);
+
+    // Pause while scrubbing
     const isCurrentlyPlaying = !audio.paused;
-    wasPlayingRef.current = isCurrentlyPlaying;
+    wasPlayingRef.current = true; // Always start/resume playback after seeking (fast preview)
     
     if (isCurrentlyPlaying) {
       audio.close && audio.close(); // optional cleanup
@@ -356,18 +411,19 @@ const SoundButton = memo(function SoundButton({
     }
 
     setIsScrubbing(true);
-    // Use a small timeout or immediate update to ensure state is processed if needed
-    // but clientX is already available
     seek(e.clientX, e.currentTarget);
-  }, [seek, initAudio]);
+  }, [seek, initAudio, stopPlaybackCallback, id]);
 
   const handleTouchStart = useCallback((e) => {
     e.stopPropagation();
     const audio = initAudio();
     if (!audio) return;
 
+    // Register active media immediately so seek() check passes
+    mediaManager.play(audio, 'audio', stopPlaybackCallback, id);
+
     const isCurrentlyPlaying = !audio.paused;
-    wasPlayingRef.current = isCurrentlyPlaying;
+    wasPlayingRef.current = true; // Always start/resume playback after seeking (fast preview)
     
     if (isCurrentlyPlaying) {
       audio.pause();
@@ -379,7 +435,7 @@ const SoundButton = memo(function SoundButton({
     if (e.touches && e.touches.length > 0) {
       seek(e.touches[0].clientX, e.currentTarget);
     }
-  }, [seek, initAudio]);
+  }, [seek, initAudio, stopPlaybackCallback, id]);
 
   // Handle global scrubbing events
   useEffect(() => {
@@ -510,7 +566,9 @@ const SoundButton = memo(function SoundButton({
 
   const displayName = (name || fileName || "Untitled").replace(/\.[^/.]+$/, "");
   const sizeStr = formatSize(fileSize);
-  const progress = duration > 0 ? (currentTime / duration) * 100 : 0;
+  const progress = duration > 0 
+    ? (currentTime / duration) * 100 
+    : (pendingSeekRatioRef.current !== null ? pendingSeekRatioRef.current * 100 : 0);
 
   return (
     <div

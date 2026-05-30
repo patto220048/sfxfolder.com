@@ -154,6 +154,7 @@ const ResourceCard = memo(function ResourceCard({
   const videoRef = useRef(null);
   const rafRef = useRef(null);
   const wasPlayingRef = useRef(false);
+  const pendingSeekRatioRef = useRef(null);
   const displayName = (name || fileName || "Untitled").replace(/\.[^/.]+$/, "");
 
   // LUT Slider comparison state
@@ -187,6 +188,15 @@ const ResourceCard = memo(function ResourceCard({
     }
   }, [isScrubbing]);
 
+  const handleVideoDurationChange = useCallback(() => {
+    const video = videoRef.current;
+    if (video && pendingSeekRatioRef.current !== null && video.duration > 0) {
+      video.currentTime = pendingSeekRatioRef.current * video.duration;
+      setVideoProgress(pendingSeekRatioRef.current * 100);
+      pendingSeekRatioRef.current = null;
+    }
+  }, []);
+
   const seek = useCallback((clientX, target) => {
     const video = videoRef.current;
     if (!video) return;
@@ -196,12 +206,17 @@ const ResourceCard = memo(function ResourceCard({
       ? video.duration 
       : null;
 
-    if (!videoDuration) return;
-
     const rect = target.getBoundingClientRect();
     const offsetX = clientX - rect.left;
     const ratio = Math.max(0, Math.min(1, offsetX / rect.width));
-    
+
+    if (!videoDuration) {
+      pendingSeekRatioRef.current = ratio;
+      setVideoProgress(ratio * 100);
+      return;
+    }
+
+    pendingSeekRatioRef.current = null;
     video.currentTime = ratio * videoDuration;
     setVideoProgress(ratio * 100);
   }, []);
@@ -285,7 +300,9 @@ const ResourceCard = memo(function ResourceCard({
 
   // --- Audio inline player ---
   const toggleAudio = useCallback(() => {
-    const audio = mediaManager.getSharedAudio();
+    const audio = typeof mediaManager.getPreloadedAudio === 'function'
+      ? mediaManager.getPreloadedAudio(id)
+      : mediaManager.getSharedAudio();
     if (!audio || !resolvedUrl) return;
 
     if (isPlaying && mediaManager.isIdActive(id)) {
@@ -314,15 +331,17 @@ const ResourceCard = memo(function ResourceCard({
 
   // Sync audio/video state with global manager
   useEffect(() => {
-    const audio = mediaManager.getSharedAudio();
+    let attachedAudio = null;
     
     const handleTimeUpdate = () => {
       if (mediaManager.isIdActive(id)) {
+        const audio = mediaManager.getSharedAudio();
         setCurrentTime(audio.currentTime);
       }
     };
     const handleDurationChange = () => {
       if (mediaManager.isIdActive(id)) {
+        const audio = mediaManager.getSharedAudio();
         setDuration(audio.duration);
       }
     };
@@ -330,44 +349,61 @@ const ResourceCard = memo(function ResourceCard({
       if (mediaManager.isIdActive(id)) {
         setIsPlaying(false);
         setCurrentTime(0);
+        const audio = mediaManager.getSharedAudio();
         mediaManager.stop(audio);
       }
     };
 
     const unsubscribe = mediaManager.subscribe(({ activeMediaId }) => {
+      const audio = mediaManager.getSharedAudio();
+      
       if (activeMediaId === id) {
         setIsPlaying(!audio.paused);
         setDuration(audio.duration);
         setCurrentTime(audio.currentTime);
         
+        if (attachedAudio && attachedAudio !== audio) {
+          attachedAudio.removeEventListener('timeupdate', handleTimeUpdate);
+          attachedAudio.removeEventListener('durationchange', handleDurationChange);
+          attachedAudio.removeEventListener('ended', handleEnded);
+        }
+        
         audio.addEventListener('timeupdate', handleTimeUpdate);
         audio.addEventListener('durationchange', handleDurationChange);
         audio.addEventListener('ended', handleEnded);
+        attachedAudio = audio;
       } else {
         if (isPlaying) setIsPlaying(false);
-        audio.removeEventListener('timeupdate', handleTimeUpdate);
-        audio.removeEventListener('durationchange', handleDurationChange);
-        audio.removeEventListener('ended', handleEnded);
+        if (attachedAudio) {
+          attachedAudio.removeEventListener('timeupdate', handleTimeUpdate);
+          attachedAudio.removeEventListener('durationchange', handleDurationChange);
+          attachedAudio.removeEventListener('ended', handleEnded);
+          attachedAudio = null;
+        }
       }
     });
 
     // Initial check for handover
     if (mediaManager.isIdActive(id)) {
+      const audio = mediaManager.getSharedAudio();
       setIsPlaying(!audio.paused);
       setDuration(audio.duration);
       setCurrentTime(audio.currentTime);
       audio.addEventListener('timeupdate', handleTimeUpdate);
       audio.addEventListener('durationchange', handleDurationChange);
       audio.addEventListener('ended', handleEnded);
+      attachedAudio = audio;
     }
 
     return () => {
       unsubscribe();
-      audio.removeEventListener('timeupdate', handleTimeUpdate);
-      audio.removeEventListener('durationchange', handleDurationChange);
-      audio.removeEventListener('ended', handleEnded);
+      if (attachedAudio) {
+        attachedAudio.removeEventListener('timeupdate', handleTimeUpdate);
+        attachedAudio.removeEventListener('durationchange', handleDurationChange);
+        attachedAudio.removeEventListener('ended', handleEnded);
+      }
     };
-  }, [id]);
+  }, [id, isPlaying]);
 
   // Sync with global settings
   useEffect(() => {
@@ -445,6 +481,8 @@ const ResourceCard = memo(function ResourceCard({
                     loop
                     poster={getOptimizedUrl(thumbnailUrl, { width: 480 })}
                     preload="metadata"
+                    onDurationChange={handleVideoDurationChange}
+                    onLoadedMetadata={handleVideoDurationChange}
                   />
                 ) : (
                   <Image
@@ -470,6 +508,8 @@ const ResourceCard = memo(function ResourceCard({
                 playsInline
                 preload="metadata"
                 poster={""}
+                onDurationChange={handleVideoDurationChange}
+                onLoadedMetadata={handleVideoDurationChange}
               />
             ) : (thumbnailUrl || resolvedUrl) ? (
               <Image
