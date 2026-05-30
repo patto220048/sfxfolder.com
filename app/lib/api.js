@@ -545,8 +545,7 @@ export async function addResource(resourceData) {
     throw new Error('Đã thêm tài nguyên nhưng không nhận được dữ liệu trả về (có thể do lỗi phân quyền RLS).');
   }
   
-  // Re-sync all tags to keep counts accurate
-  await syncAllTagsFromResources().catch(e => console.error("Auto tag sync failed:", e));
+  // Bỏ qua đồng bộ thủ công vì đã có Postgres Trigger trg_resource_tags_change tự động đồng bộ khi insert
   
   return mapResource(data[0]);
 }
@@ -566,8 +565,7 @@ export async function updateResource(id, updateData) {
     .select()
     .single();
 
-  // Re-sync all tags to keep counts accurate
-  await syncAllTagsFromResources().catch(e => console.error("Auto tag sync failed:", e));
+  // Bỏ qua đồng bộ thủ công vì đã có Postgres Trigger trg_resource_tags_change tự động đồng bộ khi update
 
   if (error) {
     console.error('Error updating resource:', error);
@@ -609,8 +607,7 @@ export async function deleteResource(id) {
     throw error;
   }
 
-  // 4. Re-sync tags to keep counts accurate
-  await syncAllTagsFromResources().catch(e => console.error("Auto tag sync failed after delete:", e));
+  // Bỏ qua đồng bộ thủ công vì đã có Postgres Trigger trg_resource_tags_change tự động đồng bộ khi delete
 
   return true;
 }
@@ -929,6 +926,14 @@ export const getTags = (...args) => {
   if (isServer && REVALIDATE_TIME !== false) {
     return getTagsCached(...args);
   }
+  
+  // Gọi qua API Route có Server-Side Cache ở phía Client
+  if (!isServer) {
+    return fetch('/api/tags', { cache: 'default' })
+      .then(res => res.ok ? res.json() : fetchTagsInternal())
+      .catch(() => fetchTagsInternal());
+  }
+  
   return fetchTagsInternal(...args);
 };
 
@@ -1255,9 +1260,8 @@ export async function bulkDeleteResources(ids) {
     throw new Error(error.error || "Xóa hàng loạt thất bại.");
   }
 
-  // Re-sync tags on the background
-  syncAllTagsFromResources().catch(e => console.error("Auto tag sync failed after bulk delete:", e));
-
+  // Bỏ qua đồng bộ thủ công vì đã có Postgres Trigger trg_resource_tags_change tự động đồng bộ khi delete
+  
   return true;
 }
 
