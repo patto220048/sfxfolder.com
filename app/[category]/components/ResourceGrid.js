@@ -263,8 +263,11 @@ const ResourceGrid = ({
   }, [isPlugin, isSoundLayout]);
 
   React.useEffect(() => {
-    const isLoading = isInitialLoading || isFetchLoading || isPending;
-    if (highlightSlug && !isLoading && highlightSlug !== lastScrolledSlugRef.current && flatItems.length > 0) {
+    // Only block scrolling during initial skeleton load or transition pending.
+    // Do NOT block scrolling during background folder fetches (isFetchLoading)
+    // if the highlighted item is already present in flatItems.
+    const isReadyToScroll = !isInitialLoading && !isPending && flatItems.length > 0;
+    if (highlightSlug && isReadyToScroll && highlightSlug !== lastScrolledSlugRef.current) {
       const highlightIndex = flatItems.findIndex(item => !item._isFolder && item.slug === highlightSlug);
       if (highlightIndex >= 0) {
         lastScrolledSlugRef.current = highlightSlug;
@@ -289,7 +292,7 @@ const ResourceGrid = ({
         return () => clearTimeout(timer);
       }
     }
-  }, [highlightSlug, flatItems, getColumnCount, isInitialLoading, isFetchLoading, isPending]);
+  }, [highlightSlug, flatItems, getColumnCount, isInitialLoading, isPending]);
 
 
 

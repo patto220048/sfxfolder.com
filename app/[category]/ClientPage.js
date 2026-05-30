@@ -105,6 +105,12 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
     highlightSlugRef.current = highlightSlug;
   }, [highlightSlug]);
 
+  const currentHighlightedItemRef = useRef(null);
+  const allLoadedResourcesRef = useRef(allLoadedResources);
+  useEffect(() => {
+    allLoadedResourcesRef.current = allLoadedResources;
+  }, [allLoadedResources]);
+
   const [prevFolderId, setPrevFolderId] = useState(selectedFolderId);
   const [prevSlug, setPrevSlug] = useState(slug);
   if (selectedFolderId !== prevFolderId || slug !== prevSlug) {
@@ -113,6 +119,9 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
     const urlHighlight = searchParams?.get("highlight") || null;
     setHighlightSlug(urlHighlight);
     highlightSlugRef.current = urlHighlight;
+    if (!urlHighlight) {
+      currentHighlightedItemRef.current = null;
+    }
   }
   const { setFolderId } = useSidebar();
 
@@ -163,6 +172,7 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
     setFolderId(id);
     setHighlightSlug(null);
     highlightSlugRef.current = null;
+    currentHighlightedItemRef.current = null;
     updateUrl({ folder: id, highlight: null });
 
     if (!isHistoryMove) {
@@ -295,12 +305,18 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
   }, [resSlug, isInitialized, allLoadedResources]);
 
   useEffect(() => {
-    if (!isInitialized || !highlightSlug) return;
+    if (!isInitialized || !highlightSlug) {
+      currentHighlightedItemRef.current = null;
+      return;
+    }
     
-    const existing = allLoadedResources.find(r => r.slug === highlightSlug);
-    if (!existing) {
+    const existing = allLoadedResourcesRef.current.find(r => r.slug === highlightSlug);
+    if (existing) {
+      currentHighlightedItemRef.current = existing;
+    } else {
       getResourceBySlug(highlightSlug).then(resource => {
         if (resource) {
+          currentHighlightedItemRef.current = resource;
           setAllLoadedResources(prev => {
             if (prev.find(r => r.id === resource.id)) return prev;
             return [resource, ...prev];
@@ -308,13 +324,31 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
         }
       });
     }
-  }, [highlightSlug, isInitialized, allLoadedResources]);
+  }, [highlightSlug, isInitialized]);
 
   useEffect(() => {
     const handleLocalSearch = (e) => setInPageSearch(e.detail || "");
+    const handleHighlightResource = (e) => {
+      const { folderId, slug: itemSlug } = e.detail;
+      mediaManager.stopAll();
+      setSelectedFolderId(folderId);
+      const result = findInTree(folders, folderId);
+      setSelectedFolderName(result?.current ? (result.current.path || result.current.name) : null);
+      setFolderId(folderId);
+      setHighlightSlug(itemSlug);
+      highlightSlugRef.current = itemSlug;
+      
+      // Update URL silently
+      updateUrl({ folder: folderId, highlight: itemSlug });
+    };
+
     window.addEventListener("local-search", handleLocalSearch);
-    return () => window.removeEventListener("local-search", handleLocalSearch);
-  }, []);
+    window.addEventListener("highlight-resource", handleHighlightResource);
+    return () => {
+      window.removeEventListener("local-search", handleLocalSearch);
+      window.removeEventListener("highlight-resource", handleHighlightResource);
+    };
+  }, [folders, setFolderId, updateUrl]);
 
   // Handle preview by updating URL (to trigger useEffect)
   const handlePreview = useCallback((resource) => {
@@ -501,11 +535,9 @@ function ClientPageContent({ slug, info, folders, resources: initialResources, c
         if (!controller.signal.aborted) {
           setAllLoadedResources(prev => {
             const freshList = fresh || [];
-            if (highlightSlugRef.current) {
-              const highlighted = prev.find(r => r.slug === highlightSlugRef.current);
-              if (highlighted && !freshList.some(r => r.slug === highlightSlugRef.current)) {
-                return [highlighted, ...freshList];
-              }
+            const highlighted = currentHighlightedItemRef.current;
+            if (highlighted && !freshList.some(r => r.slug === highlighted.slug)) {
+              return [highlighted, ...freshList];
             }
             return freshList;
           });

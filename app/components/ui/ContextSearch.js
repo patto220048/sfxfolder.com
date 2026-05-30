@@ -275,7 +275,9 @@ export default function ContextSearch({ isPlugin = false }) {
         const currentParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
         const currentCategory = currentParams?.get("category") || "sound-effects";
         if (categorySlug === currentCategory) {
-          router.push(url, { scroll: false });
+          window.dispatchEvent(new CustomEvent("highlight-resource", { 
+            detail: { folderId, slug: itemSlug, categorySlug } 
+          }));
         } else {
           router.push(url);
         }
@@ -285,8 +287,11 @@ export default function ContextSearch({ isPlugin = false }) {
         if (folderId) {
           url += `&folder=${folderId}`;
         }
-        if (typeof window !== "undefined" && window.location.pathname.replace(/\/$/, "") === `/${categorySlug}`.replace(/\/$/, "")) {
-          router.push(url, { scroll: false });
+        const isCurrentCategoryPage = typeof window !== "undefined" && window.location.pathname.replace(/\/$/, "") === `/${categorySlug}`.replace(/\/$/, "");
+        if (isCurrentCategoryPage) {
+          window.dispatchEvent(new CustomEvent("highlight-resource", { 
+            detail: { folderId, slug: itemSlug, categorySlug } 
+          }));
         } else {
           router.push(url);
         }

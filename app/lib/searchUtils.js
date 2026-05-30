@@ -47,7 +47,7 @@ export async function getOrBuildSearchIndex(forceRebuild = false) {
       // 2. Fetch resources
       const { data: allResources, error: resError } = await supabase
         .from('resources')
-        .select('id, name, description, category_id, folder_id, file_format, tags, slug, download_url, preview_url, thumbnail_url, graded_preview_url, graded_thumbnail_url, file_size, download_count')
+        .select('id, name, description, category_id, folder_id, file_format, tags, slug')
         .eq('is_published', true);
       
       // 3. Fetch folders
@@ -68,14 +68,7 @@ export async function getOrBuildSearchIndex(forceRebuild = false) {
         folderId: res.folder_id || null,
         fileFormat: res.file_format || "",
         tags: res.tags || [],
-        slug: res.slug || "",
-        downloadUrl: res.download_url || "",
-        previewUrl: res.preview_url || "",
-        thumbnailUrl: res.thumbnail_url || "",
-        gradedPreviewUrl: res.graded_preview_url || "",
-        gradedThumbnailUrl: res.graded_thumbnail_url || "",
-        fileSize: res.file_size || 0,
-        downloadCount: res.download_count || 0
+        slug: res.slug || ""
       }));
 
       // Transform folders
@@ -102,6 +95,7 @@ export async function getOrBuildSearchIndex(forceRebuild = false) {
         sessionStorage.setItem(CACHE_KEY, JSON.stringify(combined));
         sessionStorage.setItem(CACHE_TIME_KEY, Date.now().toString());
       } catch (e) {
+        sessionStorage.removeItem(CACHE_KEY); // Clean up if storage limit exceeded
         console.warn("Could not save search index to sessionStorage", e);
       }
 
@@ -134,6 +128,34 @@ function createFuseInstance(dataList) {
   });
 }
 
+function getDescendantFolderIds(folderId, folders) {
+  const ids = [folderId];
+  const childrenMap = {};
+  
+  folders.forEach(f => {
+    if (f.parentId) {
+      if (!childrenMap[f.parentId]) {
+        childrenMap[f.parentId] = [];
+      }
+      childrenMap[f.parentId].push(f.id);
+    }
+  });
+
+  const queue = [folderId];
+  while (queue.length > 0) {
+    const current = queue.shift();
+    const children = childrenMap[current] || [];
+    children.forEach(childId => {
+      if (!ids.includes(childId)) {
+        ids.push(childId);
+        queue.push(childId);
+      }
+    });
+  }
+
+  return ids;
+}
+
 /**
  * Searches the in-memory/cached index for a given term.
  * @param {string} term 
@@ -149,8 +171,9 @@ export async function searchResourcesClient(term, options = {}) {
   const limitCount = options.limit || 200;
 
   let results = [];
+  const isSearching = term && term.trim();
 
-  if (!term || !term.trim()) {
+  if (!isSearching) {
     results = list;
   } else {
     const fuseResults = fuse.search(term.trim(), { limit: limitCount });
@@ -162,6 +185,12 @@ export async function searchResourcesClient(term, options = {}) {
 
   // Apply filters if present
   if (options.category || options.folderId || options.type) {
+    let allowedFolderIds = null;
+    if (options.folderId && isSearching) {
+      const foldersOnly = list.filter(item => item.type === 'folder');
+      allowedFolderIds = new Set(getDescendantFolderIds(options.folderId, foldersOnly));
+    }
+
     results = results.filter(item => {
       // Robust category matching: check slug or display name
       const catMatch = !options.category || 
@@ -174,15 +203,20 @@ export async function searchResourcesClient(term, options = {}) {
       const typeMatch = !options.type || 
                        options.type === 'all' || 
                        item.type === options.type ||
-                       (options.folderId && item.type === 'folder' && item.parentId === options.folderId);
+                       (options.folderId && item.type === 'folder' && 
+                        (allowedFolderIds ? allowedFolderIds.has(item.parentId) : item.parentId === options.folderId));
       
       // Folder filtering: 
-      // 1. If it's a resource, check folderId
-      // 2. If it's a folder, check parentId (to show subfolders)
+      // 1. If it's a resource, check folderId (must be in allowedFolderIds if searching, otherwise direct match)
+      // 2. If it's a folder, check parentId (must be in allowedFolderIds or matches options.folderId/parentId)
       const folderMatch = !options.folderId || 
-                         (item.type === 'resource' && item.folderId === options.folderId) ||
-                         (item.type === 'folder' && item.parentId === options.folderId);
-                         
+                          (allowedFolderIds 
+                            ? ((item.type === 'resource' && allowedFolderIds.has(item.folderId)) ||
+                               (item.type === 'folder' && (allowedFolderIds.has(item.parentId) || item.id === options.folderId)))
+                            : ((item.type === 'resource' && item.folderId === options.folderId) ||
+                               (item.type === 'folder' && item.parentId === options.folderId))
+                          );
+                          
       return catMatch && folderMatch && typeMatch;
     });
   }
