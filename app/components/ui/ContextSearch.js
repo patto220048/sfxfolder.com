@@ -254,10 +254,30 @@ export default function ContextSearch({ isPlugin = false }) {
     saveRecent(item);
     
     if (item.type === 'folder') {
-      setActiveFolder(item);
-      setFilters(prev => ({ ...prev, type: 'resource' }));
-      setQuery(""); // Clear search to show folder content
-      inputRef.current?.focus();
+      const categorySlug = item.categorySlug || 'all';
+      if (isPlugin) {
+        let url = `/plugins/premiere?category=${categorySlug}&folder=${item.id}&mode=plugin`;
+        const currentParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+        const currentCategory = currentParams?.get("category") || "sound-effects";
+        if (categorySlug === currentCategory) {
+          window.dispatchEvent(new CustomEvent("highlight-resource", { 
+            detail: { folderId: item.id, slug: null, categorySlug } 
+          }));
+        } else {
+          router.push(url);
+        }
+      } else {
+        let url = `/${categorySlug}?folder=${item.id}`;
+        const isCurrentCategoryPage = typeof window !== "undefined" && window.location.pathname.replace(/\/$/, "") === `/${categorySlug}`.replace(/\/$/, "");
+        if (isCurrentCategoryPage) {
+          window.dispatchEvent(new CustomEvent("highlight-resource", { 
+            detail: { folderId: item.id, slug: null, categorySlug } 
+          }));
+        } else {
+          router.push(url);
+        }
+      }
+      closeSilent();
       return;
     }
 
