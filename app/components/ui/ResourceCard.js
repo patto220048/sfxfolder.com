@@ -63,8 +63,11 @@ const ResourceCard = memo(function ResourceCard({
       else if (['jpg', 'jpeg', 'png', 'gif'].includes(ext.toLowerCase())) mimeType = 'image/png';
       
       const downloadUrlData = `${mimeType}:${fullFileName}:${fileUrl}`;
+      const cleanPath = cachedPath.replace(/\\/g, '/');
+      
       e.dataTransfer.setData("DownloadURL", downloadUrlData);
       e.dataTransfer.setData("text/plain", cachedPath);
+      e.dataTransfer.setData("com.adobe.cep.dnd.file.0", cleanPath);
       e.dataTransfer.effectAllowed = "copy";
     }
   }, [isDraggable, cachedPath, name, fileName, fileFormat]);
