@@ -3,7 +3,7 @@
 
 [Setup]
 AppName=SFXFolder Premiere Plugin
-AppVersion=1.0.1
+AppVersion=1.0.4
 AppPublisher=SFXFolder
 AppPublisherURL=https://sfxfolder.com
 DefaultDirName={userappdata}\Adobe\CEP\extensions\com.resrc.premiere
