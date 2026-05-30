@@ -56,8 +56,25 @@ const SoundButton = memo(function SoundButton({
     progress: pluginProgress, 
     isInsidePlugin, 
     importAsset, 
-    downloadResource 
+    downloadResource,
+    cachedPath
   } = usePluginCache(id, name || fileName, fileFormat);
+
+  const isDraggable = isInsidePlugin && downloadStatus === 'cached' && cachedPath;
+
+  const handleDragStart = useCallback((e) => {
+    if (isDraggable && cachedPath) {
+      const fileUrl = 'file:///' + cachedPath.replace(/\\/g, '/');
+      const safeName = (name || fileName || "sound").replace(/[:/\\?*|"]/g, "_");
+      const ext = fileFormat || "mp3";
+      const fullFileName = safeName.endsWith("." + ext) ? safeName : `${safeName}.${ext}`;
+      const downloadUrlData = `audio/mpeg:${fullFileName}:${fileUrl}`;
+      
+      e.dataTransfer.setData("DownloadURL", downloadUrlData);
+      e.dataTransfer.setData("text/plain", cachedPath);
+      e.dataTransfer.effectAllowed = "copy";
+    }
+  }, [isDraggable, cachedPath, name, fileName, fileFormat]);
   
   const { user, session, isPremium: userIsPremium, isAdmin, loading } = useAuth();
   const { isFavorited, toggleFavorite } = useFavorites();
@@ -429,11 +446,13 @@ const SoundButton = memo(function SoundButton({
 
   return (
     <div
-      className={`${styles.item} ${isPlaying ? styles.playing : ""} ${isHighlighted ? styles.highlightFlash : ""}`}
+      className={`${styles.item} ${isPlaying ? styles.playing : ""} ${isHighlighted ? styles.highlightFlash : ""} ${isDraggable ? styles.draggableItem : ""}`}
       style={{ "--stagger-index": index, "--cat-color": primaryColor }}
       id={`sound-${id}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      draggable={isDraggable ? "true" : undefined}
+      onDragStart={isDraggable ? handleDragStart : undefined}
     >
       {/* Play button */}
       <button

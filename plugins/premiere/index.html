@@ -270,7 +270,8 @@
                         event.source.postMessage({
                             type: 'RESOURCE_STATUS',
                             resourceId: rid,
-                            exists: exists
+                            exists: exists,
+                            cachedPath: exists ? cachedPath : null
                         }, '*');
                         return;
                     }
@@ -391,7 +392,8 @@
                             iframe.contentWindow.postMessage({
                                 type: 'DOWNLOAD_COMPLETE',
                                 resourceId: resourceId,
-                                success: true
+                                success: true,
+                                cachedPath: dest
                             }, '*');
                         }
 

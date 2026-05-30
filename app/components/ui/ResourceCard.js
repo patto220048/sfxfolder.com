@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Download as DownloadCount, Play, Eye, Volume2, VolumeX, Star } from "lucide-react";
 import DownloadButton from "./DownloadButton";
+import { usePluginCache } from "@/app/hooks/usePluginCache";
 import { mediaManager } from "@/app/lib/mediaManager";
 import { isVideoFormat, isImageFormat, isFontFormat, isLUTFormat, getOptimizedUrl } from "@/app/lib/mediaUtils";
 import { useFavorites } from "@/app/context/FavoritesContext";
@@ -47,6 +48,26 @@ const ResourceCard = memo(function ResourceCard({
   const router = useRouter();
   const { isFavorited, toggleFavorite } = useFavorites();
   const isFav = isFavorited(id);
+
+  const { downloadStatus, cachedPath } = usePluginCache(isPlugin ? id : null, name || fileName, fileFormat);
+  const isDraggable = isPlugin && downloadStatus === 'cached' && cachedPath;
+
+  const handleDragStart = useCallback((e) => {
+    if (isDraggable && cachedPath) {
+      const fileUrl = 'file:///' + cachedPath.replace(/\\/g, '/');
+      const safeName = (name || fileName || "download").replace(/[:/\\?*|"]/g, "_");
+      const ext = fileFormat || "mp4";
+      const fullFileName = safeName.endsWith("." + ext) ? safeName : `${safeName}.${ext}`;
+      let mimeType = 'application/octet-stream';
+      if (['mp4', 'mov', 'webm'].includes(ext.toLowerCase())) mimeType = 'video/mp4';
+      else if (['jpg', 'jpeg', 'png', 'gif'].includes(ext.toLowerCase())) mimeType = 'image/png';
+      
+      const downloadUrlData = `${mimeType}:${fullFileName}:${fileUrl}`;
+      e.dataTransfer.setData("DownloadURL", downloadUrlData);
+      e.dataTransfer.setData("text/plain", cachedPath);
+      e.dataTransfer.effectAllowed = "copy";
+    }
+  }, [isDraggable, cachedPath, name, fileName, fileFormat]);
 
   const handleFavoriteClick = useCallback((e) => {
     e.preventDefault();
@@ -632,11 +653,13 @@ const ResourceCard = memo(function ResourceCard({
 
   return (
     <div
-      className={`${styles.card} ${isPlugin ? styles.compact : ""} ${isHighlighted ? styles.highlightFlash : ""}`}
+      className={`${styles.card} ${isPlugin ? styles.pluginCard : ""} ${isHighlighted ? styles.highlighted : ""} ${effectiveCardType === 'sound' ? styles.soundCard : ""} ${isDraggable ? styles.draggableCard : ""}`}
       style={{ 
         "--stagger-index": index,
         "--cat-color": primaryColor
       }}
+      draggable={isDraggable ? "true" : undefined}
+      onDragStart={isDraggable ? handleDragStart : undefined}
       id={`resource-${id}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
