@@ -222,6 +222,24 @@ const ResourceCard = memo(function ResourceCard({
     seek(e.clientX, e.currentTarget);
   }, [seek]);
 
+  const handleTouchStart = useCallback((e) => {
+    e.stopPropagation();
+    const video = videoRef.current;
+    if (!video) return;
+
+    // Pause while scrubbing
+    wasPlayingRef.current = !video.paused;
+    if (!video.paused) {
+      video.pause();
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    }
+
+    setIsScrubbing(true);
+    if (e.touches && e.touches.length > 0) {
+      seek(e.touches[0].clientX, e.currentTarget);
+    }
+  }, [seek]);
+
   // Handle global scrubbing events for video
   useEffect(() => {
     if (!isScrubbing) return;
@@ -230,6 +248,13 @@ const ResourceCard = memo(function ResourceCard({
       // Find the progress wrapper within this specific card
       const wrapper = document.querySelector(`#resource-${id} .${styles.videoProgressWrapper}`);
       if (wrapper) seek(e.clientX, wrapper);
+    };
+
+    const handleTouchMove = (e) => {
+      if (e.touches && e.touches.length > 0) {
+        const wrapper = document.querySelector(`#resource-${id} .${styles.videoProgressWrapper}`);
+        if (wrapper) seek(e.touches[0].clientX, wrapper);
+      }
     };
 
     const handleMouseUp = () => {
@@ -248,11 +273,15 @@ const ResourceCard = memo(function ResourceCard({
 
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handleMouseUp);
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleMouseUp);
     };
-  }, [isScrubbing, id, seek]);
+  }, [isScrubbing, id, seek, updateVideoProgress]);
 
   // --- Audio inline player ---
   const toggleAudio = useCallback(() => {
@@ -466,6 +495,12 @@ const ResourceCard = memo(function ResourceCard({
               <div 
                 className={styles.videoProgressWrapper} 
                 onMouseDown={handleMouseDown}
+                onTouchStart={handleTouchStart}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+                data-scrubbing={isScrubbing}
                 style={{ height: isScrubbing ? '6px' : undefined }}
               >
                 <div className={styles.videoProgressTrack}>

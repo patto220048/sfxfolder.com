@@ -349,6 +349,7 @@ const SoundButton = memo(function SoundButton({
     wasPlayingRef.current = isCurrentlyPlaying;
     
     if (isCurrentlyPlaying) {
+      audio.close && audio.close(); // optional cleanup
       audio.pause();
       setIsPlaying(false);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
@@ -360,6 +361,26 @@ const SoundButton = memo(function SoundButton({
     seek(e.clientX, e.currentTarget);
   }, [seek, initAudio]);
 
+  const handleTouchStart = useCallback((e) => {
+    e.stopPropagation();
+    const audio = initAudio();
+    if (!audio) return;
+
+    const isCurrentlyPlaying = !audio.paused;
+    wasPlayingRef.current = isCurrentlyPlaying;
+    
+    if (isCurrentlyPlaying) {
+      audio.pause();
+      setIsPlaying(false);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    }
+
+    setIsScrubbing(true);
+    if (e.touches && e.touches.length > 0) {
+      seek(e.touches[0].clientX, e.currentTarget);
+    }
+  }, [seek, initAudio]);
+
   // Handle global scrubbing events
   useEffect(() => {
     if (!isScrubbing) return;
@@ -367,6 +388,13 @@ const SoundButton = memo(function SoundButton({
     const handleMouseMove = (e) => {
       const wrapper = document.querySelector(`#sound-${id} .${styles.progressWrapper}`);
       if (wrapper) seek(e.clientX, wrapper);
+    };
+
+    const handleTouchMove = (e) => {
+      if (e.touches && e.touches.length > 0) {
+        const wrapper = document.querySelector(`#sound-${id} .${styles.progressWrapper}`);
+        if (wrapper) seek(e.touches[0].clientX, wrapper);
+      }
     };
 
     const handleMouseUp = () => {
@@ -387,9 +415,13 @@ const SoundButton = memo(function SoundButton({
 
     window.addEventListener("mousemove", handleMouseMove);
     window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+    window.addEventListener("touchend", handleMouseUp);
     return () => {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("touchend", handleMouseUp);
     };
   }, [isScrubbing, id, seek, updateTime]);
 
@@ -547,23 +579,29 @@ const SoundButton = memo(function SoundButton({
             {duration > 0 ? `${formatTime(currentTime)} / ${formatTime(duration)}` : ""}
           </span>
         </div>
+      </div>
 
-        {/* Stable Progress bar structure */}
-        <div 
-          className={`${styles.progressWrapper} ${(isPlaying || currentTime > 0 || isScrubbing || isHovered) ? styles.timeVisible : ""}`} 
-          onMouseDown={handleMouseDown}
-          style={{ 
-            opacity: (isPlaying || currentTime > 0 || isScrubbing || isHovered) ? 1 : 0, 
-            visibility: (isPlaying || currentTime > 0 || isScrubbing || isHovered) ? 'visible' : 'hidden',
-            height: isScrubbing ? '6px' : undefined
-          }}
-        >
-          <div className={styles.progressTrack}>
-            <div 
-              className={styles.progressFill} 
-              style={{ width: `${progress}%`, backgroundColor: primaryColor }} 
-            />
-          </div>
+      {/* Stable Progress bar structure */}
+      <div 
+        className={`${styles.progressWrapper} ${(isPlaying || currentTime > 0 || isScrubbing || isHovered) ? styles.timeVisible : ""}`} 
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        }}
+        data-scrubbing={isScrubbing}
+        style={{ 
+          opacity: (isPlaying || currentTime > 0 || isScrubbing || isHovered) ? 1 : 0, 
+          visibility: (isPlaying || currentTime > 0 || isScrubbing || isHovered) ? 'visible' : 'hidden',
+          height: isScrubbing ? '6px' : undefined
+        }}
+      >
+        <div className={styles.progressTrack}>
+          <div 
+            className={styles.progressFill} 
+            style={{ width: `${progress}%`, backgroundColor: primaryColor }} 
+          />
         </div>
       </div>
 
