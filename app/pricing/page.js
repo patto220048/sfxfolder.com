@@ -69,18 +69,62 @@ export default async function PricingPage() {
   };
 
   // Product & Offer schema for recurring subscriptions
+  // Includes: brand, sku, availability, hasMerchantReturnPolicy, shippingDetails
+  // to satisfy Google Search Console recommended fields
+  const returnPolicy = {
+    "@type": "MerchantReturnPolicy",
+    "applicableCountry": "US",
+    "returnPolicyCategory": "https://schema.org/MerchantReturnNotPermitted",
+    "merchantReturnLink": `${SITE_URL}/terms`
+  };
+
+  const shippingDetails = {
+    "@type": "OfferShippingDetails",
+    "shippingRate": {
+      "@type": "MonetaryAmount",
+      "value": "0",
+      "currency": "USD"
+    },
+    "shippingDestination": {
+      "@type": "DefinedRegion",
+      "addressCountry": "US"
+    },
+    "deliveryTime": {
+      "@type": "ShippingDeliveryTime",
+      "handlingTime": {
+        "@type": "QuantitativeValue",
+        "minValue": "0",
+        "maxValue": "0",
+        "unitCode": "DAY"
+      },
+      "transitTime": {
+        "@type": "QuantitativeValue",
+        "minValue": "0",
+        "maxValue": "0",
+        "unitCode": "DAY"
+      }
+    }
+  };
+
   const productSchema = {
     "@context": "https://schema.org",
     "@type": "Product",
     "name": "SFXFolder Premium Subscription",
     "image": `${SITE_URL}/og-default.jpg`,
     "description": "Get unlimited access to all premium sound effects, music, presets, and video editing assets with high-speed downloads and ad-free experience.",
+    "brand": {
+      "@type": "Brand",
+      "name": "SFXFolder"
+    },
+    "sku": "SFXFOLDER-PREMIUM",
+    "category": "Software > Digital Subscription",
     "offers": [
       {
         "@type": "Offer",
         "name": "Monthly Plan",
         "price": "2.00",
         "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock",
         "priceSpecification": {
           "@type": "UnitPriceSpecification",
           "price": "2.00",
@@ -91,13 +135,16 @@ export default async function PricingPage() {
             "unitCode": "MON"
           }
         },
-        "url": `${SITE_URL}/pricing`
+        "url": `${SITE_URL}/pricing`,
+        "hasMerchantReturnPolicy": returnPolicy,
+        "shippingDetails": shippingDetails
       },
       {
         "@type": "Offer",
         "name": "Yearly Plan",
         "price": "18.00",
         "priceCurrency": "USD",
+        "availability": "https://schema.org/InStock",
         "priceSpecification": {
           "@type": "UnitPriceSpecification",
           "price": "18.00",
@@ -108,7 +155,9 @@ export default async function PricingPage() {
             "unitCode": "ANN"
           }
         },
-        "url": `${SITE_URL}/pricing`
+        "url": `${SITE_URL}/pricing`,
+        "hasMerchantReturnPolicy": returnPolicy,
+        "shippingDetails": shippingDetails
       }
     ]
   };
