@@ -6,7 +6,7 @@ import { Search, Loader2, X, History, Volume2, Filter, ChevronDown, Check, Eye, 
 import { motion, AnimatePresence } from "framer-motion";
 import { getIcon } from "@/app/components/ui/IconLib";
 import { searchResourcesClient, getOrBuildSearchIndex } from "@/app/lib/searchUtils";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import styles from "./ContextSearch.module.css";
 
 function getCategoryIcon(iconName, size = 16) {
@@ -48,6 +48,7 @@ function highlightText(text, matches = [], keyName) {
 
 export default function ContextSearch({ isPlugin = false }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [visible, setVisible] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [query, setQuery] = useState("");
@@ -68,6 +69,18 @@ export default function ContextSearch({ isPlugin = false }) {
   const listRef = useRef(null);
   const debounceRef = useRef(null);
   const hasTypedRef = useRef(false);
+
+  // Reset search state when pathname changes
+  useEffect(() => {
+    setQuery("");
+    setResults([]);
+    setActiveIndex(-1);
+    setActiveFolder(null);
+    setFilters({
+      category: "",
+      type: "all"
+    });
+  }, [pathname]);
 
   // Scroll active item into view
   useEffect(() => {
@@ -165,6 +178,21 @@ export default function ContextSearch({ isPlugin = false }) {
       
       return updated;
     });
+  }, [query, filters, activeFolder]);
+
+  const removeAllRecent = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setRecentItems([]);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("context_search_recent");
+    }
+    
+    const showingRecent = !query.trim() && !filters.category && !activeFolder && filters.type === 'all';
+    if (showingRecent) {
+      setResults([]);
+    }
   }, [query, filters, activeFolder]);
 
   // Close modal and navigate to root (for click outside / ESC)
@@ -486,6 +514,8 @@ export default function ContextSearch({ isPlugin = false }) {
     }
   };
 
+  const isShowingRecent = !query.trim() && !filters.category && !activeFolder && filters.type === 'all';
+
   if (!visible) return null;
 
   const displayList = results;
@@ -596,10 +626,19 @@ export default function ContextSearch({ isPlugin = false }) {
         </div>
       )}
 
-      {!query && recentItems.length > 0 && (
+      {isShowingRecent && recentItems.length > 0 && (
         <div className={styles.sectionHeader}>
-          <History size={10} />
-          <span>RECENT SEARCHES</span>
+          <div className={styles.sectionHeaderTitle}>
+            <History size={10} />
+            <span>RECENT SEARCHES</span>
+          </div>
+          <button 
+            className={styles.clearAllBtn}
+            onClick={removeAllRecent}
+            title="Clear all search history"
+          >
+            Clear all
+          </button>
         </div>
       )}
 
@@ -648,7 +687,7 @@ export default function ContextSearch({ isPlugin = false }) {
                 </div>
               </div>
               <div className={styles.resultActions}>
-                {query && (
+                {!isShowingRecent ? (
                   <button 
                     className={styles.viewBtn} 
                     onClick={(e) => handleNavigate(e, item)}
@@ -656,8 +695,7 @@ export default function ContextSearch({ isPlugin = false }) {
                   >
                     <Eye size={14} />
                   </button>
-                )}
-                {!query && (
+                ) : (
                   <button 
                     className={styles.removeBtn} 
                     onClick={(e) => removeRecent(e, item.id)}
