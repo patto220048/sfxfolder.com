@@ -54,7 +54,13 @@ export default function AdminSidebar() {
           // Exact match for Settings to avoid matching /admin/settings/paypal
           const isActive = item.exact
             ? pathname === item.href
-            : pathname?.startsWith(item.href);
+            : pathname?.startsWith(item.href) &&
+              !menuItems.some(
+                (other) =>
+                  other.href !== item.href &&
+                  other.href.startsWith(item.href) &&
+                  pathname?.startsWith(other.href)
+              );
           return (
             <Link
               key={item.href}
