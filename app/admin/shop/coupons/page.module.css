@@ -343,6 +343,12 @@
   flex-shrink: 0;
 }
 
+.inputGroup input.toggle {
+  width: 40px !important;
+  height: 22px !important;
+  padding: 0 !important;
+}
+
 .toggle::after {
   content: '';
   position: absolute;
