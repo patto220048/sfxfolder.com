@@ -142,7 +142,7 @@ export default function PackDetailClient({
       );
     }
 
-    if (isPremium) {
+    if (isPremium && pack.free_for_premium !== false) {
       return (
         <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
           <div

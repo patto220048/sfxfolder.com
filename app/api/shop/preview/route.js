@@ -16,7 +16,7 @@ export async function GET(request) {
     // 1. Get the pack item
     const { data: item, error: itemError } = await supabaseAdmin
       .from("sound_pack_items")
-      .select("id, pack_id, preview_url, is_previewable")
+      .select("id, pack_id, preview_url, is_previewable, resource_id")
       .eq("id", itemId)
       .single();
 
@@ -48,19 +48,56 @@ export async function GET(request) {
       );
     }
 
-    // 3. Generate signed URL for the preview
-    if (!item.preview_url) {
+    // 3. Resolve the preview URL with fallback to the library resource
+    let finalPreviewUrl = item.preview_url;
+    let isLibraryResource = !!item.resource_id;
+
+    if (!finalPreviewUrl && item.resource_id) {
+      try {
+        const { data: resData } = await supabaseAdmin
+          .from("resources")
+          .select("preview_url, storage_path")
+          .eq("id", item.resource_id)
+          .single();
+
+        if (resData) {
+          finalPreviewUrl = resData.preview_url || resData.storage_path;
+          isLibraryResource = true;
+        }
+      } catch (err) {
+        console.warn("[ShopAPI] Failed to fetch resource preview fallback:", err);
+      }
+    }
+
+    if (!finalPreviewUrl) {
       return NextResponse.json(
         { error: "No preview file available" },
         { status: 404 }
       );
     }
 
-    // Determine the correct storage bucket based on the preview_url path
-    // Preview files are typically stored in the resources bucket or site-assets
+    // If preview_url is already a full URL, return it directly with CDN rewrite
+    if (finalPreviewUrl.startsWith("http://") || finalPreviewUrl.startsWith("https://")) {
+      const cdnUrl = finalPreviewUrl.replace(
+        "riorhpppwzbnjaucatjc.supabase.co",
+        "cdn.sfxfolder.com"
+      );
+      return NextResponse.json(
+        { previewUrl: cdnUrl },
+        {
+          headers: {
+            "Cache-Control": "no-store",
+          },
+        }
+      );
+    }
+
+    // Determine the correct storage bucket dynamically:
+    // library items go to 'resources', custom direct uploads go to 'site-assets'
+    const bucket = isLibraryResource ? "resources" : "site-assets";
     const { data: signedData, error: signedError } = await supabaseAdmin.storage
-      .from("resources")
-      .createSignedUrl(item.preview_url, 300); // 5 minutes
+      .from(bucket)
+      .createSignedUrl(finalPreviewUrl, 300); // 5 minutes
 
     if (signedError || !signedData?.signedUrl) {
       console.error("[ShopAPI] Preview signed URL error:", signedError);

@@ -13,10 +13,21 @@ import {
   FileArchive,
   X,
   Check,
+  Upload,
 } from "lucide-react";
 import { supabase } from "@/app/lib/supabase";
 import toast from "react-hot-toast";
 import styles from "./page.module.css";
+
+const slugify = (text) => {
+  if (!text) return "";
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+};
 
 export default function EditPackPage({ params: paramsPromise }) {
   const params = use(paramsPromise);
@@ -40,6 +51,7 @@ export default function EditPackPage({ params: paramsPromise }) {
     tags: "",
     status: "draft",
     is_featured: false,
+    free_for_premium: true,
     sort_order: 0,
     cover_image: "",
     zip_storage_path: "",
@@ -96,6 +108,7 @@ export default function EditPackPage({ params: paramsPromise }) {
               tags: pack.tags ? pack.tags.join(", ") : "",
               status: pack.status || "draft",
               is_featured: pack.is_featured || false,
+              free_for_premium: pack.free_for_premium !== false,
               sort_order: pack.sort_order || 0,
               cover_image: pack.cover_image || "",
               zip_storage_path: pack.zip_storage_path || "",
@@ -201,6 +214,58 @@ export default function EditPackPage({ params: paramsPromise }) {
     }
   };
 
+  // Upload item files directly to Supabase Storage site-assets
+  const handleItemUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    const slug = formData.slug || `pack-${Date.now()}`;
+    const toastId = toast.loading(`Uploading ${files.length} file(s)...`);
+
+    try {
+      const uploadedItems = [];
+      for (const file of files) {
+        const fileExt = file.name.split(".").pop();
+        const cleanName = file.name.replace(/\.[^/.]+$/, "");
+        const fileName = `${slugify(cleanName)}-${Date.now()}.${fileExt}`;
+        const filePath = `pack-items/${slug}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("site-assets")
+          .upload(filePath, file, { cacheControl: "3600", upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        // Get public URL
+        const { data } = supabase.storage.from("site-assets").getPublicUrl(filePath);
+        
+        // Rewrite to CDN hostname
+        const cdnUrl = data.publicUrl.replace(
+          "riorhpppwzbnjaucatjc.supabase.co",
+          "cdn.sfxfolder.com"
+        );
+
+        const newItem = {
+          pack_id: id,
+          resource_id: null,
+          file_name: file.name,
+          file_format: fileExt,
+          file_size: file.size,
+          storage_path: filePath,
+          preview_url: cdnUrl,
+          is_previewable: true,
+          sort_order: items.length + uploadedItems.length,
+        };
+        uploadedItems.push(newItem);
+      }
+
+      setItems((prev) => [...prev, ...uploadedItems]);
+      toast.success(`Uploaded ${files.length} file(s) successfully!`, { id: toastId });
+    } catch (err) {
+      toast.error("Upload failed: " + err.message, { id: toastId });
+    }
+  };
+
   // Search resources in library
   const searchResources = async () => {
     setLoadingResources(true);
@@ -292,6 +357,7 @@ export default function EditPackPage({ params: paramsPromise }) {
         tags: parsedTags,
         status: formData.status,
         is_featured: formData.is_featured,
+        free_for_premium: formData.free_for_premium,
         sort_order: parseInt(formData.sort_order) || 0,
         cover_image: formData.cover_image,
         zip_storage_path: formData.zip_storage_path,
@@ -511,6 +577,21 @@ export default function EditPackPage({ params: paramsPromise }) {
                 </div>
               </div>
 
+              <div className={styles.inputGroup}>
+                <div className={styles.toggleRow}>
+                  <input
+                    type="checkbox"
+                    id="free_for_premium"
+                    checked={formData.free_for_premium}
+                    className={styles.toggle}
+                    onChange={(e) => setFormData({ ...formData, free_for_premium: e.target.checked })}
+                  />
+                  <label htmlFor="free_for_premium" className={styles.toggleLabel}>
+                    Free for Premium Members
+                  </label>
+                </div>
+              </div>
+
               <div className={styles.inputGroupFull}>
                 <label>Short Description (card summary)</label>
                 <input
@@ -576,14 +657,32 @@ export default function EditPackPage({ params: paramsPromise }) {
           <div className={styles.form}>
             <div className={styles.itemsHeader}>
               <span className={styles.itemsTitle}>Pack Contents</span>
-              <button
-                type="button"
-                className={styles.addItemBtn}
-                onClick={() => setPickerOpen(true)}
-              >
-                <Plus size={14} />
-                <span>Add from Library</span>
-              </button>
+              <div style={{ display: "flex", gap: "12px" }}>
+                <button
+                  type="button"
+                  className={styles.addItemBtn}
+                  onClick={() => document.getElementById("itemFileInput").click()}
+                >
+                  <Upload size={14} />
+                  <span>Upload File Directly</span>
+                </button>
+                <button
+                  type="button"
+                  className={styles.addItemBtn}
+                  onClick={() => setPickerOpen(true)}
+                >
+                  <Plus size={14} />
+                  <span>Add from Library</span>
+                </button>
+              </div>
+              <input
+                type="file"
+                id="itemFileInput"
+                multiple
+                accept="audio/*"
+                style={{ display: "none" }}
+                onChange={handleItemUpload}
+              />
             </div>
 
             <div className={styles.itemsList}>

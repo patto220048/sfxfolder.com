@@ -44,12 +44,13 @@ export default function UserPurchasesPage() {
 
         setPurchasedPacks(formattedPurchases);
 
-        // 2. If Premium, fetch all other published packs
+        // 2. If Premium, fetch all other published packs (which are free for premium)
         if (isPremium) {
           const { data: allPacks, error: packsError } = await supabase
             .from("sound_packs")
             .select("*")
             .eq("status", "published")
+            .eq("free_for_premium", true)
             .order("name", { ascending: true });
 
           if (packsError) throw packsError;
@@ -147,8 +148,8 @@ export default function UserPurchasesPage() {
           <div className={styles.premiumText}>
             <Crown size={18} />
             <span>
-              As a Premium subscriber, you have unlimited access to download all
-              published sound packs for free!
+              As a Premium subscriber, you have unlimited access to download eligible
+              sound packs for free!
             </span>
           </div>
           <Link href="/shop" className={styles.shopLink}>
