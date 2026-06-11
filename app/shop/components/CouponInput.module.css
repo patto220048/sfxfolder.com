@@ -1,0 +1,65 @@
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.inputGroup {
+  display: flex;
+  gap: 0;
+  border: 1px solid var(--border-default);
+  transition: border-color var(--transition-base);
+}
+
+.inputGroup:focus-within {
+  border-color: var(--border-active);
+}
+
+.input {
+  flex: 1;
+  background: var(--bg-surface);
+  border: none;
+  padding: 10px 14px;
+  color: var(--text-primary);
+  font-family: inherit;
+  outline: none;
+  font-size: 0.85rem;
+  border-radius: 0;
+  text-transform: uppercase;
+}
+
+.button {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border: none;
+  padding: 0 16px;
+  font-weight: 900;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  border-radius: 0;
+}
+
+.button:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.message {
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.success {
+  color: #10b981;
+}
+
+.error {
+  color: #ef4444;
+}

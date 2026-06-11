@@ -3,7 +3,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "@/app/lib/auth-context";
-import { LogOut, Crown, Settings, User } from "lucide-react";
+import { LogOut, Crown, Settings, User, Package } from "lucide-react";
 import styles from "./UserMenu.module.css";
 
 export default function UserMenu() {
@@ -103,6 +103,11 @@ export default function UserMenu() {
               <span>Manage Subscription</span>
             </a>
           )}
+
+          <a href="/account/purchases" className={styles.menuItem}>
+            <Package size={16} />
+            <span>My Library</span>
+          </a>
 
           <div className={styles.divider} />
 

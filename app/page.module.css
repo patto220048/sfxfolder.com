@@ -280,3 +280,35 @@
     grid-template-columns: 1fr;
   }
 }
+
+.packsGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+@media (max-width: 900px) {
+  .packsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .packsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.browseAllLink {
+  color: var(--text-primary);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: color var(--transition-base);
+}
+
+.browseAllLink:hover {
+  color: var(--premium-gold);
+}

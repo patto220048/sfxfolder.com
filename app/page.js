@@ -1,7 +1,10 @@
+import Link from "next/link";
 import CategoryCard from "@/app/components/ui/CategoryCard";
 import SearchBar from "@/app/components/ui/SearchBar";
 import ToolTabs from "@/app/components/home/ToolTabs";
 import { getCategoriesWithCounts } from "@/app/lib/api";
+import { supabaseAdmin } from "@/app/lib/supabase-admin";
+import PackCard from "@/app/shop/components/PackCard";
 import styles from "./page.module.css";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://sfxfolder.com';
@@ -24,6 +27,19 @@ export default async function Home() {
       { slug: "font", name: "Font", icon: "type", color: "#00D2D3", description: "Professional typefaces" },
       { slug: "preset-lut", name: "Preset & LUT", icon: "sliders", color: "#54A0FF", description: "Color grading tools" },
     ];
+  }
+
+  let featuredPacks = [];
+  try {
+    const { data } = await supabaseAdmin
+      .from("sound_packs")
+      .select("id, name, slug, short_description, price, original_price, cover_image, item_count, total_size, created_at")
+      .eq("status", "published")
+      .eq("is_featured", true)
+      .limit(3);
+    featuredPacks = data || [];
+  } catch (e) {
+    console.error("Failed to fetch featured packs:", e);
   }
 
   // JSON-LD: WebPage schema for homepage
@@ -74,6 +90,23 @@ export default async function Home() {
       <section className={styles.toolSection} id="plugin-download">
         <ToolTabs />
       </section>
+
+      {/* Featured Sound Packs */}
+      {featuredPacks.length > 0 && (
+        <section className={styles.categories} id="featured-packs-section" style={{ paddingBottom: 0 }}>
+          <div className={styles.categoryHeader}>
+            <h2 className={styles.sectionTitle}>🔥 Premium Sound Packs</h2>
+            <Link href="/shop" className={styles.browseAllLink}>
+              Browse All Packs &rarr;
+            </Link>
+          </div>
+          <div className={styles.packsGrid}>
+            {featuredPacks.map((pack) => (
+              <PackCard key={pack.id} pack={pack} isPurchased={false} />
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* Categories Grid */}
       <section className={styles.categories} id="categories-section">

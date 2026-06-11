@@ -107,6 +107,7 @@ function Footer() {
                     Privacy Policy
                   </Link>
                 </li>
+                <li><Link href="/shop" className={styles.footerLink}>Shop</Link></li>
               </ul>
             </div>
           </div>
