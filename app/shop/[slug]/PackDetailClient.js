@@ -134,17 +134,40 @@ export default function PackDetailClient({
   };
 
   // Rating distribution calculations
-  const totalReviewsCount = reviews.length;
+  const mockCount = pack.mock_review_count || 0;
+  const mockAvg = pack.mock_average_rating || 0;
+  const realCount = reviews.length;
+  const realSum = reviews.reduce((acc, curr) => acc + curr.rating, 0);
+
+  const totalReviewsCount = realCount + mockCount;
   const ratingAvg = totalReviewsCount > 0
-    ? (reviews.reduce((acc, curr) => acc + curr.rating, 0) / totalReviewsCount).toFixed(1)
+    ? (((mockAvg * mockCount) + realSum) / totalReviewsCount).toFixed(1)
     : "0.0";
 
   const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+  
+  // 1. Add real reviews to distribution
   reviews.forEach((r) => {
     if (distribution[r.rating] !== undefined) {
       distribution[r.rating]++;
     }
   });
+
+  // 2. Add mock reviews to distribution mathematically based on mock average
+  if (mockCount > 0 && mockAvg > 0) {
+    const rVal = Math.min(5, Math.max(1, mockAvg)); // clamp to 1-5
+    const lower = Math.floor(rVal);
+    const upper = Math.ceil(rVal);
+    if (lower === upper) {
+      distribution[lower] += mockCount;
+    } else {
+      const upperPct = rVal - lower;
+      const upperCount = Math.round(mockCount * upperPct);
+      const lowerCount = mockCount - upperCount;
+      distribution[upper] += upperCount;
+      distribution[lower] += lowerCount;
+    }
+  }
 
   const getPercentage = (count) => {
     if (totalReviewsCount === 0) return 0;

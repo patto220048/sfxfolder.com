@@ -55,6 +55,8 @@ export default function EditPackPage({ params: paramsPromise }) {
     sort_order: 0,
     cover_image: "",
     zip_storage_path: "",
+    mock_average_rating: 0.0,
+    mock_review_count: 0,
   });
 
   // Pack items & categories
@@ -112,6 +114,8 @@ export default function EditPackPage({ params: paramsPromise }) {
               sort_order: pack.sort_order || 0,
               cover_image: pack.cover_image || "",
               zip_storage_path: pack.zip_storage_path || "",
+              mock_average_rating: pack.mock_average_rating || 0.0,
+              mock_review_count: pack.mock_review_count || 0,
             });
 
             // Fetch pack items
@@ -361,6 +365,8 @@ export default function EditPackPage({ params: paramsPromise }) {
         sort_order: parseInt(formData.sort_order) || 0,
         cover_image: formData.cover_image,
         zip_storage_path: formData.zip_storage_path,
+        mock_average_rating: parseFloat(formData.mock_average_rating) || 0.0,
+        mock_review_count: parseInt(formData.mock_review_count) || 0,
       };
 
       const apiBody = {
@@ -559,6 +565,30 @@ export default function EditPackPage({ params: paramsPromise }) {
                   type="number"
                   value={formData.sort_order}
                   onChange={(e) => setFormData({ ...formData, sort_order: e.target.value })}
+                />
+              </div>
+
+              <div className={styles.inputGroup}>
+                <label>Mock Rating (Đánh giá ảo, 1-5)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0"
+                  max="5"
+                  value={formData.mock_average_rating}
+                  placeholder="e.g. 4.8"
+                  onChange={(e) => setFormData({ ...formData, mock_average_rating: e.target.value })}
+                />
+              </div>
+
+              <div className={styles.inputGroup}>
+                <label>Mock Review Count (Lượt đánh giá ảo)</label>
+                <input
+                  type="number"
+                  min="0"
+                  value={formData.mock_review_count}
+                  placeholder="e.g. 50"
+                  onChange={(e) => setFormData({ ...formData, mock_review_count: e.target.value })}
                 />
               </div>
 

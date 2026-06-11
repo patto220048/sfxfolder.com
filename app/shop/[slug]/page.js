@@ -103,6 +103,16 @@ export default async function PackDetailPage({ params: paramsPromise }) {
     },
   };
 
+  if (pack.review_count > 0) {
+    jsonLd.aggregateRating = {
+      "@type": "AggregateRating",
+      "ratingValue": pack.average_rating || 0.0,
+      "reviewCount": pack.review_count || 0,
+      "bestRating": "5",
+      "worstRating": "1"
+    };
+  }
+
   return (
     <>
       {/* Schema.org Product Structured Data */}
