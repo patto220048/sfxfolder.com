@@ -297,67 +297,23 @@ export default function EditPackPage({ params: paramsPromise }) {
         zip_storage_path: formData.zip_storage_path,
       };
 
-      let packId = id;
+      const apiBody = {
+        pack: payload,
+        items: items
+      };
 
-      if (isNew) {
-        // Create new pack
-        const { data, error } = await supabase
-          .from("sound_packs")
-          .insert(payload)
-          .select("id")
-          .single();
+      const url = isNew ? "/api/admin/shop" : `/api/admin/shop/${id}`;
+      const method = isNew ? "POST" : "PUT";
 
-        if (error) throw error;
-        packId = data.id;
-      } else {
-        // Update existing pack
-        const { error } = await supabase
-          .from("sound_packs")
-          .update(payload)
-          .eq("id", id);
+      const res = await fetch(url, {
+        method: method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(apiBody)
+      });
 
-        if (error) throw error;
-      }
-
-      // Sync items: Delete removed items & Upsert current items
-      // For simplicity, we get current items in DB, delete items not in local list, and insert/update current items
-      const { data: dbItems } = await supabase
-        .from("sound_pack_items")
-        .select("id, resource_id")
-        .eq("pack_id", packId);
-
-      const dbResourceIds = dbItems ? dbItems.map((di) => di.resource_id).filter(Boolean) : [];
-      const localResourceIds = items.map((li) => li.resource_id).filter(Boolean);
-
-      // 1. Delete items that were removed
-      const toDelete = dbItems?.filter((di) => di.resource_id && !localResourceIds.includes(di.resource_id)) || [];
-      if (toDelete.length > 0) {
-        await supabase
-          .from("sound_pack_items")
-          .delete()
-          .in("id", toDelete.map((td) => td.id));
-      }
-
-      // 2. Upsert items
-      const itemsToUpsert = items.map((item, idx) => ({
-        id: item.id || undefined, // undefined will auto-generate id on insert
-        pack_id: packId,
-        resource_id: item.resource_id,
-        file_name: item.file_name,
-        file_format: item.file_format,
-        file_size: item.file_size,
-        storage_path: item.storage_path,
-        preview_url: item.preview_url,
-        is_previewable: item.is_previewable,
-        sort_order: idx,
-      }));
-
-      if (itemsToUpsert.length > 0) {
-        const { error: itemsError } = await supabase
-          .from("sound_pack_items")
-          .upsert(itemsToUpsert);
-        
-        if (itemsError) throw itemsError;
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || `Server returned ${res.status}`);
       }
 
       toast.success("Sound pack saved successfully!");

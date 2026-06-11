@@ -146,22 +146,21 @@ export default function AdminCouponsPage() {
         applicable_pack_ids: formData.applicable_pack_ids.length > 0 ? formData.applicable_pack_ids : null,
       };
 
-      if (editingCoupon) {
-        // Update
-        const { error } = await supabase
-          .from("coupons")
-          .update(payload)
-          .eq("id", editingCoupon.id);
+      const url = editingCoupon ? `/api/admin/shop/coupons/${editingCoupon.id}` : "/api/admin/shop/coupons";
+      const method = editingCoupon ? "PUT" : "POST";
 
-        if (error) throw error;
-        toast.success("Coupon updated successfully");
-      } else {
-        // Insert
-        const { error } = await supabase.from("coupons").insert(payload);
-        if (error) throw error;
-        toast.success("Coupon created successfully");
+      const res = await fetch(url, {
+        method: method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || `Server returned ${res.status}`);
       }
 
+      toast.success(editingCoupon ? "Coupon updated successfully" : "Coupon created successfully");
       mutateCoupons();
       setModalOpen(false);
     } catch (err) {
@@ -174,12 +173,15 @@ export default function AdminCouponsPage() {
   const handleDelete = async () => {
     if (!deleteConfirmCoupon) return;
     try {
-      const { error } = await supabase
-        .from("coupons")
-        .delete()
-        .eq("id", deleteConfirmCoupon.id);
+      const res = await fetch(`/api/admin/shop/coupons/${deleteConfirmCoupon.id}`, {
+        method: "DELETE"
+      });
 
-      if (error) throw error;
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || `Server returned ${res.status}`);
+      }
+
       toast.success("Coupon deleted successfully");
       mutateCoupons();
       setDeleteConfirmCoupon(null);

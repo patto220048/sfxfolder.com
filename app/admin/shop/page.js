@@ -71,12 +71,14 @@ export default function AdminShopPage() {
     if (!packToDelete) return;
     setIsDeleting(true);
     try {
-      const { error } = await supabase
-        .from("sound_packs")
-        .delete()
-        .eq("id", packToDelete.id);
+      const res = await fetch(`/api/admin/shop/${packToDelete.id}`, {
+        method: "DELETE"
+      });
 
-      if (error) throw error;
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || `Server returned ${res.status}`);
+      }
 
       toast.success(`Deleted pack "${packToDelete.name}" successfully`);
       mutatePacks(packs.filter((p) => p.id !== packToDelete.id), false);
