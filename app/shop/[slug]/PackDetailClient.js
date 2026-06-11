@@ -30,6 +30,12 @@ export default function PackDetailClient({
   paypalMode,
 }) {
   const { user, isPremium, isAdmin } = useAuth();
+  const { resolvedTheme } = useTheme();
+
+  const [hasPurchased, setHasPurchased] = useState(initialHasPurchased);
+  const [showSuccessState, setShowSuccessState] = useState(false);
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // Reviews fetching
   const { data: reviewsData, mutate: mutateReviews } = useSWR(
@@ -159,12 +165,6 @@ export default function PackDetailClient({
       </div>
     );
   };
-  const { resolvedTheme } = useTheme();
-
-  const [hasPurchased, setHasPurchased] = useState(initialHasPurchased);
-  const [showSuccessState, setShowSuccessState] = useState(false);
-  const [appliedCoupon, setAppliedCoupon] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
 
   const paypalColor = resolvedTheme === "dark" ? "white" : "black";
 
