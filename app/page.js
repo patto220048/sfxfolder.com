@@ -33,7 +33,7 @@ export default async function Home() {
   try {
     const { data } = await supabaseAdmin
       .from("sound_packs")
-      .select("id, name, slug, short_description, price, original_price, cover_image, item_count, total_size, created_at")
+      .select("id, name, slug, short_description, price, original_price, cover_image, item_count, total_size, created_at, average_rating, review_count")
       .eq("status", "published")
       .eq("is_featured", true)
       .limit(3);
