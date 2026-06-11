@@ -10,7 +10,7 @@ export default async function ShopPage() {
   // 1. Fetch published packs from database
   const { data: packs, error } = await supabaseAdmin
     .from("sound_packs")
-    .select("id, name, slug, description, short_description, price, original_price, cover_image, is_featured, item_count, total_size, purchase_count, created_at")
+    .select("id, name, slug, description, short_description, price, original_price, cover_image, is_featured, item_count, total_size, purchase_count, created_at, average_rating, review_count")
     .eq("status", "published")
     .order("is_featured", { ascending: false })
     .order("sort_order", { ascending: true })

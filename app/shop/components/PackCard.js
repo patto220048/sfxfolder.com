@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Package, Check, Database } from "lucide-react";
+import { Package, Check, Database, Star } from "lucide-react";
 import styles from "./PackCard.module.css";
 
 export default function PackCard({ pack, isPurchased }) {
@@ -15,6 +15,8 @@ export default function PackCard({ pack, isPurchased }) {
     item_count,
     total_size,
     created_at,
+    average_rating,
+    review_count,
   } = pack;
 
   // Check if new (created less than 7 days ago)
@@ -61,6 +63,13 @@ export default function PackCard({ pack, isPurchased }) {
         <span className={styles.category}>{pack.category || "Audio Pack"}</span>
         <h3 className={styles.name}>{name}</h3>
         <p className={styles.shortDescription}>{short_description}</p>
+
+        {review_count > 0 && (
+          <div className={styles.ratingRow} style={{ display: "flex", alignItems: "center", gap: "4px", fontSize: "0.8rem", color: "var(--premium-gold)", fontWeight: 700, marginBottom: "8px" }}>
+            <Star size={12} fill="var(--premium-gold)" color="var(--premium-gold)" />
+            <span>{average_rating} ({review_count})</span>
+          </div>
+        )}
 
         <div className={styles.footer}>
           <div className={styles.meta}>

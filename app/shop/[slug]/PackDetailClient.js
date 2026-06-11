@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { useTheme } from "next-themes";
@@ -12,9 +12,11 @@ import {
   CheckCircle,
   Database,
   Info,
+  Star,
 } from "lucide-react";
 import { marked } from "marked";
 import toast from "react-hot-toast";
+import useSWR from "swr";
 import { useAuth } from "@/app/lib/auth-context";
 import CouponInput from "../components/CouponInput";
 import PackItemList from "../components/PackItemList";
@@ -27,7 +29,136 @@ export default function PackDetailClient({
   paypalClientId,
   paypalMode,
 }) {
-  const { user, isPremium } = useAuth();
+  const { user, isPremium, isAdmin } = useAuth();
+
+  // Reviews fetching
+  const { data: reviewsData, mutate: mutateReviews } = useSWR(
+    `/api/shop/packs/${pack.id}/reviews`,
+    async (url) => {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("Failed to fetch reviews");
+      return res.json();
+    }
+  );
+  const reviews = reviewsData?.reviews || [];
+
+  // Review form state
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewComment, setReviewComment] = useState("");
+  const [hoverRating, setHoverRating] = useState(0);
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [isEditingReview, setIsEditingReview] = useState(false);
+
+  // Check if user has access to write a review
+  const hasAccess = hasPurchased || (isPremium && pack.free_for_premium !== false);
+  const myReview = user ? reviews.find((r) => r.userId === user.id) : null;
+
+  // Initialize review form when editing or myReview changes
+  useEffect(() => {
+    if (myReview && isEditingReview) {
+      setReviewRating(myReview.rating);
+      setReviewComment(myReview.comment || "");
+    } else if (!myReview) {
+      setReviewRating(0);
+      setReviewComment("");
+      setIsEditingReview(false);
+    }
+  }, [myReview, isEditingReview]);
+
+  const handleSubmitReview = async (e) => {
+    e.preventDefault();
+    if (reviewRating < 1 || reviewRating > 5) {
+      toast.error("Please select a rating between 1 and 5 stars");
+      return;
+    }
+
+    setIsSubmittingReview(true);
+    const toastId = toast.loading("Saving your review...");
+
+    try {
+      const res = await fetch(`/api/shop/packs/${pack.id}/reviews`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ rating: reviewRating, comment: reviewComment }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to save review");
+      }
+
+      toast.success("Review saved successfully!", { id: toastId });
+      mutateReviews();
+      setIsEditingReview(false);
+    } catch (err) {
+      toast.error(err.message || "Failed to save review", { id: toastId });
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
+  const handleDeleteReview = async (targetUserId) => {
+    if (!window.confirm("Are you sure you want to delete this review?")) return;
+
+    const toastId = toast.loading("Deleting review...");
+    try {
+      const res = await fetch(`/api/shop/packs/${pack.id}/reviews`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: targetUserId }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to delete review");
+      }
+
+      toast.success("Review deleted successfully!", { id: toastId });
+      mutateReviews();
+      if (targetUserId === user?.id) {
+        setReviewRating(0);
+        setReviewComment("");
+        setIsEditingReview(false);
+      }
+    } catch (err) {
+      toast.error(err.message || "Failed to delete review", { id: toastId });
+    }
+  };
+
+  // Rating distribution calculations
+  const totalReviewsCount = reviews.length;
+  const ratingAvg = totalReviewsCount > 0
+    ? (reviews.reduce((acc, curr) => acc + curr.rating, 0) / totalReviewsCount).toFixed(1)
+    : "0.0";
+
+  const distribution = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+  reviews.forEach((r) => {
+    if (distribution[r.rating] !== undefined) {
+      distribution[r.rating]++;
+    }
+  });
+
+  const getPercentage = (count) => {
+    if (totalReviewsCount === 0) return 0;
+    return Math.round((count / totalReviewsCount) * 100);
+  };
+
+  const renderStars = (ratingValue, size = 16) => {
+    return (
+      <div style={{ display: "flex", gap: "2px" }}>
+        {[1, 2, 3, 4, 5].map((s) => (
+          <Star
+            key={s}
+            size={size}
+            fill={s <= ratingValue ? "var(--premium-gold, #FACB11)" : "none"}
+            color={s <= ratingValue ? "var(--premium-gold, #FACB11)" : "var(--text-muted, #666)"}
+          />
+        ))}
+      </div>
+    );
+  };
   const { resolvedTheme } = useTheme();
 
   const [hasPurchased, setHasPurchased] = useState(initialHasPurchased);
@@ -330,6 +461,18 @@ export default function PackDetailClient({
             )}
           </div>
 
+          {totalReviewsCount > 0 ? (
+            <a href="#reviews" className={styles.ratingLink} style={{ marginBottom: "12px", display: "inline-flex" }}>
+              {renderStars(parseFloat(ratingAvg), 16)}
+              <span style={{ marginLeft: "4px" }}>{ratingAvg} ({totalReviewsCount} {totalReviewsCount === 1 ? "review" : "reviews"})</span>
+            </a>
+          ) : (
+            <a href="#reviews" className={styles.ratingLink} style={{ marginBottom: "12px", display: "inline-flex", opacity: 0.6 }}>
+              {renderStars(0, 16)}
+              <span style={{ marginLeft: "4px" }}>No reviews yet</span>
+            </a>
+          )}
+
           <div className={styles.priceSection}>
             {currentPrice > 0 ? (
               <>
@@ -387,6 +530,182 @@ export default function PackDetailClient({
           />
         </section>
       )}
+
+      {/* REVIEWS SECTION */}
+      <section id="reviews" className={styles.detailsSection} style={{ marginTop: "40px" }}>
+        <h2 className={styles.sectionTitle}>Reviews &amp; Ratings</h2>
+
+        {/* Summary Grid */}
+        <div className={styles.reviewSummaryContainer}>
+          <div className={styles.averageScoreColumn}>
+            <span className={styles.largeScore}>{ratingAvg}</span>
+            <span className={styles.scoreOutOf}>out of 5 stars</span>
+            {renderStars(parseFloat(ratingAvg), 20)}
+            <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "8px" }}>
+              {totalReviewsCount} {totalReviewsCount === 1 ? "rating" : "ratings"}
+            </span>
+          </div>
+
+          <div className={styles.starDistribution}>
+            {[5, 4, 3, 2, 1].map((stars) => {
+              const count = distribution[stars];
+              const pct = getPercentage(count);
+              return (
+                <div key={stars} className={styles.distributionRow}>
+                  <span className={styles.starLabel}>{stars} star</span>
+                  <div className={styles.barWrapper}>
+                    <div className={styles.barFill} style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className={styles.percentageLabel}>{pct}%</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Review Form (if user has access and hasn't reviewed yet, or is editing) */}
+        {user && hasAccess && (!myReview || isEditingReview) && (
+          <div className={styles.reviewFormContainer}>
+            <h3 className={styles.reviewFormTitle}>
+              {isEditingReview ? "Edit Your Review" : "Write a Review"}
+            </h3>
+            <form onSubmit={handleSubmitReview}>
+              <div className={styles.formGroup}>
+                <span className={styles.formLabel}>Your Rating</span>
+                <div style={{ display: "flex", gap: "6px", margin: "8px 0" }}>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      size={28}
+                      onClick={() => setReviewRating(star)}
+                      onMouseEnter={() => setHoverRating(star)}
+                      onMouseLeave={() => setHoverRating(0)}
+                      style={{ cursor: "pointer" }}
+                      fill={star <= (hoverRating || reviewRating) ? "var(--premium-gold, #FACB11)" : "none"}
+                      color={star <= (hoverRating || reviewRating) ? "var(--premium-gold, #FACB11)" : "var(--text-muted, #666)"}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.formLabel} htmlFor="review-comment">
+                  Your Review (Optional)
+                </label>
+                <textarea
+                  id="review-comment"
+                  className={styles.reviewTextArea}
+                  placeholder="Share your thoughts about this sound pack..."
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                />
+              </div>
+
+              <div style={{ display: "flex", gap: "12px" }}>
+                <button
+                  type="submit"
+                  className={styles.submitReviewBtn}
+                  disabled={isSubmittingReview || reviewRating === 0}
+                >
+                  {isSubmittingReview ? "Submitting..." : "Submit Review"}
+                </button>
+                {isEditingReview && (
+                  <button
+                    type="button"
+                    className={styles.actionBtn}
+                    onClick={() => setIsEditingReview(false)}
+                    style={{ border: "1px solid var(--border-default)", padding: "10px 20px" }}
+                  >
+                    Cancel
+                  </button>
+                )}
+              </div>
+            </form>
+          </div>
+        )}
+
+        {/* Prompt to purchase if logged in but no access */}
+        {user && !hasAccess && (
+          <div style={{ padding: "16px", border: "1px dashed var(--border-default)", textAlign: "center", marginBottom: "24px", color: "var(--text-muted)", fontSize: "0.9rem" }}>
+            <Info size={16} style={{ verticalAlign: "middle", marginRight: "8px" }} />
+            You must purchase or unlock this pack to write a review.
+          </div>
+        )}
+
+        {/* Prompt to log in */}
+        {!user && (
+          <div style={{ padding: "16px", border: "1px dashed var(--border-default)", textAlign: "center", marginBottom: "24px", color: "var(--text-muted)", fontSize: "0.9rem" }}>
+            <Info size={16} style={{ verticalAlign: "middle", marginRight: "8px" }} />
+            Please <span style={{ color: "var(--text-primary)", fontWeight: 700, cursor: "pointer", textDecoration: "underline" }} onClick={handleLoginRequest}>log in</span> to write a review.
+          </div>
+        )}
+
+        {/* Reviews List */}
+        <div className={styles.reviewsList}>
+          {reviews.length === 0 ? (
+            <div className={styles.noReviews}>No reviews for this pack yet. Be the first to review!</div>
+          ) : (
+            reviews.map((rev) => {
+              const isMyRev = user && rev.userId === user.id;
+              return (
+                <div key={rev.id} className={styles.reviewCard}>
+                  {isMyRev && <span className={styles.yourReviewBadge}>Your Review</span>}
+                  
+                  <div className={styles.reviewHeader}>
+                    <div className={styles.reviewerInfo}>
+                      {rev.reviewer.avatarUrl ? (
+                        <img
+                          src={rev.reviewer.avatarUrl}
+                          alt={rev.reviewer.name}
+                          className={styles.reviewerAvatar}
+                        />
+                      ) : (
+                        <div className={styles.reviewerAvatarPlaceholder}>
+                          {rev.reviewer.name.substring(0, 2).toUpperCase()}
+                        </div>
+                      )}
+                      <div>
+                        <div className={styles.reviewerName}>{rev.reviewer.name}</div>
+                        <div className={styles.reviewDate}>
+                          {new Date(rev.createdAt).toLocaleDateString("en-US", {
+                            year: "numeric",
+                            month: "long",
+                            day: "numeric",
+                          })}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>{renderStars(rev.rating, 16)}</div>
+                  </div>
+
+                  {rev.comment && <p className={styles.reviewContent}>{rev.comment}</p>}
+
+                  {/* Actions for owner or admin */}
+                  {(isMyRev || isAdmin) && (
+                    <div className={styles.reviewActions}>
+                      {isMyRev && !isEditingReview && (
+                        <button
+                          className={styles.actionBtn}
+                          onClick={() => setIsEditingReview(true)}
+                        >
+                          Edit
+                        </button>
+                      )}
+                      <button
+                        className={`${styles.actionBtn} ${styles.deleteBtn}`}
+                        onClick={() => handleDeleteReview(rev.userId)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </section>
     </div>
   );
 }
