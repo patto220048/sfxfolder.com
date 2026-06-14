@@ -159,12 +159,25 @@
 .paypalContainer {
   min-height: 150px;
   margin-top: var(--space-4);
-  background: #ffffff;
-  border: 2px solid #000000;
+  background: #ffffff !important;
+  border: 2px solid #000000 !important;
   padding: var(--space-6);
-  box-shadow: 4px 4px 0px 0px #000000;
+  box-shadow: 4px 4px 0px 0px #000000 !important;
   color-scheme: light !important;
   color: #000000 !important;
+  --text-primary: #000000 !important;
+  --text-secondary: #333333 !important;
+  --text-muted: #666666 !important;
+  --border-default: #cccccc !important;
+  --border-active: #000000 !important;
+}
+
+.paypalContainer iframe {
+  color-scheme: light !important;
+}
+
+.paypalContainer :global(.paypal-buttons-disabled) {
+  opacity: 1 !important;
 }
 
 .paypalContainer input,
