@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Package, Check, Database, Star } from "lucide-react";
 import styles from "./PackCard.module.css";
@@ -28,6 +30,12 @@ export default function PackCard({ pack, isPurchased }) {
     ? `${(total_size / 1024 / 1024).toFixed(1)} MB`
     : "0 MB";
 
+  const handleBuyNow = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    window.location.href = `/shop/checkout?packId=${id}`;
+  };
+
   return (
     <Link href={`/shop/${slug}`} className={styles.card}>
       {/* BADGES */}
@@ -54,6 +62,15 @@ export default function PackCard({ pack, isPurchased }) {
         ) : (
           <div className={styles.coverPlaceholder}>
             <Package size={36} />
+          </div>
+        )}
+
+        {/* Hover overlay quick checkout */}
+        {!isPurchased && price > 0 && (
+          <div className={styles.hoverOverlay}>
+            <button className={styles.buyNowBtn} onClick={handleBuyNow}>
+              Buy Now
+            </button>
           </div>
         )}
       </div>

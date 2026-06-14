@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { useTheme } from "next-themes";
 import {
   ArrowLeft,
@@ -18,7 +17,6 @@ import { marked } from "marked";
 import toast from "react-hot-toast";
 import useSWR from "swr";
 import { useAuth } from "@/app/lib/auth-context";
-import CouponInput from "../components/CouponInput";
 import PackItemList from "../components/PackItemList";
 import styles from "./page.module.css";
 
@@ -34,7 +32,7 @@ export default function PackDetailClient({
 
   const [hasPurchased, setHasPurchased] = useState(initialHasPurchased);
   const [showSuccessState, setShowSuccessState] = useState(false);
-  const [appliedCoupon, setAppliedCoupon] = useState(null);
+
   const [isProcessing, setIsProcessing] = useState(false);
 
   // Reviews fetching
@@ -192,11 +190,9 @@ export default function PackDetailClient({
   const paypalColor = resolvedTheme === "dark" ? "white" : "black";
 
   // Calculate prices
-  const currentPrice = appliedCoupon ? appliedCoupon.finalPrice : pack.price;
-  const isDiscounted = pack.original_price > pack.price || appliedCoupon !== null;
-  const originalDisplayPrice = appliedCoupon
-    ? pack.price
-    : pack.original_price;
+  const currentPrice = pack.price;
+  const isDiscounted = pack.original_price > pack.price;
+  const originalDisplayPrice = pack.original_price;
 
   const formattedSize = pack.total_size
     ? `${(pack.total_size / 1024 / 1024).toFixed(1)} MB`
@@ -230,7 +226,7 @@ export default function PackDetailClient({
     }
   };
 
-  // Handle 100% coupon discount (Free) claim
+  // Handle claim free pack
   const handleClaimFree = async () => {
     setIsProcessing(true);
     const toastId = toast.loading("Processing free pack claim...");
@@ -240,7 +236,6 @@ export default function PackDetailClient({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           packId: pack.id,
-          couponCode: appliedCoupon?.code,
         }),
       });
       const data = await res.json();
@@ -336,111 +331,11 @@ export default function PackDetailClient({
       );
     }
 
-    // PayPal buttons
-    const paypalOptions = {
-      "client-id": paypalClientId,
-      currency: "USD",
-    };
-
+    // Redirect to checkout page
     return (
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-        <div>
-          <span className={styles.couponLabel}>Coupon Code</span>
-          <CouponInput packId={pack.id} onApply={setAppliedCoupon} />
-        </div>
-
-        <div className={styles.divider}>Or Checkout with</div>
-
-        {paypalClientId ? (
-          <PayPalScriptProvider options={paypalOptions}>
-            <PayPalButtons
-              style={{
-                layout: "vertical",
-                color: paypalColor,
-                shape: "rect",
-                label: "checkout",
-                tagline: false,
-              }}
-              disabled={isProcessing}
-              createOrder={async () => {
-                setIsProcessing(true);
-                try {
-                  const res = await fetch("/api/shop/create-order", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      packId: pack.id,
-                      couponCode: appliedCoupon?.code,
-                    }),
-                  });
-                  const orderData = await res.json();
-
-                  if (!res.ok) {
-                    throw new Error(orderData.error || "Failed to create order");
-                  }
-
-                  return orderData.orderID;
-                } catch (err) {
-                  toast.error(err.message || "Failed to initiate PayPal checkout");
-                  setIsProcessing(false);
-                  throw err;
-                }
-              }}
-              onApprove={async (data) => {
-                const toastId = toast.loading("Capturing payment...");
-                try {
-                  const res = await fetch("/api/shop/capture-order", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      orderID: data.orderID,
-                      packId: pack.id,
-                      couponId: appliedCoupon?.couponId,
-                    }),
-                  });
-                  const captureData = await res.json();
-
-                  if (!res.ok) {
-                    throw new Error(captureData.error || "Failed to capture payment");
-                  }
-
-                  toast.success("Payment successful! Pack unlocked.", { id: toastId });
-                  setHasPurchased(true);
-                  setShowSuccessState(true);
-                } catch (err) {
-                  toast.error(err.message || "Payment verification failed", { id: toastId });
-                } finally {
-                  setIsProcessing(false);
-                }
-              }}
-              onError={(err) => {
-                toast.error("PayPal transaction failed. Please try again.");
-                console.error("PayPal Error:", err);
-                setIsProcessing(false);
-              }}
-              onCancel={() => {
-                setIsProcessing(false);
-              }}
-            />
-          </PayPalScriptProvider>
-        ) : (
-          <div
-            style={{
-              padding: "12px",
-              border: "1px solid #ef4444",
-              background: "rgba(239, 68, 68, 0.05)",
-              color: "#ef4444",
-              fontSize: "0.85rem",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-            }}
-          >
-            <Info size={16} />
-            <span>Checkout is temporarily unavailable.</span>
-          </div>
-        )}
-      </div>
+      <Link href={`/shop/checkout?packId=${pack.id}`} className={styles.downloadBtn}>
+        <span>Buy Now</span>
+      </Link>
     );
   };
 
@@ -505,9 +400,7 @@ export default function PackDetailClient({
                   </span>
                 )}
                 <span className={styles.price}>${currentPrice.toFixed(2)}</span>
-                {appliedCoupon && (
-                  <span className={styles.discountBadge}>Coupon Applied</span>
-                )}
+
               </>
             ) : (
               <span className={styles.price} style={{ color: "var(--premium-gold)" }}>

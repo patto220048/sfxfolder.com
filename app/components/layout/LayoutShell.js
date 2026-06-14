@@ -15,6 +15,9 @@ function LayoutContent({ children, initialCategories }) {
   const isAdmin = pathname?.startsWith("/admin");
   const isPlugin = searchParams?.get("mode") === "plugin" || pathname?.startsWith("/plugins/") || (typeof window !== 'undefined' && window.location.search.includes('mode=plugin'));
   const isGateway = pathname?.startsWith("/gateway");
+  const isCheckout = pathname === "/shop/checkout";
+
+  const showNavbarAndFooter = !isAdmin && !isPlugin && !isGateway && !isCheckout;
 
   // Stop all media when route changes to prevent "ghost" audio playing on other pages
   useEffect(() => {
@@ -23,18 +26,18 @@ function LayoutContent({ children, initialCategories }) {
 
   return (
     <div className={isPlugin ? 'is-plugin' : ''}>
-      {!isAdmin && !isPlugin && !isGateway && <Navbar initialCategories={initialCategories} isPlugin={isPlugin} />}
+      {showNavbarAndFooter && <Navbar initialCategories={initialCategories} isPlugin={isPlugin} />}
 
       <main 
         style={{ 
           position: 'relative',
-          paddingTop: !isPlugin && !isAdmin && !isGateway ? "var(--navbar-height)" : "0px"
+          paddingTop: showNavbarAndFooter ? "var(--navbar-height)" : "0px"
         }}
       >
         {children}
       </main>
-      {!isAdmin && !isPlugin && !isGateway && pathname !== "/about-us" && <Footer />}
-      {!isAdmin && !isGateway && pathname !== "/about-us" && <ContextSearch isPlugin={isPlugin} />}
+      {showNavbarAndFooter && pathname !== "/about-us" && <Footer />}
+      {!isAdmin && !isGateway && !isCheckout && pathname !== "/about-us" && <ContextSearch isPlugin={isPlugin} />}
     </div>
   );
 }

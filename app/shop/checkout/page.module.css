@@ -1,0 +1,548 @@
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: var(--space-12) var(--space-6) var(--space-20);
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-8);
+  transition: color var(--transition-base);
+}
+
+.backLink:hover {
+  color: var(--text-primary);
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: 2.2rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--space-10) 0;
+  color: var(--text-primary);
+  border-bottom: 2px solid var(--border-default);
+  padding-bottom: var(--space-4);
+}
+
+/* Two-column layout */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-10);
+  align-items: start;
+}
+
+@media (min-width: 768px) {
+  .layout {
+    grid-template-columns: 1.1fr 0.9fr;
+    gap: var(--space-12);
+  }
+}
+
+/* Main panel (form/buttons) */
+.mainPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  padding: var(--space-8);
+}
+
+.cardTitle {
+  font-family: var(--font-heading);
+  font-size: 1.25rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin: 0 0 var(--space-6) 0;
+  color: var(--text-primary);
+}
+
+/* Auth state card */
+.authRequired {
+  text-align: center;
+  padding: var(--space-12) var(--space-8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.authIcon {
+  color: var(--premium-gold);
+  margin-bottom: var(--space-2);
+}
+
+.authText {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  margin-bottom: var(--space-4);
+  max-width: 320px;
+}
+
+.authBtn {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border: 1px solid var(--text-primary);
+  padding: 14px 28px;
+  font-weight: 900;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  border-radius: 0;
+}
+
+.authBtn:hover {
+  background: transparent;
+  color: var(--text-primary);
+}
+
+/* Coupon & PayPal flow */
+.couponWrapper {
+  margin-bottom: var(--space-6);
+}
+
+.couponLabel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: var(--space-2);
+  display: block;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin: var(--space-6) 0;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.divider:not(:empty)::before {
+  margin-right: 1.5em;
+}
+
+.divider:not(:empty)::after {
+  margin-left: 1.5em;
+}
+
+.paypalContainer {
+  min-height: 150px;
+}
+
+/* Order Summary Column */
+.summaryPanel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  position: sticky;
+  top: 100px;
+}
+
+.summaryPackInfo {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  margin-bottom: var(--space-6);
+}
+
+.summaryCover {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border: 1px solid var(--border-default);
+  background: #000;
+  flex-shrink: 0;
+}
+
+.summaryCoverPlaceholder {
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.summaryPackText {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.summaryCategory {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.summaryName {
+  font-family: var(--font-heading);
+  font-size: 1.15rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.summaryMeta {
+  display: flex;
+  gap: 12px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Pricing Rows */
+.priceRows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  border-top: 1px solid var(--border-default);
+  padding-top: var(--space-6);
+  margin-top: var(--space-4);
+}
+
+.priceRow {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.priceRowDiscount {
+  color: #ef4444;
+}
+
+.totalRow {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--font-heading);
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: var(--text-primary);
+  border-top: 1px dashed var(--border-default);
+  padding-top: var(--space-4);
+  margin-top: var(--space-2);
+  text-transform: uppercase;
+}
+
+/* Success State Screen */
+.successWrapper {
+  text-align: center;
+  padding: var(--space-12) var(--space-6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.successIcon {
+  color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  padding: var(--space-4);
+  border-radius: 50%;
+}
+
+.successTitle {
+  font-family: var(--font-heading);
+  font-size: 1.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.successDesc {
+  color: var(--text-secondary);
+  font-size: 1rem;
+  line-height: 1.6;
+  max-width: 420px;
+  margin: 0 auto;
+}
+
+.downloadBtn {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border: 1px solid var(--text-primary);
+  width: 100%;
+  max-width: 320px;
+  padding: 16px;
+  font-weight: 900;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 0;
+}
+
+.downloadBtn:hover {
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.successActions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.detailLink {
+  color: var(--text-muted);
+  text-decoration: underline;
+  font-size: 0.85rem;
+  transition: color var(--transition-base);
+}
+
+.detailLink:hover {
+  color: var(--text-primary);
+}
+
+/* Logged in state */
+.loggedInBox {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-default);
+  padding: 14px 18px;
+  margin-top: 10px;
+}
+
+.loggedInLabel {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.loggedInEmail {
+  font-weight: 700;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.userIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+}
+
+/* Tabs */
+.authTabs {
+  display: flex;
+  border-bottom: 1px solid var(--border-default);
+  margin-bottom: 20px;
+}
+
+.authTab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  padding: 12px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+  text-align: center;
+}
+
+.authTabActive {
+  color: var(--text-primary);
+  border-bottom-color: var(--text-primary);
+}
+
+/* Form inputs */
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.inputControl {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.inputLabel {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.inputFieldWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 14px;
+  color: var(--text-muted);
+}
+
+.inputField {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border-default);
+  padding: 12px 14px 12px 42px;
+  color: var(--text-primary);
+  outline: none;
+  font-size: 0.9rem;
+  border-radius: 0;
+  transition: border-color var(--transition-base);
+}
+
+.inputField:focus {
+  border-color: var(--border-active);
+}
+
+.passwordToggle {
+  position: absolute;
+  right: 14px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.passwordToggle:hover {
+  color: var(--text-primary);
+}
+
+.submitBtn {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border: 1px solid var(--text-primary);
+  padding: 14px;
+  font-weight: 900;
+  font-size: 0.95rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  border-radius: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.submitBtn:hover {
+  background: transparent;
+  color: var(--text-primary);
+}
+
+.googleBtn {
+  background: transparent;
+  color: var(--text-primary);
+  border: 1px solid var(--border-default);
+  padding: 12px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  border-radius: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.googleBtn:hover {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border-color: var(--text-primary);
+}
+
+.errorAlert {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid #ef4444;
+  color: #ef4444;
+  padding: 12px;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.successAlert {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid #10b981;
+  color: #10b981;
+  padding: 12px;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
