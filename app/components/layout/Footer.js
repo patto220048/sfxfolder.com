@@ -36,6 +36,7 @@ function Footer() {
     { label: "Terms of Service", href: "/terms", target: "_blank", rel: "noopener noreferrer" },
     { label: "Privacy Policy", href: "/privacy", target: "_blank", rel: "noopener noreferrer" },
     { label: "Shop", href: "/shop" },
+    { label: "Blog", href: "/v1/blog" },
   ];
   const initialCompany = companyLinks.slice(0, 4);
   const moreCompany = companyLinks.length > 4 ? companyLinks.slice(4) : [];
