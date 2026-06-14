@@ -33,12 +33,16 @@ export default async function CheckoutPage({ searchParams: searchParamsPromise }
     .eq("setting_key", "paypal_config")
     .single();
 
-  let paypalClientId = process.env.PAYPAL_CLIENT_ID || "";
-  if (settings?.setting_value) {
+  let paypalClientId = "";
+  if (process.env.PAYPAL_MODE === "sandbox") {
+    paypalClientId = process.env.PAYPAL_CLIENT_ID || "";
+  } else if (!settings?.setting_value) {
+    paypalClientId = process.env.PAYPAL_CLIENT_ID || "";
+  } else {
     const config = settings.setting_value;
     const isSandbox = config.env === "sandbox";
     const activeParams = isSandbox ? config.sandbox : config.live;
-    paypalClientId = activeParams?.client_id || paypalClientId;
+    paypalClientId = activeParams?.client_id || process.env.PAYPAL_CLIENT_ID || "";
   }
 
   return (

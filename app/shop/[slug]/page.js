@@ -75,15 +75,21 @@ export default async function PackDetailPage({ params: paramsPromise }) {
     .eq("setting_key", "paypal_config")
     .single();
 
-  let paypalClientId = process.env.PAYPAL_CLIENT_ID || "";
-  let paypalMode = process.env.PAYPAL_MODE || "sandbox";
+  let paypalClientId = "";
+  let paypalMode = "sandbox";
 
-  if (settings?.setting_value) {
+  if (process.env.PAYPAL_MODE === "sandbox") {
+    paypalMode = "sandbox";
+    paypalClientId = process.env.PAYPAL_CLIENT_ID || "";
+  } else if (!settings?.setting_value) {
+    paypalMode = process.env.PAYPAL_MODE || "sandbox";
+    paypalClientId = process.env.PAYPAL_CLIENT_ID || "";
+  } else {
     const config = settings.setting_value;
     const isSandbox = config.env === "sandbox";
     paypalMode = config.env;
     const activeParams = isSandbox ? config.sandbox : config.live;
-    paypalClientId = activeParams?.client_id || paypalClientId;
+    paypalClientId = activeParams?.client_id || process.env.PAYPAL_CLIENT_ID || "";
   }
 
   // 5. Build JSON-LD structured data
