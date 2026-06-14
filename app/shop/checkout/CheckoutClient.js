@@ -201,7 +201,7 @@ export default function CheckoutClient({ pack, paypalClientId }) {
     ? pack.price
     : pack.original_price;
 
-  const paypalColor = resolvedTheme === "dark" ? "black" : "gold";
+  const paypalColor = "gold";
 
   // If already owned, show success/download screen immediately
   const isUnlocked = hasPurchased || (isPremium && pack.free_for_premium !== false);
