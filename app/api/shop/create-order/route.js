@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServerSupabaseClient, getServerUser } from "@/app/lib/supabase-server";
 import { supabaseAdmin } from "@/app/lib/supabase-admin";
+import { Resend } from "resend";
 
 // Helper: Get PayPal OAuth access token
 async function getPayPalAccessToken(clientId, clientSecret, isSandbox) {
@@ -213,6 +214,73 @@ export async function POST(request) {
         } catch (e) {
           console.warn("[ShopAPI] Failed to increment coupon usage:", e);
         }
+      }
+
+      // Send thank you email to user via Resend (Free Coupon purchase)
+      try {
+        if (process.env.RESEND_API_KEY && user.email) {
+          const resend = new Resend(process.env.RESEND_API_KEY);
+          const resendFrom = process.env.RESEND_FROM || "onboarding@resend.dev";
+          const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://sfxfolder.com";
+          const libraryUrl = `${SITE_URL}/account/purchases`;
+
+          await resend.emails.send({
+            from: `SFXFolder <${resendFrom}>`,
+            to: [user.email],
+            subject: `Your sound pack: ${pack ? pack.name : "Sound Pack"}`,
+            html: `
+              <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0b0c10; color: #e5e5e5; padding: 40px 20px; border-radius: 8px; max-width: 600px; margin: 0 auto; border: 1px solid #1f2833;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                  <h1 style="color: #66fcf1; font-size: 28px; margin: 0; letter-spacing: 1px; font-weight: bold;">SFXFOLDER</h1>
+                  <p style="color: #c5c6c7; font-size: 14px; margin-top: 5px;">Premium Audio & Sound Effects</p>
+                </div>
+                
+                <div style="background-color: #1f2833; padding: 30px; border-radius: 6px; border-left: 4px solid #66fcf1;">
+                  <h2 style="color: #ffffff; font-size: 20px; margin-top: 0;">Thank you!</h2>
+                  <p style="font-size: 16px; line-height: 1.6; color: #c5c6c7;">
+                    Hi there, you have successfully unlocked lifetime download access to <strong>${pack ? pack.name : "your sound pack"}</strong> using a discount coupon.
+                  </p>
+                  
+                  <div style="margin: 25px 0; padding: 20px; background-color: #0b0c10; border-radius: 4px; border: 1px solid #45f3ff33;">
+                    <h3 style="margin-top: 0; color: #ffffff; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Order Summary</h3>
+                    <table style="width: 100%; border-collapse: collapse; font-size: 14px; color: #c5c6c7;">
+                      <tr>
+                        <td style="padding: 6px 0; color: #ffffff;">Sound Pack:</td>
+                        <td style="padding: 6px 0; text-align: right; font-weight: bold; color: #ffffff;">${pack ? pack.name : "Sound Pack"}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 6px 0;">Promo Code:</td>
+                        <td style="padding: 6px 0; text-align: right; font-family: monospace; color: #66fcf1;">Applied</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 6px 0;">Amount Paid:</td>
+                        <td style="padding: 6px 0; text-align: right; font-weight: bold; color: #66fcf1;">$0.00 USD (FREE)</td>
+                      </tr>
+                    </table>
+                  </div>
+
+                  <p style="font-size: 16px; line-height: 1.6; color: #c5c6c7; margin-bottom: 25px;">
+                    You can download your audio assets and view your purchased items anytime from your personal Library page.
+                  </p>
+                  
+                  <div style="text-align: center; margin: 30px 0;">
+                    <a href="${libraryUrl}" style="background-color: #66fcf1; color: #0b0c10; text-decoration: none; padding: 14px 30px; font-weight: bold; border-radius: 4px; font-size: 16px; display: inline-block; letter-spacing: 0.5px; box-shadow: 0 4px 12px rgba(102, 252, 241, 0.2);">
+                      Go to My Library
+                    </a>
+                  </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 35px; color: #888888; font-size: 12px;">
+                  <p style="margin: 0;">This is an automated receipt for your purchase at SFXFolder.com.</p>
+                  <p style="margin: 5px 0 0 0;">Need help? Reply to this email or contact our support team.</p>
+                </div>
+              </div>
+            `,
+          });
+          console.log(`[Email] Coupon thank you email sent successfully to ${user.email} for pack: ${pack ? pack.name : packId}`);
+        }
+      } catch (emailError) {
+        console.error("[Email] Failed to send free pack thank you email:", emailError);
       }
 
       return NextResponse.json({ success: true, free: true });
