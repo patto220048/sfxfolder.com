@@ -14,14 +14,14 @@ export async function GET(request) {
     let query = supabaseAdmin
       .from("sound_packs")
       .select(
-        "id, name, slug, description, short_description, price, original_price, currency, category, tags, cover_image_url, item_count, total_size, purchase_count, created_at, updated_at",
+        "id, name, slug, description, short_description, price, original_price, category_id, tags, cover_image, item_count, total_size, purchase_count, created_at, updated_at",
         { count: "exact" }
       )
       .eq("status", "published");
 
     // Filter by category
     if (category) {
-      query = query.eq("category", category);
+      query = query.eq("category_id", category);
     }
 
     // Search by name or description

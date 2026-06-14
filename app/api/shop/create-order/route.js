@@ -83,19 +83,20 @@ export async function POST(request) {
     }
 
     const { packId, couponCode } = await request.json();
+    console.log("[CreateOrderAPI] Received request for packId:", packId, "couponCode:", couponCode);
 
     if (!packId) {
       return NextResponse.json({ error: "packId is required" }, { status: 400 });
     }
 
-    // 2. Check pack exists and is published
     const { data: pack, error: packError } = await supabaseAdmin
       .from("sound_packs")
-      .select("id, name, price, currency, status")
+      .select("id, name, price, status")
       .eq("id", packId)
       .single();
 
     if (packError || !pack) {
+      console.error("[CreateOrderAPI] Pack not found or query error:", packError, pack);
       return NextResponse.json({ error: "Pack not found" }, { status: 404 });
     }
 
@@ -165,7 +166,7 @@ export async function POST(request) {
           pack_id: packId,
           paypal_order_id: `FREE-${Date.now()}`,
           amount_paid: 0,
-          currency: pack.currency || "USD",
+          currency: "USD",
           coupon_id: couponId,
           discount_amount: discountAmount,
           status: "completed",
@@ -241,7 +242,7 @@ export async function POST(request) {
           reference_id: packId,
           description: pack.name,
           amount: {
-            currency_code: pack.currency || "USD",
+            currency_code: "USD",
             value: finalPrice.toFixed(2),
           },
         },
