@@ -224,7 +224,7 @@ export async function POST(request) {
           const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://sfxfolder.com";
           const libraryUrl = `${SITE_URL}/account/purchases`;
 
-          await resend.emails.send({
+          const emailResponse = await resend.emails.send({
             from: `SFXFolder <${resendFrom}>`,
             to: [user.email],
             subject: `Your sound pack: ${pack ? pack.name : "Sound Pack"}`,
@@ -277,7 +277,12 @@ export async function POST(request) {
               </div>
             `,
           });
-          console.log(`[Email] Coupon thank you email sent successfully to ${user.email} for pack: ${pack ? pack.name : packId}`);
+
+          if (emailResponse.error) {
+            console.error("[Email] Resend API error:", emailResponse.error);
+          } else {
+            console.log(`[Email] Coupon thank you email sent successfully to ${user.email} for pack: ${pack ? pack.name : packId}`);
+          }
         }
       } catch (emailError) {
         console.error("[Email] Failed to send free pack thank you email:", emailError);
