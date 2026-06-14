@@ -158,6 +158,7 @@
 
 .paypalContainer {
   min-height: 150px;
+  margin-top: var(--space-4);
 }
 
 /* Order Summary Column */
