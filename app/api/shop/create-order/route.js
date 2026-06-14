@@ -166,7 +166,6 @@ export async function POST(request) {
           pack_id: packId,
           paypal_order_id: `FREE-${Date.now()}`,
           amount_paid: 0,
-          currency: "USD",
           coupon_id: couponId,
           discount_amount: discountAmount,
           status: "completed",

@@ -157,7 +157,6 @@ export async function POST(request) {
         pack_id: packId,
         paypal_order_id: orderID,
         amount_paid: amountPaid,
-        currency,
         coupon_id: couponId || null,
         discount_amount: discountAmount > 0 ? discountAmount : 0,
         status: "completed",
