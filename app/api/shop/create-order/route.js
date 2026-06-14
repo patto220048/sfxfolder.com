@@ -220,7 +220,10 @@ export async function POST(request) {
       try {
         if (process.env.RESEND_API_KEY && user.email) {
           const resend = new Resend(process.env.RESEND_API_KEY);
-          const resendFrom = process.env.RESEND_FROM || "onboarding@resend.dev";
+          let resendFrom = process.env.RESEND_FROM || "onboarding@resend.dev";
+          if (resendFrom && !resendFrom.includes("@")) {
+            resendFrom = `no-reply@${resendFrom}`;
+          }
           const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://sfxfolder.com";
           const libraryUrl = `${SITE_URL}/account/purchases`;
 
