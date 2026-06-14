@@ -1,6 +1,8 @@
 import { supabaseAdmin } from "@/app/lib/supabase-admin";
 import ShopClient from "./ShopClient";
 
+export const revalidate = 3600; // Cache and revalidate in background every 1 hour
+
 export const metadata = {
   title: "Sound Packs — Premium Audio Bundles | SFXFolder",
   description: "Browse and download curated sound effect packs, transitions, and audio assets.",

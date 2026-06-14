@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Package, Check, Database, Star } from "lucide-react";
 import styles from "./PackCard.module.css";
 
@@ -58,7 +59,15 @@ export default function PackCard({ pack, isPurchased }) {
       {/* COVER IMAGE */}
       <div className={styles.imageWrapper}>
         {cover_image ? (
-          <img src={cover_image} alt={name} className={styles.coverImage} />
+          <Image
+            src={cover_image}
+            alt={name}
+            width={400}
+            height={280}
+            className={styles.coverImage}
+            sizes="(max-width: 768px) 100vw, 33vw"
+            loading="lazy"
+          />
         ) : (
           <div className={styles.coverPlaceholder}>
             <Package size={36} />

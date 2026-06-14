@@ -1,17 +1,55 @@
 import { notFound } from "next/navigation";
+import { cache } from "react";
 import { supabaseAdmin } from "@/app/lib/supabase-admin";
-import { getServerUser } from "@/app/lib/supabase-server";
 import PackDetailClient from "./PackDetailClient";
+
+export const revalidate = 3600; // Cache and revalidate in background every 1 hour
+
+// Cached data fetching to prevent duplicate queries between generateMetadata and page render
+const getPack = cache(async (slug) => {
+  const { data } = await supabaseAdmin
+    .from("sound_packs")
+    .select("*")
+    .eq("slug", slug)
+    .single();
+  return data;
+});
+
+const getPackItems = cache(async (packId) => {
+  const { data } = await supabaseAdmin
+    .from("sound_pack_items")
+    .select("*")
+    .eq("pack_id", packId)
+    .order("sort_order", { ascending: true });
+  return data;
+});
+
+const getPaypalConfig = cache(async () => {
+  const { data } = await supabaseAdmin
+    .from("system_settings")
+    .select("setting_value")
+    .eq("setting_key", "paypal_config")
+    .single();
+  return data;
+});
+
+export async function generateStaticParams() {
+  const { data: packs } = await supabaseAdmin
+    .from("sound_packs")
+    .select("slug")
+    .eq("status", "published");
+
+  if (!packs) return [];
+  return packs.map((pack) => ({
+    slug: pack.slug,
+  }));
+}
 
 export async function generateMetadata({ params: paramsPromise }) {
   const params = await paramsPromise;
   const { slug } = params;
 
-  const { data: pack } = await supabaseAdmin
-    .from("sound_packs")
-    .select("name, short_description, cover_image")
-    .eq("slug", slug)
-    .single();
+  const pack = await getPack(slug);
 
   if (!pack) {
     return {
@@ -19,12 +57,15 @@ export async function generateMetadata({ params: paramsPromise }) {
     };
   }
 
+  const title = `${pack.name} — Sound Pack | SFXFolder`;
+  const description = pack.short_description || `Download ${pack.name} sound pack.`;
+
   return {
-    title: `${pack.name} — Sound Pack | SFXFolder`,
-    description: pack.short_description || `Download ${pack.name} sound pack.`,
+    title,
+    description,
     openGraph: {
-      title: `${pack.name} — Sound Pack | SFXFolder`,
-      description: pack.short_description,
+      title,
+      description,
       images: pack.cover_image ? [{ url: pack.cover_image }] : [],
     },
   };
@@ -35,45 +76,17 @@ export default async function PackDetailPage({ params: paramsPromise }) {
   const { slug } = params;
 
   // 1. Fetch pack details
-  const { data: pack, error: packErr } = await supabaseAdmin
-    .from("sound_packs")
-    .select("*")
-    .eq("slug", slug)
-    .single();
+  const pack = await getPack(slug);
 
-  if (packErr || !pack) {
+  if (!pack) {
     notFound();
   }
 
-  // 2. Fetch pack items
-  const { data: items } = await supabaseAdmin
-    .from("sound_pack_items")
-    .select("*")
-    .eq("pack_id", pack.id)
-    .order("sort_order", { ascending: true });
-
-  // 3. Get server user and check purchase status
-  const { user } = await getServerUser();
-  let hasPurchased = false;
-
-  if (user) {
-    const { data: purchase } = await supabaseAdmin
-      .from("pack_purchases")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("pack_id", pack.id)
-      .eq("status", "completed")
-      .maybeSingle();
-
-    hasPurchased = !!purchase;
-  }
-
-  // 4. Load PayPal configuration
-  const { data: settings } = await supabaseAdmin
-    .from("system_settings")
-    .select("setting_value")
-    .eq("setting_key", "paypal_config")
-    .single();
+  // 2. Parallel fetch pack items and PayPal configuration
+  const [items, settings] = await Promise.all([
+    getPackItems(pack.id),
+    getPaypalConfig(),
+  ]);
 
   let paypalClientId = "";
   let paypalMode = "sandbox";
@@ -92,8 +105,8 @@ export default async function PackDetailPage({ params: paramsPromise }) {
     paypalClientId = activeParams?.client_id || process.env.PAYPAL_CLIENT_ID || "";
   }
 
-  // 5. Build JSON-LD structured data
-  const jsonLd = {
+  // 3. Build JSON-LD structured data (Product Schema & BreadcrumbList)
+  const productJsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     "name": pack.name,
@@ -110,7 +123,7 @@ export default async function PackDetailPage({ params: paramsPromise }) {
   };
 
   if (pack.review_count > 0) {
-    jsonLd.aggregateRating = {
+    productJsonLd.aggregateRating = {
       "@type": "AggregateRating",
       "ratingValue": pack.average_rating || 0.0,
       "reviewCount": pack.review_count || 0,
@@ -119,18 +132,48 @@ export default async function PackDetailPage({ params: paramsPromise }) {
     };
   }
 
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": process.env.NEXT_PUBLIC_SITE_URL || "https://sfxfolder.com",
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Shop",
+        "item": `${process.env.NEXT_PUBLIC_SITE_URL || "https://sfxfolder.com"}/shop`,
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": pack.name,
+        "item": `${process.env.NEXT_PUBLIC_SITE_URL || "https://sfxfolder.com"}/shop/${pack.slug}`,
+      },
+    ],
+  };
+
   return (
     <>
       {/* Schema.org Product Structured Data */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
+      {/* Schema.org BreadcrumbList Structured Data */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
       
       <PackDetailClient
         pack={pack}
         initialItems={items || []}
-        initialHasPurchased={hasPurchased}
+        initialHasPurchased={false} // Will check client-side
         paypalClientId={paypalClientId}
         paypalMode={paypalMode}
       />

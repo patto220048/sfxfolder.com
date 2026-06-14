@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useTheme } from "next-themes";
 import {
   ArrowLeft,
@@ -17,6 +18,7 @@ import { marked } from "marked";
 import toast from "react-hot-toast";
 import useSWR from "swr";
 import { useAuth } from "@/app/lib/auth-context";
+import { supabase } from "@/app/lib/supabase";
 import PackItemList from "../components/PackItemList";
 import styles from "./page.module.css";
 
@@ -34,6 +36,30 @@ export default function PackDetailClient({
   const [showSuccessState, setShowSuccessState] = useState(false);
 
   const [isProcessing, setIsProcessing] = useState(false);
+
+  // Fetch user purchase status client-side to allow SSG/ISR static pre-rendering
+  useEffect(() => {
+    if (user && !initialHasPurchased) {
+      async function checkPurchase() {
+        try {
+          const { data, error } = await supabase
+            .from("pack_purchases")
+            .select("id")
+            .eq("user_id", user.id)
+            .eq("pack_id", pack.id)
+            .eq("status", "completed")
+            .maybeSingle();
+
+          if (!error && data) {
+            setHasPurchased(true);
+          }
+        } catch (e) {
+          console.error("Client: Failed to fetch purchase status:", e);
+        }
+      }
+      checkPurchase();
+    }
+  }, [user, pack.id, initialHasPurchased]);
 
   // Reviews fetching
   const { data: reviewsData, mutate: mutateReviews } = useSWR(
@@ -350,9 +376,12 @@ export default function PackDetailClient({
         {/* COVER COLUMN */}
         <div className={styles.coverWrapper}>
           {pack.cover_image ? (
-            <img
+            <Image
               src={pack.cover_image}
               alt={pack.name}
+              width={500}
+              height={500}
+              priority={true}
               className={styles.coverImage}
             />
           ) : (
