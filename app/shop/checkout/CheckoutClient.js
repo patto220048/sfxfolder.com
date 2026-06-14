@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { useTheme } from "next-themes";
 import {
@@ -232,7 +233,7 @@ export default function CheckoutClient({ pack, paypalClientId }) {
     );
   }
 
-  return (
+  const mainContent = (
     <div className={styles.container}>
       <Link href={`/shop/${pack.slug}`} className={styles.backLink}>
         <ArrowLeft size={16} />
@@ -378,12 +379,6 @@ export default function CheckoutClient({ pack, paypalClientId }) {
                   
                   {paypalClientId ? (
                     <div className={styles.paypalContainer}>
-                      <PayPalScriptProvider
-                        options={{
-                          "client-id": paypalClientId,
-                          currency: "USD",
-                        }}
-                      >
                         <PayPalButtons
                           style={{
                             layout: "vertical",
@@ -455,7 +450,6 @@ export default function CheckoutClient({ pack, paypalClientId }) {
                             setIsProcessing(false);
                           }}
                         />
-                      </PayPalScriptProvider>
                     </div>
                   ) : (
                     <div
@@ -487,9 +481,11 @@ export default function CheckoutClient({ pack, paypalClientId }) {
             
             <div className={styles.summaryPackInfo}>
               {pack.cover_image ? (
-                <img
+                <Image
                   src={pack.cover_image}
                   alt={pack.name}
+                  width={80}
+                  height={80}
                   className={styles.summaryCover}
                 />
               ) : (
@@ -538,4 +534,21 @@ export default function CheckoutClient({ pack, paypalClientId }) {
       </div>
     </div>
   );
+
+  if (paypalClientId) {
+    return (
+      <PayPalScriptProvider
+        options={{
+          "client-id": paypalClientId,
+          currency: "USD",
+          intent: "capture",
+          components: "buttons,card-fields",
+        }}
+      >
+        {mainContent}
+      </PayPalScriptProvider>
+    );
+  }
+
+  return mainContent;
 }

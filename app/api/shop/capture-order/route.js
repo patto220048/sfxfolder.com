@@ -3,8 +3,13 @@ import { createServerSupabaseClient } from "@/app/lib/supabase-server";
 import { supabaseAdmin } from "@/app/lib/supabase-admin";
 import { Resend } from "resend";
 
-// Helper: Get PayPal OAuth access token
+// Helper: Get PayPal OAuth access token with Memory Cache
 async function getPayPalAccessToken(clientId, clientSecret, isSandbox) {
+  const cacheKey = `${clientId}:${isSandbox}`;
+  if (global.paypalTokenCache?.[cacheKey] && Date.now() < global.paypalTokenCache[cacheKey].expiry) {
+    return global.paypalTokenCache[cacheKey].token;
+  }
+
   const url = isSandbox
     ? "https://api-m.sandbox.paypal.com/v1/oauth2/token"
     : "https://api-m.paypal.com/v1/oauth2/token";
@@ -24,6 +29,17 @@ async function getPayPalAccessToken(clientId, clientSecret, isSandbox) {
   if (!response.ok) {
     throw new Error(data.error_description || "Failed to get PayPal access token");
   }
+
+  if (!global.paypalTokenCache) {
+    global.paypalTokenCache = {};
+  }
+  
+  const expiresInMs = (data.expires_in || 3600) * 1000;
+  global.paypalTokenCache[cacheKey] = {
+    token: data.access_token,
+    expiry: Date.now() + expiresInMs - 60000,
+  };
+
   return data.access_token;
 }
 
@@ -92,8 +108,45 @@ export async function POST(request) {
       );
     }
 
-    // 2. Get PayPal config & capture the order
-    const { isSandbox, clientId, clientSecret } = await getPayPalConfig();
+    // 2. Fetch PayPal config & Sound Pack details in parallel
+    const [paypalConfigRes, packRes] = await Promise.all([
+      supabaseAdmin
+        .from("system_settings")
+        .select("setting_value")
+        .eq("setting_key", "paypal_config")
+        .single(),
+      supabaseAdmin
+        .from("sound_packs")
+        .select("name, price")
+        .eq("id", packId)
+        .single(),
+    ]);
+
+    const { data: settings } = paypalConfigRes;
+    const { data: pack } = packRes;
+
+    let isSandbox;
+    let clientId;
+
+    if (process.env.PAYPAL_MODE === "sandbox") {
+      isSandbox = true;
+      clientId = process.env.PAYPAL_CLIENT_ID;
+    } else if (!settings) {
+      console.warn("[ShopAPI] system_settings missing, falling back to env vars.");
+      isSandbox = process.env.PAYPAL_MODE !== "live";
+      clientId = process.env.PAYPAL_CLIENT_ID;
+    } else {
+      const config = settings.setting_value;
+      isSandbox = config.env === "sandbox";
+      const activeParams = isSandbox ? config.sandbox : config.live;
+      clientId = activeParams?.client_id;
+    }
+
+    const clientSecret = isSandbox
+      ? process.env.PAYPAL_SECRET_SANDBOX
+      : process.env.PAYPAL_SECRET_LIVE;
+
+    if (!clientId) clientId = process.env.PAYPAL_CLIENT_ID;
 
     if (!clientId || !clientSecret) {
       return NextResponse.json(
@@ -140,13 +193,6 @@ export async function POST(request) {
       ? parseFloat(captureUnit.amount.value)
       : 0;
     const currency = captureUnit?.amount?.currency_code || "USD";
-
-    // 4. Get pack details to calculate discount & display in email
-    const { data: pack } = await supabaseAdmin
-      .from("sound_packs")
-      .select("name, price")
-      .eq("id", packId)
-      .single();
 
     const discountAmount = pack ? pack.price - amountPaid : 0;
 

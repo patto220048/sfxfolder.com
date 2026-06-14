@@ -3,8 +3,13 @@ import { createServerSupabaseClient, getServerUser } from "@/app/lib/supabase-se
 import { supabaseAdmin } from "@/app/lib/supabase-admin";
 import { Resend } from "resend";
 
-// Helper: Get PayPal OAuth access token
+// Helper: Get PayPal OAuth access token with Memory Cache
 async function getPayPalAccessToken(clientId, clientSecret, isSandbox) {
+  const cacheKey = `${clientId}:${isSandbox}`;
+  if (global.paypalTokenCache?.[cacheKey] && Date.now() < global.paypalTokenCache[cacheKey].expiry) {
+    return global.paypalTokenCache[cacheKey].token;
+  }
+
   const url = isSandbox
     ? "https://api-m.sandbox.paypal.com/v1/oauth2/token"
     : "https://api-m.paypal.com/v1/oauth2/token";
@@ -24,6 +29,17 @@ async function getPayPalAccessToken(clientId, clientSecret, isSandbox) {
   if (!response.ok) {
     throw new Error(data.error_description || "Failed to get PayPal access token");
   }
+
+  if (!global.paypalTokenCache) {
+    global.paypalTokenCache = {};
+  }
+  
+  const expiresInMs = (data.expires_in || 3600) * 1000;
+  global.paypalTokenCache[cacheKey] = {
+    token: data.access_token,
+    expiry: Date.now() + expiresInMs - 60000,
+  };
+
   return data.access_token;
 }
 
@@ -90,11 +106,38 @@ export async function POST(request) {
       return NextResponse.json({ error: "packId is required" }, { status: 400 });
     }
 
-    const { data: pack, error: packError } = await supabaseAdmin
-      .from("sound_packs")
-      .select("id, name, price, status")
-      .eq("id", packId)
-      .single();
+    // 2. Fetch pack details, check existing purchase, and load PayPal config in parallel
+    const [packRes, purchaseRes, paypalConfigRes, couponRes] = await Promise.all([
+      supabaseAdmin
+        .from("sound_packs")
+        .select("id, name, price, status")
+        .eq("id", packId)
+        .single(),
+      supabaseAdmin
+        .from("pack_purchases")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("pack_id", packId)
+        .eq("status", "completed")
+        .maybeSingle(),
+      supabaseAdmin
+        .from("system_settings")
+        .select("setting_value")
+        .eq("setting_key", "paypal_config")
+        .single(),
+      couponCode
+        ? supabaseAdmin.rpc("validate_coupon", {
+            p_code: couponCode,
+            p_pack_id: packId,
+            p_user_id: user.id,
+          })
+        : Promise.resolve({ data: null, error: null }),
+    ]);
+
+    const { data: pack, error: packError } = packRes;
+    const { data: existingPurchase } = purchaseRes;
+    const { data: settings } = paypalConfigRes;
+    const { data: couponResult, error: couponError } = couponRes;
 
     if (packError || !pack) {
       console.error("[CreateOrderAPI] Pack not found or query error:", packError, pack);
@@ -104,15 +147,6 @@ export async function POST(request) {
     if (pack.status !== "published") {
       return NextResponse.json({ error: "Pack is not available" }, { status: 400 });
     }
-
-    // 3. Check if user already purchased
-    const { data: existingPurchase } = await supabaseAdmin
-      .from("pack_purchases")
-      .select("id")
-      .eq("user_id", user.id)
-      .eq("pack_id", packId)
-      .eq("status", "completed")
-      .maybeSingle();
 
     if (existingPurchase) {
       return NextResponse.json(
@@ -127,13 +161,6 @@ export async function POST(request) {
     let discountAmount = 0;
 
     if (couponCode) {
-      const { data: couponResult, error: couponError } = await supabaseAdmin
-        .rpc("validate_coupon", {
-          p_code: couponCode,
-          p_pack_id: packId,
-          p_user_id: user.id,
-        });
-
       if (couponError) {
         console.error("[ShopAPI] Coupon validation RPC error:", couponError);
         return NextResponse.json(
@@ -294,8 +321,29 @@ export async function POST(request) {
       return NextResponse.json({ success: true, free: true });
     }
 
-    // 6. Create PayPal order
-    const { isSandbox, clientId, clientSecret } = await getPayPalConfig();
+    // 6. Parse PayPal config from parallelized results
+    let isSandbox;
+    let clientId;
+
+    if (process.env.PAYPAL_MODE === "sandbox") {
+      isSandbox = true;
+      clientId = process.env.PAYPAL_CLIENT_ID;
+    } else if (!settings) {
+      console.warn("[ShopAPI] system_settings missing, falling back to env vars.");
+      isSandbox = process.env.PAYPAL_MODE !== "live";
+      clientId = process.env.PAYPAL_CLIENT_ID;
+    } else {
+      const config = settings.setting_value;
+      isSandbox = config.env === "sandbox";
+      const activeParams = isSandbox ? config.sandbox : config.live;
+      clientId = activeParams?.client_id;
+    }
+
+    const clientSecret = isSandbox
+      ? process.env.PAYPAL_SECRET_SANDBOX
+      : process.env.PAYPAL_SECRET_LIVE;
+
+    if (!clientId) clientId = process.env.PAYPAL_CLIENT_ID;
 
     if (!clientId || !clientSecret) {
       return NextResponse.json(
