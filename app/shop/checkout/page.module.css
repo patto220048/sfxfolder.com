@@ -164,6 +164,26 @@
   padding: var(--space-6);
   box-shadow: 4px 4px 0px 0px #000000;
   color-scheme: light !important;
+  color: #000000 !important;
+}
+
+.paypalContainer input,
+.paypalContainer select,
+.paypalContainer textarea {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+  border-color: #cccccc !important;
+}
+
+.paypalContainer input::placeholder {
+  color: #767676 !important;
+}
+
+.paypalContainer label,
+.paypalContainer span,
+.paypalContainer div,
+.paypalContainer p {
+  color: #000000 !important;
 }
 
 /* Order Summary Column */
