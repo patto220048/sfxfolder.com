@@ -217,27 +217,18 @@ export async function POST(request) {
       // Increment coupon used count
       if (couponId) {
         try {
-          await supabaseAdmin
+          const { data: coupon } = await supabaseAdmin
             .from("coupons")
-            .update({ used_count: supabaseAdmin.rpc ? undefined : 0 })
-            .eq("id", couponId);
-          // Use raw SQL increment via RPC or manual increment
-          await supabaseAdmin.rpc("increment_coupon_used_count", { p_coupon_id: couponId }).catch(() => {
-            // Fallback: manual increment
-            supabaseAdmin
+            .select("used_count")
+            .eq("id", couponId)
+            .single();
+
+          if (coupon) {
+            await supabaseAdmin
               .from("coupons")
-              .select("used_count")
-              .eq("id", couponId)
-              .single()
-              .then(({ data }) => {
-                if (data) {
-                  supabaseAdmin
-                    .from("coupons")
-                    .update({ used_count: (data.used_count || 0) + 1 })
-                    .eq("id", couponId);
-                }
-              });
-          });
+              .update({ used_count: (coupon.used_count || 0) + 1 })
+              .eq("id", couponId);
+          }
         } catch (e) {
           console.warn("[ShopAPI] Failed to increment coupon usage:", e);
         }
