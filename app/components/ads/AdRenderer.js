@@ -1,7 +1,6 @@
 "use client";
 
 import AdSlot from "./AdSlot";
-import EzoicAd from "./EzoicAd";
 
 /**
  * AdRenderer Component
@@ -17,12 +16,11 @@ export default function AdRenderer({ content, placeholder }) {
     return placeholder || null;
   }
 
-  // Check if content is a numeric value (Ezoic placeholder ID)
+  // Check if content is a numeric value (formerly Ezoic placeholder ID)
   const isNumeric = /^\d+$/.test(trimmed);
 
   if (isNumeric) {
-    const ezoicId = parseInt(trimmed, 10);
-    return <EzoicAd id={ezoicId} />;
+    return placeholder || null;
   }
 
   // Otherwise, fallback to raw HTML AdSlot

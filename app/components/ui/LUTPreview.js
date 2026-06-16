@@ -28,14 +28,19 @@ export default function LUTPreview({
   const [isResizing, setIsResizing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [hasLoadError, setHasLoadError] = useState(false);
+
+  useEffect(() => {
+    setHasLoadError(false);
+  }, [referenceImageUrl, thumbnailUrl]);
   
   const hasCustomImage = !!(referenceImageUrl || thumbnailUrl);
 
   const samples = useMemo(() => {
     const list = [];
     
-    // 1. If there is a custom preview image uploaded for this resource, always include it first
-    if (hasCustomImage) {
+    // 1. If there is a custom preview image uploaded for this resource, always include it first (if it hasn't failed to load)
+    if (hasCustomImage && !hasLoadError) {
       list.push({
         id: 'custom',
         name: 'Custom Preview',
@@ -373,7 +378,12 @@ export default function LUTPreview({
           }}
           onError={() => {
             setOriginalLoaded(true);
-            setError("Failed to load preview image");
+            if (activeSample?.isCustom) {
+              console.warn("Custom preview image failed to load, falling back to default samples.");
+              setHasLoadError(true);
+            } else {
+              setError("Failed to load preview image");
+            }
           }}
         />
 
@@ -398,7 +408,12 @@ export default function LUTPreview({
             onLoad={() => setGradedLoaded(true)}
             onError={() => {
               setGradedLoaded(true);
-              console.warn("Failed to load graded preview image");
+              if (activeSample?.isCustom) {
+                console.warn("Custom graded image failed to load, falling back to default samples.");
+                setHasLoadError(true);
+              } else {
+                console.warn("Failed to load graded preview image");
+              }
             }}
           />
         )}

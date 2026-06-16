@@ -27,6 +27,20 @@ function Footer() {
   const initialResources = footerCategories.slice(0, 4);
   const moreResources = footerCategories.length > 4 ? footerCategories.slice(4) : [];
 
+  // Logic to split company links if more than 4
+  const companyLinks = [
+    { label: "About Us", href: "/about-us" },
+    { label: "Contact", href: "/contact" },
+    { label: "Pricing", href: "/pricing" },
+    { label: "Q&A", href: "/faq" },
+    { label: "Terms of Service", href: "/terms", target: "_blank", rel: "noopener noreferrer" },
+    { label: "Privacy Policy", href: "/privacy", target: "_blank", rel: "noopener noreferrer" },
+    { label: "Shop", href: "/shop" },
+    { label: "Blog", href: "/v1/blog" },
+  ];
+  const initialCompany = companyLinks.slice(0, 4);
+  const moreCompany = companyLinks.length > 4 ? companyLinks.slice(4) : [];
+
   return (
     <footer className={styles.footer} id="main-footer">
       <div className={styles.mainContent}>
@@ -93,22 +107,30 @@ function Footer() {
             <div className={styles.linkCol}>
               <h4 className={styles.colTitle}>Company</h4>
               <ul className={styles.linkList}>
-                <li><Link href="/about-us" className={styles.footerLink}>About Us</Link></li>
-                <li><Link href="/contact" className={styles.footerLink}>Contact</Link></li>
-                <li><Link href="/pricing" className={styles.footerLink}>Pricing</Link></li>
-                <li><Link href="/faq" className={styles.footerLink}>Q&A</Link></li>
-                <li>
-                  <Link href="/terms" className={styles.footerLink} target="_blank" rel="noopener noreferrer">
-                    Terms of Service
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/privacy" className={styles.footerLink} target="_blank" rel="noopener noreferrer">
-                    Privacy Policy
-                  </Link>
-                </li>
+                {initialCompany.map((link, idx) => (
+                  <li key={idx}>
+                    <Link href={link.href} className={styles.footerLink} target={link.target} rel={link.rel}>
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
+
+            {moreCompany.length > 0 && (
+              <div className={styles.linkCol}>
+                <h4 className={styles.colTitle}>Legal</h4>
+                <ul className={styles.linkList}>
+                  {moreCompany.map((link, idx) => (
+                    <li key={idx}>
+                      <Link href={link.href} className={styles.footerLink} target={link.target} rel={link.rel}>
+                        {link.label}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         </div>
       </div>

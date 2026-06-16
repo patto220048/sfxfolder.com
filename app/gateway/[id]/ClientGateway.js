@@ -16,7 +16,7 @@ function formatSize(bytes) {
 }
 
 export default function ClientGateway({ resource }) {
-  const [countdown, setCountdown] = useState(5);
+  const [countdown, setCountdown] = useState(8);
   const [status, setStatus] = useState("waiting"); // waiting | downloading | done | error
   const [errorMessage, setErrorMessage] = useState("");
   const { session } = useAuth();
@@ -27,8 +27,9 @@ export default function ClientGateway({ resource }) {
     setStatus("downloading");
     setErrorMessage("");
 
-    // Trigger Popunder Smartlink in new tab if configured
-    if (ads.gateway_popup_link && ads.gateway_popup_link.trim() !== '') {
+    // Trigger Popunder Smartlink in new tab if configured and enabled
+    const gatewayPopupEnabled = ads.gateway_popup_enabled !== false;
+    if (gatewayPopupEnabled && ads.gateway_popup_link && ads.gateway_popup_link.trim() !== '') {
       try {
         window.open(ads.gateway_popup_link.trim(), "_blank");
       } catch (e) {
@@ -74,26 +75,33 @@ export default function ClientGateway({ resource }) {
     }
   }, [countdown]);
 
+  const gatewayLeftEnabled = ads.gateway_left_enabled !== false;
+  const gatewayRightEnabled = ads.gateway_right_enabled !== false;
+  const gatewayMiddleEnabled = ads.gateway_middle_enabled !== false;
+  const categoryStickyEnabled = ads.category_sticky_enabled !== false;
+
   const displayName = (resource.name || resource.file_name || "Untitled").replace(/\.[^/.]+$/, "");
 
   return (
     <>
-      <div className={styles.container}>
+      <div className={styles.container} style={!categoryStickyEnabled ? { paddingBottom: "40px" } : {}}>
         <div className={styles.mainWrapper}>
           {/* Left Ad */}
-          {ads.gateway_left && ads.gateway_left.trim() !== '' ? (
-            <div className={styles.sideAdContainer}>
-              <AdRenderer content={ads.gateway_left} />
-            </div>
-          ) : (
-            <div className={styles.sideAdPlaceholder}>
-              Advertisement<br />(160x600)
-            </div>
+          {gatewayLeftEnabled && (
+            ads.gateway_left && ads.gateway_left.trim() !== '' ? (
+              <div className={styles.sideAdContainer}>
+                <AdRenderer content={ads.gateway_left} />
+              </div>
+            ) : (
+              <div className={styles.sideAdPlaceholder}>
+                Advertisement<br />(160x600)
+              </div>
+            )
           )}
 
           <div className={styles.content}>
             <h1 className={styles.title}>Preparing your download...</h1>
-            <p className={styles.subtitle}>Please wait 5 seconds to download. This helps us prevent bot scraping.</p>
+            <p className={styles.subtitle}>Please wait 8 seconds to download. This helps us prevent bot scraping.</p>
 
             <div className={styles.countdownCircle}>
               {countdown > 0 ? countdown : (status === "done" ? <Check size={48} /> : "0")}
@@ -107,14 +115,16 @@ export default function ClientGateway({ resource }) {
             </div>
 
             {/* Middle Ad inside container */}
-            {ads.gateway_middle && ads.gateway_middle.trim() !== '' ? (
-              <div className={styles.middleAd}>
-                <AdRenderer content={ads.gateway_middle} />
-              </div>
-            ) : (
-              <div className={styles.middleAdPlaceholder}>
-                Advertisement<br />(300x250)
-              </div>
+            {gatewayMiddleEnabled && (
+              ads.gateway_middle && ads.gateway_middle.trim() !== '' ? (
+                <div className={styles.middleAd}>
+                  <AdRenderer content={ads.gateway_middle} />
+                </div>
+              ) : (
+                <div className={styles.middleAdPlaceholder}>
+                  Advertisement<br />(300x250)
+                </div>
+              )
             )}
 
             {status === "waiting" && countdown > 0 && (
@@ -159,30 +169,34 @@ export default function ClientGateway({ resource }) {
           </div>
 
           {/* Right Ad */}
-          {ads.gateway_right && ads.gateway_right.trim() !== '' ? (
-            <div className={styles.sideAdContainer}>
-              <AdRenderer content={ads.gateway_right} />
-            </div>
-          ) : (
-            <div className={styles.sideAdPlaceholder}>
-              Advertisement<br />(160x600)
-            </div>
+          {gatewayRightEnabled && (
+            ads.gateway_right && ads.gateway_right.trim() !== '' ? (
+              <div className={styles.sideAdContainer}>
+                <AdRenderer content={ads.gateway_right} />
+              </div>
+            ) : (
+              <div className={styles.sideAdPlaceholder}>
+                Advertisement<br />(160x600)
+              </div>
+            )
           )}
         </div>
       </div>
 
       {/* Sticky Bottom Ad */}
-      <div className={styles.bottomAd}>
-        {ads.category_sticky && ads.category_sticky.trim() !== '' ? (
-          <div className={styles.adWrapper}>
-            <AdRenderer content={ads.category_sticky} />
-          </div>
-        ) : (
-          <div className={styles.adPlaceholder}>
-            Advertisement - Placeholder (728x90 or 320x50)
-          </div>
-        )}
-      </div>
+      {categoryStickyEnabled && (
+        <div className={styles.bottomAd}>
+          {ads.category_sticky && ads.category_sticky.trim() !== '' ? (
+            <div className={styles.adWrapper}>
+              <AdRenderer content={ads.category_sticky} />
+            </div>
+          ) : (
+            <div className={styles.adPlaceholder}>
+              Advertisement - Placeholder (728x90 or 320x50)
+            </div>
+          )}
+        </div>
+      )}
     </>
   );
 }

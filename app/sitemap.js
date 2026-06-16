@@ -1,4 +1,5 @@
 import { getCategories, getResources, getAllBlogPostSlugs } from '@/app/lib/api';
+import { supabaseAdmin } from '@/app/lib/supabase-admin';
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || 'https://sfxfolder.com';
 
@@ -16,6 +17,12 @@ export default async function sitemap() {
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.7,
+    },
+    {
+      url: `${SITE_URL}/shop`,
+      lastModified: new Date(),
+      changeFrequency: 'weekly',
+      priority: 0.8,
     },
     {
       url: `${SITE_URL}/pricing`,
@@ -65,6 +72,7 @@ export default async function sitemap() {
   let categoryPages = [];
   let resourcePages = [];
   let blogPages = [];
+  let shopPages = [];
 
   try {
     const categories = await getCategories();
@@ -115,10 +123,29 @@ export default async function sitemap() {
     } catch (e) {
       console.error('Sitemap: Error fetching blog posts:', e.message);
     }
+
+    // 5. Fetch published sound packs for shop
+    try {
+      const { data: packs } = await supabaseAdmin
+        .from('sound_packs')
+        .select('slug, updated_at')
+        .eq('status', 'published');
+
+      if (packs) {
+        shopPages = packs.map((pack) => ({
+          url: `${SITE_URL}/shop/${pack.slug}`,
+          lastModified: pack.updated_at ? new Date(pack.updated_at) : new Date(),
+          changeFrequency: 'weekly',
+          priority: 0.7,
+        }));
+      }
+    } catch (e) {
+      console.error('Sitemap: Error fetching sound packs:', e.message);
+    }
   } catch (e) {
     console.error('Sitemap: Error fetching categories:', e.message);
   }
 
-  return [...staticPages, ...categoryPages, ...resourcePages, ...blogPages];
+  return [...staticPages, ...categoryPages, ...resourcePages, ...blogPages, ...shopPages];
 }
 

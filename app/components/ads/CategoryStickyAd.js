@@ -12,6 +12,7 @@ export default function CategoryStickyAd() {
   const { settings } = useSiteData();
   const { isPremium } = useAuth();
   const adHtml = settings?.ads_config?.category_sticky;
+  const categoryStickyEnabled = settings?.ads_config?.category_sticky_enabled !== false;
 
   const [countdown, setCountdown] = useState(5);
   const [isVisible, setIsVisible] = useState(true);
@@ -25,8 +26,8 @@ export default function CategoryStickyAd() {
     }
   }, [countdown]);
 
-  // Don't show in plugin or if premium
-  if (!isVisible || isPlugin || isPremium) return null;
+  // Don't show in plugin, if premium, or if disabled
+  if (!isVisible || isPlugin || isPremium || !categoryStickyEnabled) return null;
 
   return (
     <div className={styles.adContainer}>

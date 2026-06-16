@@ -1,0 +1,210 @@
+.container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: var(--space-16) var(--space-6) var(--space-20);
+}
+
+.title {
+  font-family: var(--font-heading);
+  font-size: 2.25rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--space-2) 0;
+  color: var(--text-primary);
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-10);
+}
+
+/* Premium Banner */
+.premiumBanner {
+  background: rgba(250, 203, 17, 0.05);
+  border: 1px solid var(--premium-gold);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: var(--space-10);
+  flex-wrap: wrap;
+}
+
+.premiumText {
+  color: var(--premium-gold);
+  font-weight: 700;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.shopLink {
+  background: var(--premium-gold);
+  color: #000;
+  border: 1px solid var(--premium-gold);
+  padding: 8px 16px;
+  font-size: 0.8rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  border-radius: 0;
+}
+
+.shopLink:hover {
+  background: transparent;
+  color: var(--premium-gold);
+}
+
+/* Loader */
+.loadingArea {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 5rem 2rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  gap: 1rem;
+  color: var(--text-secondary);
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
+  color: var(--text-primary);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Grid */
+.grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-6);
+}
+
+@media (min-width: 640px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Purchase Card */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  align-items: center;
+  position: relative;
+  border-radius: 0;
+}
+
+.coverThumb {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: #000;
+  flex-shrink: 0;
+}
+
+.coverPlaceholder {
+  width: 80px;
+  height: 80px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.cardDetails {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0; /* allows text truncation */
+}
+
+.packName {
+  font-family: var(--font-heading);
+  font-size: 1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.date {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.downloadBtn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  padding: 8px;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.downloadBtn:hover {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border-color: var(--text-primary);
+}
+
+/* Empty State */
+.emptyState {
+  text-align: center;
+  padding: 5rem 2rem;
+  border: 1px dashed var(--border-default);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.emptyText {
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.emptyBtn {
+  background: var(--text-primary);
+  color: var(--bg-primary);
+  border: 1px solid var(--text-primary);
+  padding: 10px 24px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.8rem;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  border-radius: 0;
+}
+
+.emptyBtn:hover {
+  background: transparent;
+  color: var(--text-primary);
+}
