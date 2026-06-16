@@ -307,45 +307,49 @@ export default function EditPackPage({ params: paramsPromise }) {
         zip.file(zipFileName, fileData);
       }
 
-      // 3. Add LICENSE.txt to ZIP
+      // 3. Add LICENSE.txt to ZIP (in English)
       const licenseText = `===================================================================
-                      SFXFOLDER.COM - GIẤY PHÉP SỬ DỤNG
+                      SFXFOLDER.COM - LICENSE AGREEMENT
 ===================================================================
 
-Cảm ơn bạn đã sở hữu gói sản phẩm từ SFXFolder.com.
+Thank you for acquiring a sound pack from SFXFolder.com.
 
-Giấy phép bản quyền này cho phép người sở hữu (cá nhân hoặc tổ chức)
-sử dụng các file âm thanh trong gói sản phẩm này cho các mục đích:
-1. Video Youtube, TikTok, Facebook, Instagram và các nền tảng mạng xã hội khác.
-2. Dự án phim điện ảnh, phim ngắn, phim truyền hình, quảng cáo thương mại.
-3. Trò chơi điện tử (Game), ứng dụng di động (App) và phần mềm.
-4. Livestream, podcast và các sản phẩm truyền thông kỹ thuật số khác.
+This license grants the owner (individual or organization)
+the right to use the audio files contained in this pack for:
+1. Youtube, TikTok, Facebook, Instagram videos and other social media platforms.
+2. Feature films, short films, television, and commercial advertisements.
+3. Video games, mobile applications, and software.
+4. Livestreams, podcasts, and other digital media productions.
 
-GIỚI HẠN SỬ DỤNG:
-- Bạn không được phép bán lại, phân phối lại hoặc chia sẻ miễn phí
-  các file âm thanh gốc dưới mọi hình thức (như một thư viện âm thanh
-  hoặc gói độc lập).
-- Bạn không được phép đăng ký bản quyền (Content ID, Copyright) các file
-  âm thanh này như là tác phẩm âm nhạc gốc của riêng bạn.
+LIMITATIONS OF USE:
+- You are not allowed to resell, redistribute, or share for free
+  the original audio files in any form (such as a standalone sound
+  library or bundle).
+- You are not allowed to register copyright/Content ID for these audio
+  files as your own original musical work.
 
-Mọi thắc mắc vui lòng liên hệ: support@sfxfolder.com`;
+For any inquiries, please contact: support@sfxfolder.com`;
 
       zip.file("LICENSE.txt", licenseText);
 
-      // 4. Add README.txt to ZIP
+      // 4. Add README.txt to ZIP (in English)
       const fileListText = items.map((item, idx) => `${idx + 1}. ${item.file_name}`).join("\n");
       let readmeText = `===================================================================
-                  SFXFOLDER.COM - THÔNG TIN GÓI SẢN PHẨM
+                  SFXFOLDER.COM - SOUND PACK DETAILS
 ===================================================================
 
-Tên gói: ${formData.name || "Sound Pack"}
-Tổng số file: ${items.length} files
-Định dạng: WAV / MP3
-Trang web hỗ trợ: https://sfxfolder.com
-Email liên hệ: support@sfxfolder.com
+Thank you for purchasing this sound pack! We truly appreciate your 
+support. We hope these sound effects help elevate your creative 
+projects and make your editing process smoother and more fun.
+
+Pack Name: ${formData.name || "Sound Pack"}
+Total Items: ${items.length} files
+Format: WAV / MP3
+Support Website: https://sfxfolder.com
+Contact Email: support@sfxfolder.com
 
 -------------------------------------------------------------------
-DANH SÁCH FILE CÓ TRONG GÓI:
+FILE LIST IN BUNDLE:
 -------------------------------------------------------------------
 ${fileListText}`;
 
@@ -353,7 +357,7 @@ ${fileListText}`;
         readmeText += `
 
 -------------------------------------------------------------------
-HƯỚNG DẪN ĐẶC BIỆT & GHI CHÚ TỪ ADMIN:
+SPECIAL INSTRUCTIONS & NOTES FROM ADMIN:
 -------------------------------------------------------------------
 ${formData.custom_readme.trim()}`;
       }
@@ -1295,81 +1299,144 @@ ${formData.custom_readme.trim()}`;
         )}
 
         {activeTab === "zip" && (
-          <div className={styles.zipInfo}>
-            <div className={styles.inputGroupFull} style={{ marginBottom: "1rem" }}>
-              <label>Ghi chú bổ sung cho README.txt (Tùy chọn)</label>
-              <textarea
-                value={formData.custom_readme || ""}
-                rows={6}
-                placeholder="Nhập hướng dẫn sử dụng, ghi chú đặc biệt cho gói sound effects này..."
-                onChange={(e) => setFormData({ ...formData, custom_readme: e.target.value })}
-              />
+          <div className={styles.zipInfo} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+            {/* Custom Notes Section */}
+            <div style={{
+              background: "var(--bg-surface)",
+              border: "1px solid var(--border-default)",
+              padding: "1.5rem",
+              display: "flex",
+              flexDirection: "column",
+              gap: "0.75rem"
+            }}>
+              <h3 style={{ margin: 0, fontSize: "0.9rem", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-primary)" }}>
+                Documentation Files Configuration (README.txt & LICENSE.txt)
+              </h3>
+              <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--text-muted)", lineHeight: 1.4 }}>
+                When bundling the pack, the system automatically inserts standard English <strong>LICENSE.txt</strong> and <strong>README.txt</strong> files.
+                Use the textarea below to add any custom guidelines or tips (these will be appended to the bottom of the README file).
+              </p>
+              <div className={styles.inputGroupFull} style={{ marginTop: "0.5rem" }}>
+                <textarea
+                  value={formData.custom_readme || ""}
+                  rows={4}
+                  placeholder="e.g. For Premiere Pro editors, we recommend dragging these sound files directly into your timeline and setting track volume to -6dB..."
+                  onChange={(e) => setFormData({ ...formData, custom_readme: e.target.value })}
+                  style={{ width: "100%", padding: "0.75rem", fontSize: "0.8rem" }}
+                />
+              </div>
             </div>
 
-            {formData.zip_storage_path ? (
-              <div className={styles.zipCard}>
-                <FileArchive size={32} className={styles.zipIcon} />
-                <div className={styles.zipDetails}>
-                  <span className={styles.zipPath}>{formData.zip_storage_path}</span>
-                  <span className={styles.zipSize}>
-                    Total pack items size: {getZipSize()}
+            {/* ZIP Package Bundle Status */}
+            <div style={{
+              background: "var(--bg-surface)",
+              border: "1px solid var(--border-default)",
+              padding: "1.5rem",
+              display: "flex",
+              flexDirection: "column",
+              gap: "1rem"
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <h3 style={{ margin: 0, fontSize: "0.9rem", fontWeight: "bold", textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--text-primary)" }}>
+                  ZIP Package Bundle
+                </h3>
+                {formData.zip_storage_path ? (
+                  <span style={{
+                    fontSize: "0.65rem",
+                    fontWeight: "bold",
+                    color: "#10b981",
+                    background: "rgba(16, 185, 129, 0.1)",
+                    border: "1px solid rgba(16, 185, 129, 0.3)",
+                    padding: "3px 10px",
+                    borderRadius: "2px",
+                    textTransform: "uppercase"
+                  }}>
+                    Linked / Active
                   </span>
+                ) : (
+                  <span style={{
+                    fontSize: "0.65rem",
+                    fontWeight: "bold",
+                    color: "#f59e0b",
+                    background: "rgba(245, 158, 11, 0.1)",
+                    border: "1px solid rgba(245, 158, 11, 0.3)",
+                    padding: "3px 10px",
+                    borderRadius: "2px",
+                    textTransform: "uppercase"
+                  }}>
+                    No File Linked
+                  </span>
+                )}
+              </div>
+
+              {formData.zip_storage_path ? (
+                <div className={styles.zipCard} style={{ margin: 0, border: "1px solid rgba(16, 185, 129, 0.3)", background: "rgba(16, 185, 129, 0.02)", padding: "1.25rem" }}>
+                  <FileArchive size={32} className={styles.zipIcon} />
+                  <div className={styles.zipDetails}>
+                    <span className={styles.zipPath}>{formData.zip_storage_path}</span>
+                    <span className={styles.zipSize}>
+                      Total items: {items.length} | Size: {getZipSize()}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setFormData({ ...formData, zip_storage_path: "" })}
+                    className={styles.removeZipBtn}
+                  >
+                    Remove Link
+                  </button>
                 </div>
+              ) : (
+                <div className={styles.noZip} style={{ border: "1px dashed rgba(245, 158, 11, 0.3)", background: "rgba(245, 158, 11, 0.01)", padding: "2.5rem 2rem", textAlign: "center", color: "var(--text-muted)" }}>
+                  No ZIP file is linked to this product. Users won&apos;t be able to download this pack upon purchasing.
+                </div>
+              )}
+
+              <div className={styles.zipActions} style={{ display: "flex", gap: "0.75rem", borderTop: "1px solid var(--border-default)", paddingTop: "1.25rem", marginTop: "0.5rem" }}>
                 <button
                   type="button"
-                  onClick={() => setFormData({ ...formData, zip_storage_path: "" })}
-                  className={styles.removeZipBtn}
+                  className={styles.generateZipBtn}
+                  onClick={handleGenerateZip}
+                  disabled={generatingZip || uploadingZip || items.length === 0}
+                  style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.6rem 1.5rem" }}
                 >
-                  Remove
+                  {generatingZip ? (
+                    <Loader2 className="animate-spin" size={14} />
+                  ) : (
+                    <FileArchive size={14} />
+                  )}
+                  <span>{generatingZip ? "Generating..." : "Auto-Generate ZIP Bundle"}</span>
                 </button>
+
+                <button
+                  type="button"
+                  className={styles.uploadBtn}
+                  onClick={() => document.getElementById("zipInput").click()}
+                  disabled={uploadingZip || generatingZip}
+                  style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.6rem 1.5rem" }}
+                >
+                  {uploadingZip ? (
+                    <Loader2 className="animate-spin" size={14} />
+                  ) : (
+                    <FileArchive size={14} />
+                  )}
+                  <span>{uploadingZip ? "Uploading..." : "Upload ZIP Manually"}</span>
+                </button>
+
+                <input
+                  type="file"
+                  id="zipInput"
+                  accept=".zip"
+                  className={styles.hiddenInput}
+                  onChange={handleZipUpload}
+                />
               </div>
-            ) : (
-              <div className={styles.noZip}>
-                No ZIP package linked to this pack. Please upload a ZIP archive for user downloads.
-              </div>
-            )}
-
-            <div className={styles.zipActions}>
-              <button
-                type="button"
-                className={styles.uploadBtn}
-                onClick={() => document.getElementById("zipInput").click()}
-                disabled={uploadingZip || generatingZip}
-              >
-                {uploadingZip ? (
-                  <Loader2 className="animate-spin" size={14} />
-                ) : (
-                  <FileArchive size={14} />
-                )}
-                <span>{uploadingZip ? "Uploading ZIP..." : "Upload ZIP Archive"}</span>
-              </button>
-
-              <button
-                type="button"
-                className={styles.generateZipBtn}
-                onClick={handleGenerateZip}
-                disabled={generatingZip || uploadingZip || items.length === 0}
-              >
-                {generatingZip ? (
-                  <Loader2 className="animate-spin" size={14} />
-                ) : (
-                  <FileArchive size={14} />
-                )}
-                <span>{generatingZip ? "Generating..." : "Generate ZIP from Pack Items"}</span>
-              </button>
-
-              <input
-                type="file"
-                id="zipInput"
-                accept=".zip"
-                className={styles.hiddenInput}
-                onChange={handleZipUpload}
-              />
             </div>
 
             {generatingZip && zipProgress && (
-              <div className={styles.zipProgressContainer}>
-                Status: <span className={styles.zipProgressText}>{zipProgress}</span>
+              <div className={styles.zipProgressContainer} style={{ background: "var(--bg-surface)", border: "1px solid var(--border-default)", padding: "1rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                <Loader2 className="animate-spin" size={16} style={{ color: "var(--premium-gold)" }} />
+                <span style={{ fontSize: "0.8rem", color: "var(--text-primary)" }}>{zipProgress}</span>
               </div>
             )}
           </div>
