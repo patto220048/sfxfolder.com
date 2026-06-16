@@ -32,6 +32,19 @@ export default function ShopClient({ initialPacks }) {
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [purchasedPackIds, setPurchasedPackIds] = useState([]);
 
+  // Client-side fallback: if server returned empty (ISR cache miss), fetch via API
+  const { data: clientPacks } = useSWR(
+    initialPacks.length === 0 ? "shop_packs_fallback" : null,
+    async () => {
+      const res = await fetch("/api/shop/packs?limit=50");
+      if (!res.ok) return [];
+      const { packs } = await res.json();
+      return packs || [];
+    }
+  );
+
+  const packs = initialPacks.length > 0 ? initialPacks : (clientPacks || []);
+
   // Fetch categories
   const { data: categories = [] } = useSWR("shop_categories", async () => {
     const { data } = await supabase
@@ -62,7 +75,7 @@ export default function ShopClient({ initialPacks }) {
   }, [user]);
 
   // Client side filtering & sorting
-  const filteredPacks = initialPacks
+  const filteredPacks = packs
     .filter((pack) => {
       // 1. Search term match
       const matchesSearch =
