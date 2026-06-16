@@ -16,6 +16,8 @@ import {
   Upload,
   Folder,
   FolderOpen,
+  ChevronRight,
+  ChevronDown,
 } from "lucide-react";
 import { supabase } from "@/app/lib/supabase";
 import toast from "react-hot-toast";
@@ -73,6 +75,7 @@ export default function EditPackPage({ params: paramsPromise }) {
   const [loadingResources, setLoadingResources] = useState(false);
   const [libraryFolders, setLibraryFolders] = useState([]);
   const [loadingFolders, setLoadingFolders] = useState(false);
+  const [collapsedFolders, setCollapsedFolders] = useState({});
 
   // File upload states
   const [uploadingCover, setUploadingCover] = useState(false);
@@ -590,6 +593,61 @@ export default function EditPackPage({ params: paramsPromise }) {
     }
   };
 
+  const getGroupedItems = () => {
+    const groups = {
+      root: []
+    };
+
+    items.forEach((item, originalIndex) => {
+      const parts = item.file_name.split("/");
+      if (parts.length > 1) {
+        const folderName = parts[0];
+        const displayFileName = parts.slice(1).join("/");
+        if (!groups[folderName]) {
+          groups[folderName] = [];
+        }
+        groups[folderName].push({
+          ...item,
+          originalIndex,
+          displayFileName
+        });
+      } else {
+        groups.root.push({
+          ...item,
+          originalIndex,
+          displayFileName: item.file_name
+        });
+      }
+    });
+
+    return groups;
+  };
+
+  const toggleFolderCollapse = (folderName) => {
+    setCollapsedFolders((prev) => ({
+      ...prev,
+      [folderName]: !prev[folderName]
+    }));
+  };
+
+  const removeFolderFromPack = (folderName, folderItems) => {
+    if (window.confirm(`Are you sure you want to remove all items in folder "${folderName}"?`)) {
+      const indicesToRemove = new Set(folderItems.map((item) => item.originalIndex));
+      setItems((prev) => prev.filter((_, idx) => !indicesToRemove.has(idx)));
+      toast.success(`Removed folder "${folderName}" from pack`);
+    }
+  };
+
+  const toggleFolderPreviewable = (folderName, folderItems, value) => {
+    const indicesToUpdate = new Set(folderItems.map((item) => item.originalIndex));
+    setItems((prev) =>
+      prev.map((item, idx) =>
+        indicesToUpdate.has(idx) ? { ...item, is_previewable: value } : item
+      )
+    );
+    toast.success(`Updated preview settings for folder "${folderName}" items`);
+  };
+
   // Save changes
   const handleSave = async (e) => {
     e.preventDefault();
@@ -1004,32 +1062,134 @@ export default function EditPackPage({ params: paramsPromise }) {
                   This pack contains no items. Click &ldquo;Add from Library&rdquo; to add items.
                 </div>
               ) : (
-                items.map((item, idx) => (
-                  <div key={idx} className={styles.itemRow}>
-                    <span className={styles.itemFileName}>{item.file_name}</span>
-                    <div className={styles.itemMeta}>
-                      <span>{item.file_format?.toUpperCase()}</span>
-                      <span>
-                        {item.file_size ? `${(item.file_size / 1024 / 1024).toFixed(2)} MB` : "0 MB"}
-                      </span>
-                      <label className={styles.previewToggle}>
-                        <input
-                          type="checkbox"
-                          checked={item.is_previewable}
-                          onChange={(e) => togglePreviewable(idx, e.target.checked)}
-                        />
-                        <span>Previewable</span>
-                      </label>
-                      <button
-                        type="button"
-                        onClick={() => removePackItem(idx)}
-                        className={styles.removeItemBtn}
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-                ))
+                (() => {
+                  const grouped = getGroupedItems();
+                  const folderNames = Object.keys(grouped).filter((k) => k !== "root");
+                  
+                  return (
+                    <>
+                      {/* Render Folders */}
+                      {folderNames.map((folderName) => {
+                        const folderItems = grouped[folderName];
+                        const isCollapsed = !!collapsedFolders[folderName];
+                        const allPreviewable = folderItems.every((item) => item.is_previewable);
+                        
+                        return (
+                          <div key={folderName} className={styles.folderGroup}>
+                            {/* Folder Header */}
+                            <div className={styles.folderGroupHeader}>
+                              <button
+                                type="button"
+                                className={styles.collapseToggleBtn}
+                                onClick={() => toggleFolderCollapse(folderName)}
+                              >
+                                {isCollapsed ? (
+                                  <ChevronRight size={16} />
+                                ) : (
+                                  <ChevronDown size={16} />
+                                )}
+                              </button>
+                              
+                              <div className={styles.folderHeaderInfo} onClick={() => toggleFolderCollapse(folderName)}>
+                                <Folder size={16} className={styles.folderIcon} style={{ color: "var(--premium-gold)" }} />
+                                <span className={styles.folderHeaderName}>{folderName}</span>
+                                <span className={styles.folderItemCount}>({folderItems.length} items)</span>
+                              </div>
+
+                              <div className={styles.folderHeaderMeta}>
+                                <label className={styles.previewToggle}>
+                                  <input
+                                    type="checkbox"
+                                    checked={allPreviewable}
+                                    onChange={(e) => toggleFolderPreviewable(folderName, folderItems, e.target.checked)}
+                                  />
+                                  <span>All Previewable</span>
+                                </label>
+                                <button
+                                  type="button"
+                                  onClick={() => removeFolderFromPack(folderName, folderItems)}
+                                  className={styles.removeItemBtn}
+                                  title="Remove entire folder"
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Folder Items */}
+                            {!isCollapsed && (
+                              <div className={styles.folderGroupContent}>
+                                {folderItems.map((item) => (
+                                  <div key={item.originalIndex} className={`${styles.itemRow} ${styles.itemRowNested}`}>
+                                    <span className={styles.itemFileName}>{item.displayFileName}</span>
+                                    <div className={styles.itemMeta}>
+                                      <span>{item.file_format?.toUpperCase()}</span>
+                                      <span>
+                                        {item.file_size ? `${(item.file_size / 1024 / 1024).toFixed(2)} MB` : "0 MB"}
+                                      </span>
+                                      <label className={styles.previewToggle}>
+                                        <input
+                                          type="checkbox"
+                                          checked={item.is_previewable}
+                                          onChange={(e) => togglePreviewable(item.originalIndex, e.target.checked)}
+                                        />
+                                        <span>Previewable</span>
+                                      </label>
+                                      <button
+                                        type="button"
+                                        onClick={() => removePackItem(item.originalIndex)}
+                                        className={styles.removeItemBtn}
+                                      >
+                                        <Trash2 size={14} />
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+
+                      {/* Render Root (Uncategorized) Items */}
+                      {grouped.root.length > 0 && (
+                        <div className={styles.rootItemsGroup}>
+                          {folderNames.length > 0 && (
+                            <div className={styles.rootItemsTitle}>
+                              Uncategorized / Direct Uploads
+                            </div>
+                          )}
+                          {grouped.root.map((item) => (
+                            <div key={item.originalIndex} className={styles.itemRow}>
+                              <span className={styles.itemFileName}>{item.displayFileName}</span>
+                              <div className={styles.itemMeta}>
+                                <span>{item.file_format?.toUpperCase()}</span>
+                                <span>
+                                  {item.file_size ? `${(item.file_size / 1024 / 1024).toFixed(2)} MB` : "0 MB"}
+                                </span>
+                                <label className={styles.previewToggle}>
+                                  <input
+                                    type="checkbox"
+                                    checked={item.is_previewable}
+                                    onChange={(e) => togglePreviewable(item.originalIndex, e.target.checked)}
+                                  />
+                                  <span>Previewable</span>
+                                </label>
+                                <button
+                                  type="button"
+                                  onClick={() => removePackItem(item.originalIndex)}
+                                  className={styles.removeItemBtn}
+                                >
+                                  <Trash2 size={14} />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  );
+                })()
               )}
             </div>
           </div>

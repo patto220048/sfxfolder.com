@@ -842,3 +842,96 @@
   color: #ff4d4d !important;
 }
 
+.folderGroup {
+  border: 1px solid var(--border-default);
+  margin-bottom: 1rem;
+  background: var(--bg-surface);
+}
+
+.folderGroupHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.collapseToggleBtn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  transition: color var(--transition-base);
+}
+
+.collapseToggleBtn:hover {
+  color: var(--text-primary);
+}
+
+.folderHeaderInfo {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.folderHeaderName {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--premium-gold, #cca43b);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.folderItemCount {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.folderHeaderMeta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.folderGroupContent {
+  background: rgba(0, 0, 0, 0.15);
+  border-top: none;
+}
+
+.itemRowNested {
+  border: none !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important;
+  padding-left: 2.5rem !important;
+  background: transparent !important;
+}
+
+.itemRowNested:last-child {
+  border-bottom: none !important;
+}
+
+.rootItemsGroup {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.rootItemsTitle {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+  padding-bottom: 4px;
+  border-bottom: 1px dashed var(--border-default);
+}
+
+
