@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/app/lib/supabase-admin";
 import { getServerUser } from "@/app/lib/supabase-server";
 
@@ -81,6 +82,11 @@ export async function POST(req) {
         throw itemsErr;
       }
     }
+
+    if (pack?.slug) {
+      revalidatePath(`/shop/${pack.slug}`);
+    }
+    revalidatePath("/shop");
 
     return NextResponse.json({ success: true, id: packId });
   } catch (err) {

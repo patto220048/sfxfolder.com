@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/app/lib/supabase-admin";
 import { getServerUser } from "@/app/lib/supabase-server";
 
@@ -110,6 +111,11 @@ export async function PUT(req, { params: paramsPromise }) {
       if (updateErr) throw updateErr;
     }
 
+    if (pack?.slug) {
+      revalidatePath(`/shop/${pack.slug}`);
+    }
+    revalidatePath("/shop");
+
     return NextResponse.json({ success: true });
   } catch (err) {
     console.error("[Admin Shop PUT] Error:", err);
@@ -129,12 +135,24 @@ export async function DELETE(req, { params: paramsPromise }) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
     }
 
+    // Fetch the pack's slug before deleting it so we can invalidate its page cache
+    const { data: packToDelete } = await supabaseAdmin
+      .from("sound_packs")
+      .select("slug")
+      .eq("id", id)
+      .single();
+
     const { error: deleteErr } = await supabaseAdmin
       .from("sound_packs")
       .delete()
       .eq("id", id);
 
     if (deleteErr) throw deleteErr;
+
+    if (packToDelete?.slug) {
+      revalidatePath(`/shop/${packToDelete.slug}`);
+    }
+    revalidatePath("/shop");
 
     return NextResponse.json({ success: true });
   } catch (err) {
