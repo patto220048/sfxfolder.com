@@ -152,3 +152,94 @@
 .closePlayerBtn:hover {
   color: var(--text-primary);
 }
+
+/* Folder Grouping Styles */
+.folderGroup {
+  border-bottom: 1px solid var(--border-default);
+  background: var(--bg-card);
+}
+
+.folderGroup:last-child {
+  border-bottom: none;
+}
+
+.folderGroupHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 20px;
+  background: rgba(255, 255, 255, 0.01);
+  border-bottom: 1px solid var(--border-default);
+}
+
+.collapseToggleBtn {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  transition: color var(--transition-fast);
+}
+
+.collapseToggleBtn:hover {
+  color: var(--text-primary);
+}
+
+.folderHeaderInfo {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.folderHeaderName {
+  font-weight: 700;
+  font-size: 0.85rem;
+  color: var(--premium-gold, #FACB11);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.folderIcon {
+  flex-shrink: 0;
+}
+
+.folderItemCount {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.folderGroupContent {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.itemRowNested {
+  padding-left: 48px !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.02) !important;
+}
+
+.itemRowNested:last-child {
+  border-bottom: none !important;
+}
+
+.rootItemsGroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.rootItemsTitle {
+  padding: 10px 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+  background: rgba(255, 255, 255, 0.02);
+  border-bottom: 1px solid var(--border-default);
+}
+
