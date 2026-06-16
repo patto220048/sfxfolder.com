@@ -651,3 +651,46 @@
   gap: 1rem;
   color: var(--text-muted);
 }
+
+.generateZipBtn {
+  background: var(--premium-gold, #cca43b);
+  border: 1px solid var(--premium-gold, #cca43b);
+  color: black;
+  padding: 0.5rem 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.7rem;
+  transition: all var(--transition-base);
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.generateZipBtn:hover {
+  background: transparent;
+  color: var(--premium-gold, #cca43b);
+}
+
+.generateZipBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  background: var(--bg-surface);
+  border-color: var(--border-default);
+  color: var(--text-muted);
+}
+
+.zipProgressContainer {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.zipProgressText {
+  color: var(--premium-gold);
+  font-weight: bold;
+}

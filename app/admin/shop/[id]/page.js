@@ -73,6 +73,10 @@ export default function EditPackPage({ params: paramsPromise }) {
   const [uploadingCover, setUploadingCover] = useState(false);
   const [uploadingZip, setUploadingZip] = useState(false);
 
+  // ZIP generation states
+  const [generatingZip, setGeneratingZip] = useState(false);
+  const [zipProgress, setZipProgress] = useState("");
+
   // Load categories & pack data
   useEffect(() => {
     async function init() {
@@ -215,6 +219,78 @@ export default function EditPackPage({ params: paramsPromise }) {
       toast.error("ZIP upload failed: " + err.message);
     } finally {
       setUploadingZip(false);
+    }
+  };
+
+  // Generate ZIP package from pack items on the client-side
+  const handleGenerateZip = async () => {
+    if (items.length === 0) {
+      toast.error("No items in the list to zip. Please add items first.");
+      return;
+    }
+
+    setGeneratingZip(true);
+    setZipProgress("Initializing ZIP generation...");
+
+    try {
+      // 1. Dynamically import JSZip to keep build bundle lightweight
+      const JSZip = (await import("jszip")).default;
+      const zip = new JSZip();
+
+      // 2. Fetch each file from Supabase storage and add to ZIP
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        setZipProgress(`Downloading ${i + 1}/${items.length}: ${item.file_name}...`);
+
+        if (!item.storage_path) {
+          throw new Error(`Item ${item.file_name} has no storage path.`);
+        }
+
+        // Authenticated download from Supabase storage directly to client memory
+        const { data: fileData, error: downloadError } = await supabase.storage
+          .from("site-assets")
+          .download(item.storage_path);
+
+        if (downloadError) {
+          throw new Error(`Failed to download ${item.file_name}: ${downloadError.message}`);
+        }
+
+        // Determine correct file name inside zip (ensure correct extension if missing)
+        let zipFileName = item.file_name;
+        const ext = item.file_format ? `.${item.file_format.toLowerCase()}` : "";
+        if (ext && !zipFileName.toLowerCase().endsWith(ext)) {
+          zipFileName = `${zipFileName}${ext}`;
+        }
+
+        zip.file(zipFileName, fileData);
+      }
+
+      setZipProgress("Compressing files into ZIP bundle...");
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+
+      setZipProgress("Uploading ZIP package to Storage...");
+      const slug = formData.slug || `pack-${Date.now()}`;
+      const zipFileName = `${slug}-${Date.now()}.zip`;
+      const zipFilePath = `pack-zips/${zipFileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("site-assets")
+        .upload(zipFilePath, zipBlob, {
+          contentType: "application/zip",
+          cacheControl: "3600",
+          upsert: true,
+        });
+
+      if (uploadError) throw uploadError;
+
+      setFormData((prev) => ({ ...prev, zip_storage_path: zipFilePath }));
+      toast.success("ZIP bundle generated and linked successfully!");
+    } catch (err) {
+      console.error("ZIP Generation failed:", err);
+      toast.error("ZIP Generation failed: " + err.message);
+    } finally {
+      setGeneratingZip(false);
+      setZipProgress("");
     }
   };
 
@@ -782,7 +858,7 @@ export default function EditPackPage({ params: paramsPromise }) {
                 type="button"
                 className={styles.uploadBtn}
                 onClick={() => document.getElementById("zipInput").click()}
-                disabled={uploadingZip}
+                disabled={uploadingZip || generatingZip}
               >
                 {uploadingZip ? (
                   <Loader2 className="animate-spin" size={14} />
@@ -791,6 +867,21 @@ export default function EditPackPage({ params: paramsPromise }) {
                 )}
                 <span>{uploadingZip ? "Uploading ZIP..." : "Upload ZIP Archive"}</span>
               </button>
+
+              <button
+                type="button"
+                className={styles.generateZipBtn}
+                onClick={handleGenerateZip}
+                disabled={generatingZip || uploadingZip || items.length === 0}
+              >
+                {generatingZip ? (
+                  <Loader2 className="animate-spin" size={14} />
+                ) : (
+                  <FileArchive size={14} />
+                )}
+                <span>{generatingZip ? "Generating..." : "Generate ZIP from Pack Items"}</span>
+              </button>
+
               <input
                 type="file"
                 id="zipInput"
@@ -799,6 +890,12 @@ export default function EditPackPage({ params: paramsPromise }) {
                 onChange={handleZipUpload}
               />
             </div>
+
+            {generatingZip && zipProgress && (
+              <div className={styles.zipProgressContainer}>
+                Status: <span className={styles.zipProgressText}>{zipProgress}</span>
+              </div>
+            )}
           </div>
         )}
       </div>
