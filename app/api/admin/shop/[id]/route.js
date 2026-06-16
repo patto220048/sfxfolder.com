@@ -65,11 +65,10 @@ export async function PUT(req, { params: paramsPromise }) {
 
     if (fetchErr) throw fetchErr;
 
-    const dbResourceIds = dbItems ? dbItems.map((di) => di.resource_id).filter(Boolean) : [];
-    const localResourceIds = items.map((li) => li.resource_id).filter(Boolean);
+    const localItemIds = items.map((li) => li.id).filter(Boolean);
 
-    // 2a. Delete items that were removed
-    const toDelete = dbItems?.filter((di) => di.resource_id && !localResourceIds.includes(di.resource_id)) || [];
+    // 2a. Delete items that were removed (both library items and custom uploads)
+    const toDelete = dbItems?.filter((di) => !localItemIds.includes(di.id)) || [];
     if (toDelete.length > 0) {
       const { error: deleteErr } = await supabaseAdmin
         .from("sound_pack_items")
