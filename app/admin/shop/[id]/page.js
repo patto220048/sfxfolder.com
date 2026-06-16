@@ -247,12 +247,44 @@ export default function EditPackPage({ params: paramsPromise }) {
         }
 
         // Authenticated download from Supabase storage directly to client memory
-        const { data: fileData, error: downloadError } = await supabase.storage
-          .from("site-assets")
-          .download(item.storage_path);
+        // Library items are in 'resources' bucket, custom pack-uploaded items are in 'site-assets'
+        let bucket = item.resource_id ? "resources" : "site-assets";
+        let fileData = null;
+        let downloadError = null;
+
+        try {
+          const { data, error } = await supabase.storage
+            .from(bucket)
+            .download(item.storage_path);
+          
+          if (error) {
+            downloadError = error;
+          } else {
+            fileData = data;
+          }
+        } catch (e) {
+          downloadError = e;
+        }
+
+        // Fallback: if download failed, try the other bucket
+        if (downloadError) {
+          const fallbackBucket = bucket === "resources" ? "site-assets" : "resources";
+          try {
+            const { data, error } = await supabase.storage
+              .from(fallbackBucket)
+              .download(item.storage_path);
+            
+            if (!error && data) {
+              fileData = data;
+              downloadError = null;
+            }
+          } catch (e) {
+            // keep the original error
+          }
+        }
 
         if (downloadError) {
-          throw new Error(`Failed to download ${item.file_name}: ${downloadError.message}`);
+          throw new Error(`Failed to download ${item.file_name} from storage: ${downloadError.message || downloadError}`);
         }
 
         // Determine correct file name inside zip (ensure correct extension if missing)
