@@ -62,6 +62,7 @@ export default function EditPackPage({ params: paramsPromise }) {
     zip_storage_path: "",
     mock_average_rating: 0.0,
     mock_review_count: 0,
+    custom_readme: "",
   });
 
   // Pack items & categories
@@ -129,6 +130,7 @@ export default function EditPackPage({ params: paramsPromise }) {
               zip_storage_path: pack.zip_storage_path || "",
               mock_average_rating: pack.mock_average_rating || 0.0,
               mock_review_count: pack.mock_review_count || 0,
+              custom_readme: pack.custom_readme || "",
             });
 
             // Fetch pack items
@@ -304,6 +306,64 @@ export default function EditPackPage({ params: paramsPromise }) {
 
         zip.file(zipFileName, fileData);
       }
+
+      // 3. Add LICENSE.txt to ZIP
+      const licenseText = `===================================================================
+                      SFXFOLDER.COM - GIẤY PHÉP SỬ DỤNG
+===================================================================
+
+Cảm ơn bạn đã sở hữu gói sản phẩm từ SFXFolder.com.
+
+Giấy phép bản quyền này cho phép người sở hữu (cá nhân hoặc tổ chức)
+sử dụng các file âm thanh trong gói sản phẩm này cho các mục đích:
+1. Video Youtube, TikTok, Facebook, Instagram và các nền tảng mạng xã hội khác.
+2. Dự án phim điện ảnh, phim ngắn, phim truyền hình, quảng cáo thương mại.
+3. Trò chơi điện tử (Game), ứng dụng di động (App) và phần mềm.
+4. Livestream, podcast và các sản phẩm truyền thông kỹ thuật số khác.
+
+GIỚI HẠN SỬ DỤNG:
+- Bạn không được phép bán lại, phân phối lại hoặc chia sẻ miễn phí
+  các file âm thanh gốc dưới mọi hình thức (như một thư viện âm thanh
+  hoặc gói độc lập).
+- Bạn không được phép đăng ký bản quyền (Content ID, Copyright) các file
+  âm thanh này như là tác phẩm âm nhạc gốc của riêng bạn.
+
+Mọi thắc mắc vui lòng liên hệ: support@sfxfolder.com`;
+
+      zip.file("LICENSE.txt", licenseText);
+
+      // 4. Add README.txt to ZIP
+      const fileListText = items.map((item, idx) => `${idx + 1}. ${item.file_name}`).join("\n");
+      let readmeText = `===================================================================
+                  SFXFOLDER.COM - THÔNG TIN GÓI SẢN PHẨM
+===================================================================
+
+Tên gói: ${formData.name || "Sound Pack"}
+Tổng số file: ${items.length} files
+Định dạng: WAV / MP3
+Trang web hỗ trợ: https://sfxfolder.com
+Email liên hệ: support@sfxfolder.com
+
+-------------------------------------------------------------------
+DANH SÁCH FILE CÓ TRONG GÓI:
+-------------------------------------------------------------------
+${fileListText}`;
+
+      if (formData.custom_readme && formData.custom_readme.trim()) {
+        readmeText += `
+
+-------------------------------------------------------------------
+HƯỚNG DẪN ĐẶC BIỆT & GHI CHÚ TỪ ADMIN:
+-------------------------------------------------------------------
+${formData.custom_readme.trim()}`;
+      }
+
+      readmeText += `
+
+-------------------------------------------------------------------
+===================================================================`;
+
+      zip.file("README.txt", readmeText);
 
       setZipProgress("Compressing files into ZIP bundle...");
       const zipBlob = await zip.generateAsync({ type: "blob" });
@@ -717,6 +777,7 @@ export default function EditPackPage({ params: paramsPromise }) {
         zip_storage_path: formData.zip_storage_path,
         mock_average_rating: parseFloat(formData.mock_average_rating) || 0.0,
         mock_review_count: parseInt(formData.mock_review_count) || 0,
+        custom_readme: formData.custom_readme || null,
       };
 
       const apiBody = {
@@ -1235,6 +1296,16 @@ export default function EditPackPage({ params: paramsPromise }) {
 
         {activeTab === "zip" && (
           <div className={styles.zipInfo}>
+            <div className={styles.inputGroupFull} style={{ marginBottom: "1rem" }}>
+              <label>Ghi chú bổ sung cho README.txt (Tùy chọn)</label>
+              <textarea
+                value={formData.custom_readme || ""}
+                rows={6}
+                placeholder="Nhập hướng dẫn sử dụng, ghi chú đặc biệt cho gói sound effects này..."
+                onChange={(e) => setFormData({ ...formData, custom_readme: e.target.value })}
+              />
+            </div>
+
             {formData.zip_storage_path ? (
               <div className={styles.zipCard}>
                 <FileArchive size={32} className={styles.zipIcon} />
