@@ -573,6 +573,23 @@ export default function EditPackPage({ params: paramsPromise }) {
     });
   };
 
+  const enableAllPreviewable = () => {
+    setItems((prev) => prev.map((item) => ({ ...item, is_previewable: true })));
+    toast.success("Enabled preview for all items");
+  };
+
+  const disableAllPreviewable = () => {
+    setItems((prev) => prev.map((item) => ({ ...item, is_previewable: false })));
+    toast.success("Disabled preview for all items");
+  };
+
+  const removeAllItems = () => {
+    if (window.confirm("Are you sure you want to remove all items from this pack?")) {
+      setItems([]);
+      toast.success("Removed all items from the list");
+    }
+  };
+
   // Save changes
   const handleSave = async (e) => {
     e.preventDefault();
@@ -951,6 +968,35 @@ export default function EditPackPage({ params: paramsPromise }) {
                 onChange={handleItemUpload}
               />
             </div>
+
+            {items.length > 0 && (
+              <div className={styles.bulkActionsBar}>
+                <span className={styles.bulkActionsLabel}>Bulk Actions ({items.length} items):</span>
+                <div className={styles.bulkActionsButtons}>
+                  <button
+                    type="button"
+                    className={styles.bulkBtn}
+                    onClick={enableAllPreviewable}
+                  >
+                    Enable Preview for All
+                  </button>
+                  <button
+                    type="button"
+                    className={styles.bulkBtn}
+                    onClick={disableAllPreviewable}
+                  >
+                    Disable Preview for All
+                  </button>
+                  <button
+                    type="button"
+                    className={`${styles.bulkBtn} ${styles.bulkBtnDanger}`}
+                    onClick={removeAllItems}
+                  >
+                    Remove All Items
+                  </button>
+                </div>
+              </div>
+            )}
 
             <div className={styles.itemsList}>
               {items.length === 0 ? (

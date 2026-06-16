@@ -786,3 +786,59 @@
   color: black;
 }
 
+.bulkActionsBar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border-default);
+  margin-bottom: 1rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.bulkActionsLabel {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.bulkActionsButtons {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.bulkBtn {
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  padding: 4px 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.bulkBtn:hover {
+  border-color: var(--text-primary);
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.bulkBtnDanger {
+  color: #ff4d4d;
+  border-color: rgba(255, 77, 77, 0.3);
+}
+
+.bulkBtnDanger:hover {
+  background: rgba(255, 77, 77, 0.1) !important;
+  border-color: #ff4d4d !important;
+  color: #ff4d4d !important;
+}
+
