@@ -694,3 +694,95 @@
   color: var(--premium-gold);
   font-weight: bold;
 }
+
+/* Resource Picker Tabs & Folders */
+.pickerTabs {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.pickerTab {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  transition: all var(--transition-base);
+  border-bottom: 2px solid transparent;
+}
+
+.pickerTab:hover {
+  color: var(--text-primary);
+}
+
+.pickerTabActive {
+  color: var(--premium-gold, #cca43b) !important;
+  border-bottom-color: var(--premium-gold, #cca43b) !important;
+}
+
+.pickerFolderItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-default);
+  border-bottom: none;
+  background: var(--bg-surface);
+  transition: background var(--transition-fast);
+}
+
+.pickerFolderItem:last-child {
+  border-bottom: 1px solid var(--border-default);
+}
+
+.pickerFolderItem:hover {
+  background: var(--bg-hover);
+}
+
+.folderInfo {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.folderName {
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+}
+
+.folderCategory {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 2px 6px;
+  border: 1px solid var(--border-default);
+  color: var(--text-muted);
+  border-radius: 2px;
+}
+
+.addFolderBtn {
+  background: transparent;
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  padding: 4px 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-base);
+  text-transform: uppercase;
+}
+
+.addFolderBtn:hover {
+  background: var(--premium-gold, #cca43b);
+  border-color: var(--premium-gold, #cca43b);
+  color: black;
+}
+

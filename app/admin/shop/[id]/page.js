@@ -14,6 +14,8 @@ import {
   X,
   Check,
   Upload,
+  Folder,
+  FolderOpen,
 } from "lucide-react";
 import { supabase } from "@/app/lib/supabase";
 import toast from "react-hot-toast";
@@ -65,9 +67,12 @@ export default function EditPackPage({ params: paramsPromise }) {
   
   // Library picker states
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerTab, setPickerTab] = useState("files"); // "files" | "folders"
   const [searchQuery, setSearchQuery] = useState("");
   const [libraryResources, setLibraryResources] = useState([]);
   const [loadingResources, setLoadingResources] = useState(false);
+  const [libraryFolders, setLibraryFolders] = useState([]);
+  const [loadingFolders, setLoadingFolders] = useState(false);
 
   // File upload states
   const [uploadingCover, setUploadingCover] = useState(false);
@@ -401,12 +406,136 @@ export default function EditPackPage({ params: paramsPromise }) {
     }
   };
 
+  // Fetch library folders
+  const fetchLibraryFolders = async () => {
+    setLoadingFolders(true);
+    try {
+      let query = supabase
+        .from("folders")
+        .select("id, name, parent_id, category_id")
+        .order("name", { ascending: true });
+
+      if (searchQuery.trim()) {
+        query = query.ilike("name", `%${searchQuery}%`);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      setLibraryFolders(data || []);
+    } catch (err) {
+      toast.error("Failed to fetch folders: " + err.message);
+    } finally {
+      setLoadingFolders(false);
+    }
+  };
+
+  // Add all resources of a folder to the pack
+  const addFolderToPack = async (folderId, folderName) => {
+    const toastId = toast.loading(`Adding resources from folder "${folderName}"...`);
+    try {
+      const { data: resources, error } = await supabase
+        .from("resources")
+        .select("id, name, file_format, file_size, storage_path, preview_url")
+        .eq("folder_id", folderId)
+        .is("is_published", true);
+
+      if (error) throw error;
+
+      if (!resources || resources.length === 0) {
+        toast.error(`No published resources found in folder "${folderName}"`, { id: toastId });
+        return;
+      }
+
+      // Filter out resources already in items
+      const existingResourceIds = new Set(items.map((item) => item.resource_id).filter(Boolean));
+      const newResources = resources.filter((res) => !existingResourceIds.has(res.id));
+
+      if (newResources.length === 0) {
+        toast.error("All resources from this folder are already added to the pack", { id: toastId });
+        return;
+      }
+
+      const newItems = newResources.map((res, index) => {
+        let cleanName = res.name;
+        const ext = res.file_format ? `.${res.file_format.toLowerCase()}` : "";
+        if (ext && !cleanName.toLowerCase().endsWith(ext)) {
+          cleanName = `${cleanName}${ext}`;
+        }
+        
+        return {
+          pack_id: id,
+          resource_id: res.id,
+          file_name: `${folderName}/${cleanName}`,
+          file_format: res.file_format,
+          file_size: res.file_size || 0,
+          storage_path: res.storage_path,
+          preview_url: res.preview_url,
+          is_previewable: !!res.preview_url,
+          sort_order: items.length + index,
+        };
+      });
+
+      setItems((prev) => [...prev, ...newItems]);
+      toast.success(`Successfully added ${newItems.length} resources from folder "${folderName}"`, { id: toastId });
+    } catch (err) {
+      toast.error(`Failed to add folder: ${err.message}`, { id: toastId });
+    }
+  };
+
+  const getCategoryName = (catSlug) => {
+    const cat = categories.find((c) => c.slug === catSlug);
+    return cat ? cat.name : catSlug;
+  };
+
+  const buildFolderHierarchy = (foldersList) => {
+    const tree = [];
+    const map = {};
+
+    foldersList.forEach((f) => {
+      map[f.id] = { ...f, children: [] };
+    });
+
+    foldersList.forEach((f) => {
+      if (f.parent_id && map[f.parent_id]) {
+        map[f.parent_id].children.push(map[f.id]);
+      } else {
+        tree.push(map[f.id]);
+      }
+    });
+
+    const sortTree = (nodes) => {
+      nodes.sort((a, b) => a.name.localeCompare(b.name));
+      nodes.forEach((n) => {
+        if (n.children.length > 0) {
+          sortTree(n.children);
+        }
+      });
+    };
+    sortTree(tree);
+
+    const flatList = [];
+    const flatten = (nodes, level = 0) => {
+      nodes.forEach((node) => {
+        flatList.push({ ...node, level });
+        if (node.children.length > 0) {
+          flatten(node.children, level + 1);
+        }
+      });
+    };
+    flatten(tree);
+    return flatList;
+  };
+
   // Fetch initial picker resources when opened
   useEffect(() => {
     if (pickerOpen) {
-      searchResources();
+      if (pickerTab === "files") {
+        searchResources();
+      } else {
+        fetchLibraryFolders();
+      }
     }
-  }, [pickerOpen]);
+  }, [pickerOpen, pickerTab]);
 
   // Add resource from library picker to pack items
   const addResourceToPack = (resource) => {
@@ -943,45 +1072,113 @@ export default function EditPackPage({ params: paramsPromise }) {
               </button>
             </div>
 
+            <div className={styles.pickerTabs}>
+              <button
+                type="button"
+                className={`${styles.pickerTab} ${pickerTab === "files" ? styles.pickerTabActive : ""}`}
+                onClick={() => {
+                  setPickerTab("files");
+                  setSearchQuery("");
+                }}
+              >
+                Single Files
+              </button>
+              <button
+                type="button"
+                className={`${styles.pickerTab} ${pickerTab === "folders" ? styles.pickerTabActive : ""}`}
+                onClick={() => {
+                  setPickerTab("folders");
+                  setSearchQuery("");
+                }}
+              >
+                Entire Folders
+              </button>
+            </div>
+
             <div className={styles.pickerSearch}>
               <Search size={16} className={styles.searchIcon} />
               <input
                 type="text"
-                placeholder="Search resources by name..."
+                placeholder={pickerTab === "files" ? "Search resources by name..." : "Search folders by name..."}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && searchResources()}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    if (pickerTab === "files") {
+                      searchResources();
+                    } else {
+                      fetchLibraryFolders();
+                    }
+                  }
+                }}
               />
             </div>
 
             <div className={styles.pickerList}>
-              {loadingResources ? (
-                <div className={styles.pickerLoading}>
-                  <Loader2 className="animate-spin" size={24} />
-                </div>
-              ) : libraryResources.length === 0 ? (
-                <div className={styles.pickerEmpty}>No resources found.</div>
-              ) : (
-                libraryResources.map((res) => {
-                  const isAdded = items.some((item) => item.resource_id === res.id);
-                  return (
-                    <div
-                      key={res.id}
-                      className={`${styles.pickerItem} ${isAdded ? styles.pickerItemAdded : ""}`}
-                      onClick={() => !isAdded && addResourceToPack(res)}
-                    >
-                      <span className={styles.pickerItemName}>{res.name}</span>
-                      <div className={styles.pickerItemMeta}>
-                        <span>{res.file_format?.toUpperCase()}</span>
-                        {isAdded && (
-                          <span style={{ marginLeft: "10px", color: "var(--premium-gold)", fontWeight: 700 }}>
-                            <Check size={14} style={{ display: "inline", verticalAlign: "middle" }} /> Added
-                          </span>
-                        )}
+              {pickerTab === "files" ? (
+                loadingResources ? (
+                  <div className={styles.pickerLoading}>
+                    <Loader2 className="animate-spin" size={24} />
+                  </div>
+                ) : libraryResources.length === 0 ? (
+                  <div className={styles.pickerEmpty}>No resources found.</div>
+                ) : (
+                  libraryResources.map((res) => {
+                    const isAdded = items.some((item) => item.resource_id === res.id);
+                    return (
+                      <div
+                        key={res.id}
+                        className={`${styles.pickerItem} ${isAdded ? styles.pickerItemAdded : ""}`}
+                        onClick={() => !isAdded && addResourceToPack(res)}
+                      >
+                        <span className={styles.pickerItemName}>{res.name}</span>
+                        <div className={styles.pickerItemMeta}>
+                          <span>{res.file_format?.toUpperCase()}</span>
+                          {isAdded && (
+                            <span style={{ marginLeft: "10px", color: "var(--premium-gold)", fontWeight: 700 }}>
+                              <Check size={14} style={{ display: "inline", verticalAlign: "middle" }} /> Added
+                            </span>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })
+                    );
+                  })
+                )
+              ) : (
+                loadingFolders ? (
+                  <div className={styles.pickerLoading}>
+                    <Loader2 className="animate-spin" size={24} />
+                  </div>
+                ) : libraryFolders.length === 0 ? (
+                  <div className={styles.pickerEmpty}>No folders found.</div>
+                ) : (
+                  buildFolderHierarchy(libraryFolders).map((folder) => {
+                    return (
+                      <div
+                        key={folder.id}
+                        className={styles.pickerFolderItem}
+                        style={{ paddingLeft: `${16 + folder.level * 20}px` }}
+                      >
+                        <div className={styles.folderInfo}>
+                          <Folder size={16} className={styles.folderIcon} style={{ color: "var(--premium-gold)", flexShrink: 0 }} />
+                          <span className={styles.folderName}>{folder.name}</span>
+                          {!folder.parent_id && folder.category_id && (
+                            <span className={styles.folderCategory}>
+                              {getCategoryName(folder.category_id)}
+                            </span>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          className={styles.addFolderBtn}
+                          onClick={() => addFolderToPack(folder.id, folder.name)}
+                        >
+                          Add Folder
+                        </button>
+                      </div>
+                    );
+                  })
+                )
               )}
             </div>
 
