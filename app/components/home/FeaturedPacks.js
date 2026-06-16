@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import PackCard from "@/app/shop/components/PackCard";
-import styles from "./page.module.css";
+import styles from "@/app/page.module.css";
 
 export default function FeaturedPacks() {
   const [packs, setPacks] = useState([]);
