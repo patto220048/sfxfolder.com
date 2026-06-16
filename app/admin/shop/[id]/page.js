@@ -22,6 +22,7 @@ import {
 import { supabase } from "@/app/lib/supabase";
 import toast from "react-hot-toast";
 import styles from "./page.module.css";
+import JSZip from "jszip";
 
 const slugify = (text) => {
   if (!text) return "";
@@ -241,8 +242,7 @@ export default function EditPackPage({ params: paramsPromise }) {
     setZipProgress("Initializing ZIP generation...");
 
     try {
-      // 1. Dynamically import JSZip to keep build bundle lightweight
-      const JSZip = (await import("jszip")).default;
+      // Use statically imported JSZip
       const zip = new JSZip();
 
       // 2. Fetch each file from Supabase storage and add to ZIP
