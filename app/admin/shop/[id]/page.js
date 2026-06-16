@@ -638,12 +638,13 @@ export default function EditPackPage({ params: paramsPromise }) {
     items.forEach((item, originalIndex) => {
       const parts = item.file_name.split("/");
       if (parts.length > 1) {
-        const folderName = parts[0];
-        const displayFileName = parts.slice(1).join("/");
-        if (!groups[folderName]) {
-          groups[folderName] = [];
+        // Group by the full folder path (excluding the filename part)
+        const folderPath = parts.slice(0, -1).join("/");
+        const displayFileName = parts[parts.length - 1];
+        if (!groups[folderPath]) {
+          groups[folderPath] = [];
         }
-        groups[folderName].push({
+        groups[folderPath].push({
           ...item,
           originalIndex,
           displayFileName
