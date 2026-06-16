@@ -6,6 +6,47 @@ import { revalidateSettings } from "@/app/lib/actions";
 import { uploadFile } from "@/app/lib/storage";
 import { useToast } from "@/app/context/ToastContext";
 
+function ToggleSwitch({ name, checked, onChange }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "var(--space-2)", userSelect: "none" }}>
+      <label style={{ position: "relative", display: "inline-block", width: "42px", height: "22px", cursor: "pointer" }}>
+        <input
+          type="checkbox"
+          name={name}
+          checked={!!checked}
+          onChange={(e) => onChange(name, e.target.checked)}
+          style={{ opacity: 0, width: 0, height: 0, position: "absolute" }}
+        />
+        <span style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: checked ? "var(--neon-green, #00ff00)" : "#222",
+          transition: "0.2s",
+          borderRadius: "11px",
+          border: "1px solid var(--border-default)"
+        }} />
+        <span style={{
+          position: "absolute",
+          content: '""',
+          height: "14px",
+          width: "14px",
+          left: checked ? "24px" : "4px",
+          bottom: "3px",
+          backgroundColor: checked ? "black" : "var(--text-secondary)",
+          transition: "0.2s",
+          borderRadius: "50%"
+        }} />
+      </label>
+      <span style={{ fontSize: "0.7rem", textTransform: "uppercase", color: checked ? "var(--neon-green, #00ff00)" : "var(--text-secondary)", fontWeight: "bold" }}>
+        {checked ? "ON" : "OFF"}
+      </span>
+    </div>
+  );
+}
+
 export default function AdminSettings() {
   const [settings, setSettings] = useState({
     site_name: "",
@@ -16,13 +57,21 @@ export default function AdminSettings() {
     social_links: [],
     ads_config: {
       head_script: "",
+      head_script_enabled: true,
       category_sticky: "",
+      category_sticky_enabled: true,
       gateway_left: "",
+      gateway_left_enabled: true,
       gateway_right: "",
+      gateway_right_enabled: true,
       gateway_middle: "",
+      gateway_middle_enabled: true,
       home_left: "",
+      home_left_enabled: true,
       home_right: "",
-      gateway_popup_link: ""
+      home_right_enabled: true,
+      gateway_popup_link: "",
+      gateway_popup_enabled: true
     }
   });
   const [loading, setLoading] = useState(true);
@@ -39,13 +88,21 @@ export default function AdminSettings() {
             social_links: data.social_links || [],
             ads_config: {
               head_script: "",
+              head_script_enabled: true,
               category_sticky: "",
+              category_sticky_enabled: true,
               home_left: "",
+              home_left_enabled: true,
               home_right: "",
+              home_right_enabled: true,
               gateway_left: "",
+              gateway_left_enabled: true,
               gateway_right: "",
+              gateway_right_enabled: true,
               gateway_middle: "",
+              gateway_middle_enabled: true,
               gateway_popup_link: "",
+              gateway_popup_enabled: true,
               ...(data.ads_config || {})
             }
           });
@@ -84,6 +141,16 @@ export default function AdminSettings() {
       ads_config: {
         ...prev.ads_config,
         [name]: value
+      }
+    }));
+  };
+
+  const handleAdsToggleChange = (name, checked) => {
+    setSettings(prev => ({
+      ...prev,
+      ads_config: {
+        ...prev.ads_config,
+        [name]: checked
       }
     }));
   };
@@ -265,7 +332,10 @@ export default function AdminSettings() {
             display: "flex", flexDirection: "column", gap: "var(--space-6)"
           }}>
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-              <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Toàn trang (Head Script - Google Auto Ads, etc.)</label>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Toàn trang (Head Script - Google Auto Ads, etc.)</label>
+                <ToggleSwitch name="head_script_enabled" checked={settings.ads_config?.head_script_enabled} onChange={handleAdsToggleChange} />
+              </div>
               <textarea 
                 name="head_script" value={settings.ads_config?.head_script || ""} onChange={handleAdsChange}
                 placeholder="<script>...</script>" rows={3}
@@ -274,7 +344,10 @@ export default function AdminSettings() {
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-              <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Dưới cùng bám đuổi (Sticky Bottom - Category & Gateway)</label>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Dưới cùng bám đuổi (Sticky Bottom - Category & Gateway)</label>
+                <ToggleSwitch name="category_sticky_enabled" checked={settings.ads_config?.category_sticky_enabled} onChange={handleAdsToggleChange} />
+              </div>
               <textarea 
                 name="category_sticky" value={settings.ads_config?.category_sticky || ""} onChange={handleAdsChange}
                 placeholder="<script>...</script><ins>...</ins>" rows={3}
@@ -284,7 +357,10 @@ export default function AdminSettings() {
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-4)" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-                <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Trang Chủ - Cột Trái (160x600)</label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                  <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Trang Chủ - Cột Trái (160x600)</label>
+                  <ToggleSwitch name="home_left_enabled" checked={settings.ads_config?.home_left_enabled} onChange={handleAdsToggleChange} />
+                </div>
                 <textarea 
                   name="home_left" value={settings.ads_config?.home_left || ""} onChange={handleAdsChange}
                   placeholder="Mã quảng cáo dọc trái trang chủ..." rows={4}
@@ -292,7 +368,10 @@ export default function AdminSettings() {
                 />
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-                <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Trang Chủ - Cột Phải (160x600)</label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                  <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Trang Chủ - Cột Phải (160x600)</label>
+                  <ToggleSwitch name="home_right_enabled" checked={settings.ads_config?.home_right_enabled} onChange={handleAdsToggleChange} />
+                </div>
                 <textarea 
                   name="home_right" value={settings.ads_config?.home_right || ""} onChange={handleAdsChange}
                   placeholder="Mã quảng cáo dọc phải trang chủ..." rows={4}
@@ -303,7 +382,10 @@ export default function AdminSettings() {
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--space-4)" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-                <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Gateway - Cột Trái (160x600)</label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                  <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Gateway - Cột Trái (160x600)</label>
+                  <ToggleSwitch name="gateway_left_enabled" checked={settings.ads_config?.gateway_left_enabled} onChange={handleAdsToggleChange} />
+                </div>
                 <textarea 
                   name="gateway_left" value={settings.ads_config?.gateway_left || ""} onChange={handleAdsChange}
                   placeholder="Mã quảng cáo dọc trái gateway..." rows={4}
@@ -311,7 +393,10 @@ export default function AdminSettings() {
                 />
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-                <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Gateway - Cột Phải (160x600)</label>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                  <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Gateway - Cột Phải (160x600)</label>
+                  <ToggleSwitch name="gateway_right_enabled" checked={settings.ads_config?.gateway_right_enabled} onChange={handleAdsToggleChange} />
+                </div>
                 <textarea 
                   name="gateway_right" value={settings.ads_config?.gateway_right || ""} onChange={handleAdsChange}
                   placeholder="Mã quảng cáo dọc phải gateway..." rows={4}
@@ -321,7 +406,10 @@ export default function AdminSettings() {
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-              <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Gateway - Trong hộp tải (300x250 hoặc Banner linh hoạt)</label>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Gateway - Trong hộp tải (300x250 hoặc Banner linh hoạt)</label>
+                <ToggleSwitch name="gateway_middle_enabled" checked={settings.ads_config?.gateway_middle_enabled} onChange={handleAdsToggleChange} />
+              </div>
               <textarea 
                 name="gateway_middle" value={settings.ads_config?.gateway_middle || ""} onChange={handleAdsChange}
                 placeholder="Mã quảng cáo đặt trong khung tải (phù hợp quảng cáo 300x250, native banner)..." rows={3}
@@ -330,7 +418,10 @@ export default function AdminSettings() {
             </div>
 
             <div style={{ display: "flex", flexDirection: "column", gap: "var(--space-1)" }}>
-              <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Đường dẫn Popunder khi Click Download (Adsterra Smartlink / Direct Link)</label>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "4px" }}>
+                <label style={{ fontSize: "0.75rem", textTransform: "uppercase", color: "var(--text-secondary)" }}>Đường dẫn Popunder khi Click Download (Smartlink)</label>
+                <ToggleSwitch name="gateway_popup_enabled" checked={settings.ads_config?.gateway_popup_enabled} onChange={handleAdsToggleChange} />
+              </div>
               <input 
                 type="text" name="gateway_popup_link" value={settings.ads_config?.gateway_popup_link || ""} onChange={handleAdsChange}
                 placeholder="https://your-smartlink-url.com"

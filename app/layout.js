@@ -145,7 +145,8 @@ export default async function RootLayout({ children }) {
     getSiteSettings()
   ]);
 
-  const headScript = settings?.ads_config?.head_script || '';
+  const headScriptEnabled = settings?.ads_config?.head_script_enabled !== false;
+  const headScript = headScriptEnabled ? (settings?.ads_config?.head_script || '') : '';
   const parsedMetaAndLinkTags = parseMetaAndLinkTags(headScript);
 
   // JSON-LD: WebSite schema with SearchAction for sitelinks search box

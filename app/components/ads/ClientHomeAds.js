@@ -44,9 +44,12 @@ export default function ClientHomeAds({ side }) {
   };
   
   const adContent = side === 'left' ? adsConfig.home_left : adsConfig.home_right;
+  const homeLeftEnabled = adsConfig.home_left_enabled !== false;
+  const homeRightEnabled = adsConfig.home_right_enabled !== false;
+  const isSideEnabled = side === 'left' ? homeLeftEnabled : homeRightEnabled;
   const label = side === 'left' ? 'Trang Chủ - Trái (160x600)' : 'Trang Chủ - Phải (160x600)';
 
-  if (!isDesktop || !isVisible || isPremium) return null;
+  if (!isDesktop || !isVisible || isPremium || !isSideEnabled) return null;
 
   return (
     <div className={adContent ? styles.sideAdContainer : styles.sideAdPlaceholder}>

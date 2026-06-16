@@ -8,8 +8,9 @@ export default function ClientGlobalAds() {
   const { isPremium } = useAuth();
   const { settings } = useSiteData();
   const headScript = settings?.ads_config?.head_script;
+  const headScriptEnabled = settings?.ads_config?.head_script_enabled !== false;
 
-  if (isPremium || !headScript || headScript.trim() === '') return null;
+  if (!headScriptEnabled || isPremium || !headScript || headScript.trim() === '') return null;
 
   return (
     <div style={{ display: 'none' }}>
