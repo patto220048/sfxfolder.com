@@ -432,20 +432,33 @@ export default function EditPackPage({ params: paramsPromise }) {
     }
   };
 
-  // Add all resources of a folder to the pack
+  // Add all resources of a folder (including all subfolders recursively) to the pack
   const addFolderToPack = async (folderId, folderName) => {
     const toastId = toast.loading(`Adding resources from folder "${folderName}"...`);
     try {
+      // 1. Find all descendant folder IDs (including self) from in-memory libraryFolders
+      const descendantIds = [folderId];
+      const findChildren = (parentId) => {
+        libraryFolders.forEach((f) => {
+          if (f.parent_id === parentId) {
+            descendantIds.push(f.id);
+            findChildren(f.id);
+          }
+        });
+      };
+      findChildren(folderId);
+
+      // 2. Fetch all published resources under these folder IDs
       const { data: resources, error } = await supabase
         .from("resources")
-        .select("id, name, file_format, file_size, storage_path, preview_url")
-        .eq("folder_id", folderId)
+        .select("id, name, folder_id, file_format, file_size, storage_path, preview_url")
+        .in("folder_id", descendantIds)
         .is("is_published", true);
 
       if (error) throw error;
 
       if (!resources || resources.length === 0) {
-        toast.error(`No published resources found in folder "${folderName}"`, { id: toastId });
+        toast.error(`No published resources found in folder "${folderName}" (or its subfolders)`, { id: toastId });
         return;
       }
 
@@ -458,6 +471,27 @@ export default function EditPackPage({ params: paramsPromise }) {
         return;
       }
 
+      // 3. Build relative path from the selected folder down to the resource folder
+      const folderMap = {};
+      libraryFolders.forEach((f) => {
+        folderMap[f.id] = f;
+      });
+
+      const getRelativePath = (resFolderId) => {
+        const pathParts = [];
+        let currentId = resFolderId;
+        
+        while (currentId) {
+          const folder = folderMap[currentId];
+          if (!folder) break;
+          pathParts.unshift(folder.name);
+          if (currentId === folderId) break;
+          currentId = folder.parent_id;
+        }
+        
+        return pathParts.join("/");
+      };
+
       const newItems = newResources.map((res, index) => {
         let cleanName = res.name;
         const ext = res.file_format ? `.${res.file_format.toLowerCase()}` : "";
@@ -465,10 +499,13 @@ export default function EditPackPage({ params: paramsPromise }) {
           cleanName = `${cleanName}${ext}`;
         }
         
+        const relativeFolder = getRelativePath(res.folder_id);
+        const fileNameWithPath = relativeFolder ? `${relativeFolder}/${cleanName}` : cleanName;
+
         return {
           pack_id: id,
           resource_id: res.id,
-          file_name: `${folderName}/${cleanName}`,
+          file_name: fileNameWithPath,
           file_format: res.file_format,
           file_size: res.file_size || 0,
           storage_path: res.storage_path,
