@@ -36,6 +36,21 @@ export default function PackDetailClient({
   const [showSuccessState, setShowSuccessState] = useState(false);
 
   const [isProcessing, setIsProcessing] = useState(false);
+  const [viewCount, setViewCount] = useState(pack.view_count || 0);
+
+  useEffect(() => {
+    async function incrementView() {
+      try {
+        const { error } = await supabase.rpc("increment_pack_view_count", { p_pack_id: pack.id });
+        if (!error) {
+          setViewCount((prev) => prev + 1);
+        }
+      } catch (e) {
+        console.error("Failed to increment pack view count:", e);
+      }
+    }
+    incrementView();
+  }, [pack.id]);
 
   // Fetch user purchase status client-side to allow SSG/ISR static pre-rendering
   useEffect(() => {
@@ -403,9 +418,8 @@ export default function PackDetailClient({
             <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
               <Database size={14} /> {formattedSize}
             </span>
-            {pack.purchase_count > 0 && (
-              <span>• {pack.purchase_count} purchases</span>
-            )}
+            <span>• {pack.purchase_count || 0} purchases</span>
+            <span>• {viewCount} views</span>
           </div>
 
           {totalReviewsCount > 0 ? (

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Package, Check, Database, Star } from "lucide-react";
+import { Package, Check, Database, Star, Eye, Download } from "lucide-react";
 import styles from "./PackCard.module.css";
 
 export default function PackCard({ pack, isPurchased }) {
@@ -20,6 +20,8 @@ export default function PackCard({ pack, isPurchased }) {
     created_at,
     average_rating,
     review_count,
+    purchase_count,
+    view_count,
   } = pack;
 
   // Check if new (created less than 7 days ago)
@@ -99,12 +101,22 @@ export default function PackCard({ pack, isPurchased }) {
 
         <div className={styles.footer}>
           <div className={styles.meta}>
-            <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <span style={{ display: "flex", alignItems: "center", gap: "4px" }} title="Items">
               <Package size={12} /> {item_count || 0} items
             </span>
-            <span style={{ display: "flex", alignItems: "center", gap: "4px" }}>
+            <span style={{ display: "flex", alignItems: "center", gap: "4px" }} title="Size">
               <Database size={12} /> {formattedSize}
             </span>
+            {purchase_count > 0 && (
+              <span style={{ display: "flex", alignItems: "center", gap: "4px" }} title="Purchases">
+                <Download size={12} /> {purchase_count}
+              </span>
+            )}
+            {view_count > 9 && (
+              <span style={{ display: "flex", alignItems: "center", gap: "4px" }} title="Views">
+                <Eye size={12} /> {view_count}
+              </span>
+            )}
           </div>
 
           <div className={styles.priceContainer}>
