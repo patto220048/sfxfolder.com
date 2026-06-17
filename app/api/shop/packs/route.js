@@ -14,7 +14,7 @@ export async function GET(request) {
     let query = supabaseAdmin
       .from("sound_packs")
       .select(
-        "id, name, slug, description, short_description, price, original_price, category_id, tags, cover_image, item_count, total_size, purchase_count, created_at, updated_at",
+        "id, name, slug, description, short_description, price, original_price, category_id, tags, cover_image, item_count, total_size, purchase_count, created_at, updated_at, average_rating, review_count, view_count",
         { count: "exact" }
       )
       .eq("status", "published");
