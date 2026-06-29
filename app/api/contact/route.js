@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import { NextResponse } from 'next/server';
+import { supabaseAdmin } from '@/app/lib/supabase-admin';
 
 export async function POST(request) {
   // Initialize Resend inside the handler to prevent build-time errors if API key is missing
@@ -43,6 +44,17 @@ export async function POST(request) {
       );
     }
 
+    // Save to Supabase DB
+    const { error: dbError } = await supabaseAdmin.from('contact_messages').insert({
+      name,
+      email,
+      message,
+      status: 'pending',
+    });
+    if (dbError) {
+      console.error('Error saving contact message to DB:', dbError);
+    }
+
     // 4. Send Email
     if (!process.env.RESEND_API_KEY) {
       console.error('Missing RESEND_API_KEY environment variable');
@@ -76,3 +88,4 @@ export async function POST(request) {
     );
   }
 }
+
