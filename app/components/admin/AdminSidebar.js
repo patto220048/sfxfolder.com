@@ -3,13 +3,14 @@
 import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
-  LayoutDashboard, Upload, FolderTree, Tags, FileText, Settings, LogOut, ExternalLink, CreditCard, Users, Receipt, Wrench, ShoppingBag, Ticket
+  LayoutDashboard, Upload, FolderTree, Tags, FileText, Settings, LogOut, ExternalLink, CreditCard, Users, Receipt, Wrench, ShoppingBag, Ticket, Mail
 } from "lucide-react";
 import { useAuth } from "@/app/lib/auth-context";
 import styles from "./AdminSidebar.module.css";
 
 const menuItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/admin/dashboard" },
+  { icon: Mail, label: "Support Mail", href: "/admin/support" },
   { icon: Upload, label: "Resources", href: "/admin/resources" },
   { icon: FolderTree, label: "Categories", href: "/admin/categories" },
   { icon: Tags, label: "Tags", href: "/admin/tags" },
