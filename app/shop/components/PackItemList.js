@@ -4,22 +4,111 @@ import { useState, useRef, useEffect } from "react";
 import { Play, Pause, Lock, X, Loader2, Folder, ChevronRight, ChevronDown } from "lucide-react";
 import styles from "./PackItemList.module.css";
 
+// Helper functions for hierarchical tree structure
+const buildTree = (items) => {
+  const root = { name: "root", type: "folder", path: "", children: [] };
+
+  items.forEach((item) => {
+    const parts = (item.file_name || "").split("/");
+    let currentNode = root;
+
+    for (let i = 0; i < parts.length - 1; i++) {
+      const part = parts[i];
+      const currentPath = parts.slice(0, i + 1).join("/");
+      
+      let childNode = currentNode.children.find(
+        (child) => child.type === "folder" && child.name === part
+      );
+
+      if (!childNode) {
+        childNode = {
+          name: part,
+          type: "folder",
+          path: currentPath,
+          children: []
+        };
+        currentNode.children.push(childNode);
+      }
+      currentNode = childNode;
+    }
+
+    currentNode.children.push({
+      name: parts[parts.length - 1],
+      type: "file",
+      item: item
+    });
+  });
+
+  return root;
+};
+
+const sortTree = (node) => {
+  if (node.children) {
+    node.children.sort((a, b) => {
+      if (a.type !== b.type) {
+        return a.type === "folder" ? -1 : 1;
+      }
+      return a.name.localeCompare(b.name);
+    });
+    node.children.forEach(sortTree);
+  }
+};
+
+const countFiles = (node) => {
+  if (node.type === "file") return 1;
+  let count = 0;
+  node.children.forEach((child) => {
+    count += countFiles(child);
+  });
+  return count;
+};
+
+const getAllFolderPaths = (node, paths = []) => {
+  if (node.type === "folder" && node.path) {
+    paths.push(node.path);
+  }
+  if (node.children) {
+    node.children.forEach((child) => getAllFolderPaths(child, paths));
+  }
+  return paths;
+};
+
 export default function PackItemList({ items }) {
   const [playingId, setPlayingId] = useState(null);
   const [loadingId, setLoadingId] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [collapsedFolders, setCollapsedFolders] = useState({});
+  const [collapsedFolders, setCollapsedFolders] = useState(() => {
+    const tree = buildTree(items);
+    const paths = getAllFolderPaths(tree);
+    const initialState = {};
+    paths.forEach((path) => {
+      initialState[path] = true;
+    });
+    return initialState;
+  });
   const audioRef = useRef(null);
 
   // Stop audio when component unmounts
   useEffect(() => {
+    const currentAudio = audioRef.current;
     return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
+      if (currentAudio) {
+        currentAudio.pause();
       }
     };
   }, []);
+
+  // Update collapsed folders when items change
+  useEffect(() => {
+    const tree = buildTree(items);
+    const paths = getAllFolderPaths(tree);
+    const initialState = {};
+    paths.forEach((path) => {
+      initialState[path] = true;
+    });
+    setCollapsedFolders(initialState);
+  }, [items]);
 
   const handlePlayToggle = async (item) => {
     if (playingId === item.id) {
@@ -98,42 +187,110 @@ export default function PackItemList({ items }) {
     return activeItem ? activeItem.file_name : "";
   };
 
-  const getGroupedItems = () => {
-    const groups = {
-      root: []
-    };
-
-    items.forEach((item, originalIndex) => {
-      const parts = (item.file_name || "").split("/");
-      if (parts.length > 1) {
-        // Group by the full folder path (excluding the filename part)
-        const folderPath = parts.slice(0, -1).join("/");
-        const displayFileName = parts[parts.length - 1];
-        if (!groups[folderPath]) {
-          groups[folderPath] = [];
-        }
-        groups[folderPath].push({
-          ...item,
-          originalIndex,
-          displayFileName
-        });
-      } else {
-        groups.root.push({
-          ...item,
-          originalIndex,
-          displayFileName: item.file_name
-        });
-      }
-    });
-
-    return groups;
-  };
-
   const toggleFolderCollapse = (folderName) => {
     setCollapsedFolders((prev) => ({
       ...prev,
       [folderName]: !prev[folderName]
     }));
+  };
+
+  const tree = buildTree(items);
+  sortTree(tree);
+
+  const allFolderPaths = getAllFolderPaths(tree);
+  const allCollapsed = allFolderPaths.every((path) => !!collapsedFolders[path]);
+
+  const toggleAllFolders = () => {
+    if (allCollapsed) {
+      setCollapsedFolders({});
+    } else {
+      const newState = {};
+      allFolderPaths.forEach((path) => {
+        newState[path] = true;
+      });
+      setCollapsedFolders(newState);
+    }
+  };
+
+  const renderNode = (node, depth = 0) => {
+    if (node.type === "file") {
+      const { item } = node;
+      const isCurrent = playingId === item.id;
+      const isLoading = loadingId === item.id;
+
+      return (
+        <div
+          key={item.id}
+          className={`${styles.row} ${isCurrent ? styles.activeRow : ""}`}
+          style={{ paddingLeft: `${20 + depth * 16}px` }}
+        >
+          <div className={styles.actionCell}>
+            {item.is_previewable ? (
+              <button
+                className={`${styles.playBtn} ${isCurrent && isPlaying ? styles.activePlayBtn : ""}`}
+                onClick={() => handlePlayToggle(item)}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : isCurrent && isPlaying ? (
+                  <Pause size={14} />
+                ) : (
+                  <Play size={14} />
+                )}
+              </button>
+            ) : (
+              <Lock size={14} className={styles.lockIcon} />
+            )}
+          </div>
+
+          <span className={styles.fileName}>{node.name}</span>
+
+          <div className={styles.meta}>
+            <span className={styles.format}>{item.file_format || "wav"}</span>
+            <span className={styles.size}>{formattedSize(item.file_size)}</span>
+          </div>
+        </div>
+      );
+    }
+
+    const isCollapsed = !!collapsedFolders[node.path];
+    const folderItemsCount = countFiles(node);
+
+    return (
+      <div key={node.path || "root"} className={styles.folderGroup}>
+        {node.path && (
+          <div
+            className={styles.folderGroupHeader}
+            style={{ paddingLeft: `${20 + (depth - 1) * 16}px` }}
+          >
+            <button
+              type="button"
+              className={styles.collapseToggleBtn}
+              onClick={() => toggleFolderCollapse(node.path)}
+            >
+              {isCollapsed ? (
+                <ChevronRight size={16} />
+              ) : (
+                <ChevronDown size={16} />
+              )}
+            </button>
+            
+            <div className={styles.folderHeaderInfo} onClick={() => toggleFolderCollapse(node.path)}>
+              <Folder size={16} className={styles.folderIcon} style={{ color: "var(--premium-gold, #FACB11)" }} />
+              <span className={styles.folderHeaderName}>{node.name}</span>
+              <span className={styles.folderItemCount}>({folderItemsCount} {folderItemsCount === 1 ? "item" : "items"})</span>
+            </div>
+          </div>
+        )}
+
+        {(!isCollapsed || !node.path) && (
+          <div className={node.path ? styles.folderGroupContent : ""}>
+            {node.children.map((child) => renderNode(child, node.path ? depth + 1 : depth))}
+          </div>
+        )}
+      </div>
+    );
   };
 
   return (
@@ -168,6 +325,23 @@ export default function PackItemList({ items }) {
         </div>
       )}
 
+      {/* TOOLBAR */}
+      {allFolderPaths.length > 0 && (
+        <div className={styles.toolbar}>
+          <div className={styles.toolbarInfo}>
+            <Folder size={14} className={styles.toolbarIcon} />
+            <span>{allFolderPaths.length} {allFolderPaths.length === 1 ? "folder" : "folders"}</span>
+          </div>
+          <button
+            type="button"
+            className={styles.toggleAllBtn}
+            onClick={toggleAllFolders}
+          >
+            {allCollapsed ? "Expand All" : "Collapse All"}
+          </button>
+        </div>
+      )}
+
       {/* ITEMS LIST */}
       <div className={styles.list}>
         {items.length === 0 ? (
@@ -175,141 +349,7 @@ export default function PackItemList({ items }) {
             This pack contains no items.
           </div>
         ) : (
-          (() => {
-            const grouped = getGroupedItems();
-            const folderNames = Object.keys(grouped).filter((k) => k !== "root");
-            
-            // Sort folder names alphabetically
-            folderNames.sort((a, b) => a.localeCompare(b));
-
-            return (
-              <>
-                {/* Render Folders */}
-                {folderNames.map((folderName) => {
-                  const folderItems = grouped[folderName];
-                  const isCollapsed = !!collapsedFolders[folderName];
-                  
-                  return (
-                    <div key={folderName} className={styles.folderGroup}>
-                      {/* Folder Header */}
-                      <div className={styles.folderGroupHeader}>
-                        <button
-                          type="button"
-                          className={styles.collapseToggleBtn}
-                          onClick={() => toggleFolderCollapse(folderName)}
-                        >
-                          {isCollapsed ? (
-                            <ChevronRight size={16} />
-                          ) : (
-                            <ChevronDown size={16} />
-                          )}
-                        </button>
-                        
-                        <div className={styles.folderHeaderInfo} onClick={() => toggleFolderCollapse(folderName)}>
-                          <Folder size={16} className={styles.folderIcon} style={{ color: "var(--premium-gold, #FACB11)" }} />
-                          <span className={styles.folderHeaderName}>{folderName}</span>
-                          <span className={styles.folderItemCount}>({folderItems.length} items)</span>
-                        </div>
-                      </div>
-
-                      {/* Folder Items */}
-                      {!isCollapsed && (
-                        <div className={styles.folderGroupContent}>
-                          {folderItems.map((item) => {
-                            const isCurrent = playingId === item.id;
-                            const isLoading = loadingId === item.id;
-
-                            return (
-                              <div
-                                key={item.id}
-                                className={`${styles.row} ${styles.itemRowNested} ${isCurrent ? styles.activeRow : ""}`}
-                              >
-                                <div className={styles.actionCell}>
-                                  {item.is_previewable ? (
-                                    <button
-                                      className={`${styles.playBtn} ${isCurrent && isPlaying ? styles.activePlayBtn : ""}`}
-                                      onClick={() => handlePlayToggle(item)}
-                                      disabled={isLoading}
-                                    >
-                                      {isLoading ? (
-                                        <Loader2 size={14} className="animate-spin" />
-                                      ) : isCurrent && isPlaying ? (
-                                        <Pause size={14} />
-                                      ) : (
-                                        <Play size={14} />
-                                      )}
-                                    </button>
-                                  ) : (
-                                    <Lock size={14} className={styles.lockIcon} />
-                                  )}
-                                </div>
-
-                                <span className={styles.fileName}>{item.displayFileName}</span>
-
-                                <div className={styles.meta}>
-                                  <span className={styles.format}>{item.file_format || "wav"}</span>
-                                  <span className={styles.size}>{formattedSize(item.file_size)}</span>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-
-                {/* Render Root (Uncategorized) Items */}
-                {grouped.root.length > 0 && (
-                  <div className={styles.rootItemsGroup}>
-                    {folderNames.length > 0 && (
-                      <div className={styles.rootItemsTitle}>
-                        Direct Items / Uncategorized
-                      </div>
-                    )}
-                    {grouped.root.map((item) => {
-                      const isCurrent = playingId === item.id;
-                      const isLoading = loadingId === item.id;
-
-                      return (
-                        <div
-                          key={item.id}
-                          className={`${styles.row} ${isCurrent ? styles.activeRow : ""}`}
-                        >
-                          <div className={styles.actionCell}>
-                            {item.is_previewable ? (
-                              <button
-                                className={`${styles.playBtn} ${isCurrent && isPlaying ? styles.activePlayBtn : ""}`}
-                                onClick={() => handlePlayToggle(item)}
-                                disabled={isLoading}
-                              >
-                                {isLoading ? (
-                                  <Loader2 size={14} className="animate-spin" />
-                                ) : isCurrent && isPlaying ? (
-                                  <Pause size={14} />
-                                ) : (
-                                  <Play size={14} />
-                                )}
-                              </button>
-                            ) : (
-                              <Lock size={14} className={styles.lockIcon} />
-                            )}
-                          </div>
-
-                          <span className={styles.fileName}>{item.file_name}</span>
-
-                          <div className={styles.meta}>
-                            <span className={styles.format}>{item.file_format || "wav"}</span>
-                            <span className={styles.size}>{formattedSize(item.file_size)}</span>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </>
-            );
-          })()
+          renderNode(tree)
         )}
       </div>
     </div>
